@@ -40,10 +40,25 @@ export async function POST(request: NextRequest) {
     const body = await request.json();
     console.log('🌐 WordPress webhook received:', JSON.stringify(body).substring(0, 200));
 
-    const { name, email, phone, message } = body;
+    const { name, email, phone, message, ...otherFields } = body;
 
     if (!name && !email && !phone) {
       return NextResponse.json({ error: 'At least name, email, or phone is required' }, { status: 400 });
+    }
+
+    // Combine any extra fields from Elementor (like Package Name, Adult, Child) into the message
+    let finalMessage = message || '';
+    if (Object.keys(otherFields).length > 0) {
+      const extraDetails = Object.entries(otherFields)
+        .filter(([key]) => !['form_id', 'form_name', 'action'].includes(key)) // skip internal elementor fields
+        .map(([key, val]) => `${key}: ${val}`)
+        .join('\n');
+      
+      finalMessage = finalMessage ? `${finalMessage}\n\nDetails:\n${extraDetails}` : `Form Details:\n${extraDetails}`;
+    }
+
+    if (!finalMessage) {
+      finalMessage = `Website enquiry from ${name || email}`;
     }
 
     await dbConnect();
