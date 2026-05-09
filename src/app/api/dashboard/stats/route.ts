@@ -1,0 +1,58 @@
+import { NextResponse } from 'next/server';
+import dbConnect from '@/lib/mongodb';
+import Customer from '@/models/Customer';
+import Enquiry from '@/models/Enquiry';
+import Booking from '@/models/Booking';
+import YatraPackage from '@/models/YatraPackage';
+
+export async function GET() {
+  try {
+    await dbConnect();
+
+    const [
+      totalCustomers,
+      totalEnquiries,
+      newEnquiries,
+      totalBookings,
+      totalPackages,
+      recentEnquiries,
+      recentBookings,
+      enquiriesByStatus,
+      enquiriesBySource,
+    ] = await Promise.all([
+      Customer.countDocuments(),
+      Enquiry.countDocuments(),
+      Enquiry.countDocuments({ status: 'new' }),
+      Booking.countDocuments(),
+      YatraPackage.countDocuments({ isActive: true }),
+      Enquiry.find({}).populate('customer', 'name phone').sort({ createdAt: -1 }).limit(5).lean(),
+      Booking.find({}).populate('customer', 'name phone').populate('package', 'name').sort({ createdAt: -1 }).limit(5).lean(),
+      Enquiry.aggregate([{ $group: { _id: '$status', count: { $sum: 1 } } }]),
+      Enquiry.aggregate([{ $group: { _id: '$source', count: { $sum: 1 } } }]),
+    ]);
+
+    const bookingRevenue = await Booking.aggregate([
+      { $match: { status: { $ne: 'cancelled' } } },
+      { $group: { _id: null, total: { $sum: '$totalAmount' }, collected: { $sum: '$advancePaid' } } },
+    ]);
+
+    return NextResponse.json({
+      stats: {
+        totalCustomers,
+        totalEnquiries,
+        newEnquiries,
+        totalBookings,
+        totalPackages,
+        revenue: bookingRevenue[0]?.total || 0,
+        collected: bookingRevenue[0]?.collected || 0,
+      },
+      recentEnquiries,
+      recentBookings,
+      enquiriesByStatus,
+      enquiriesBySource,
+    });
+  } catch (error) {
+    console.error('Dashboard stats error:', error);
+    return NextResponse.json({ error: 'Failed to fetch stats' }, { status: 500 });
+  }
+}
