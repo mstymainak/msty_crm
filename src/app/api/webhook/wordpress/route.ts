@@ -104,7 +104,7 @@ export async function POST(request: NextRequest) {
     const enquiry = await Enquiry.create({
       customer: customer._id,
       source: 'website',
-      message: message || `Website enquiry from ${name || email}`,
+      message: finalMessage,
       status: 'new',
       priority: 'medium',
     });
