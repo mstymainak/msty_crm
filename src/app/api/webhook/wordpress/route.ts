@@ -60,12 +60,27 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Invalid request body format' }, { status: 400 });
     }
 
-    let body = rawBody;
-    // Handle Elementor's "Advanced Data" JSON structure
-    if (rawBody.fields && typeof rawBody.fields === 'object') {
-      body = {};
+    let body: any = {};
+    
+    // 1. Handle Elementor's "Advanced Data" JSON structure
+    if (rawBody.fields && typeof rawBody.fields === 'object' && !Array.isArray(rawBody.fields)) {
       for (const key in rawBody.fields) {
-        body[key] = rawBody.fields[key].value;
+        if (rawBody.fields[key] && typeof rawBody.fields[key] === 'object' && 'value' in rawBody.fields[key]) {
+          body[key] = rawBody.fields[key].value;
+        } else {
+          body[key] = rawBody.fields[key];
+        }
+      }
+    } 
+    // 2. Handle standard Form-Data (keys look like "fields[name]")
+    else {
+      for (const key in rawBody) {
+        const match = key.match(/^fields\[(.*)\]$/);
+        if (match) {
+          body[match[1]] = rawBody[key];
+        } else {
+          body[key] = rawBody[key];
+        }
       }
     }
 
