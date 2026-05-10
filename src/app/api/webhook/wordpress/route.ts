@@ -43,7 +43,11 @@ export async function POST(request: NextRequest) {
     try {
       if (contentType.includes('application/json')) {
         rawBody = await request.json();
-      } else if (contentType.includes('application/x-www-form-urlencoded') || contentType.includes('multipart/form-data')) {
+      } else if (contentType.includes('application/x-www-form-urlencoded')) {
+        const text = await request.text();
+        const params = new URLSearchParams(text);
+        rawBody = Object.fromEntries(params.entries());
+      } else if (contentType.includes('multipart/form-data')) {
         const formData = await request.formData();
         rawBody = Object.fromEntries(formData.entries());
       } else {
@@ -51,7 +55,6 @@ export async function POST(request: NextRequest) {
         try {
           rawBody = JSON.parse(text);
         } catch (e) {
-          console.warn('Could not parse webhook body as JSON:', text);
           rawBody = { raw_text: text };
         }
       }
@@ -83,6 +86,10 @@ export async function POST(request: NextRequest) {
         }
       }
     }
+
+    // Map common variations to standard fields
+    if (body.mobileno && !body.phone) body.phone = body.mobileno;
+    if (body['Mobile No'] && !body.phone) body.phone = body['Mobile No'];
 
     console.log('🌐 WordPress webhook parsed body:', JSON.stringify(body).substring(0, 200));
 
