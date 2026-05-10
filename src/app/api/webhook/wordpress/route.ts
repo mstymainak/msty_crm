@@ -37,8 +37,25 @@ import Enquiry from '@/models/Enquiry';
  */
 export async function POST(request: NextRequest) {
   try {
-    const body = await request.json();
-    console.log('🌐 WordPress webhook received:', JSON.stringify(body).substring(0, 200));
+    let rawBody: any;
+    try {
+      rawBody = await request.json();
+    } catch (err) {
+      // Fallback if Elementor sends as form-data instead of JSON
+      const formData = await request.formData();
+      rawBody = Object.fromEntries(formData.entries());
+    }
+
+    let body = rawBody;
+    // Handle Elementor's "Advanced Data" JSON structure
+    if (rawBody.fields && typeof rawBody.fields === 'object') {
+      body = {};
+      for (const key in rawBody.fields) {
+        body[key] = rawBody.fields[key].value;
+      }
+    }
+
+    console.log('🌐 WordPress webhook parsed body:', JSON.stringify(body).substring(0, 200));
 
     const { name, email, phone, message, ...otherFields } = body;
 
