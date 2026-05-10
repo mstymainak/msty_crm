@@ -37,13 +37,27 @@ import Enquiry from '@/models/Enquiry';
  */
 export async function POST(request: NextRequest) {
   try {
-    let rawBody: any;
+    const contentType = request.headers.get('content-type') || '';
+    let rawBody: any = {};
+
     try {
-      rawBody = await request.json();
+      if (contentType.includes('application/json')) {
+        rawBody = await request.json();
+      } else if (contentType.includes('application/x-www-form-urlencoded') || contentType.includes('multipart/form-data')) {
+        const formData = await request.formData();
+        rawBody = Object.fromEntries(formData.entries());
+      } else {
+        const text = await request.text();
+        try {
+          rawBody = JSON.parse(text);
+        } catch (e) {
+          console.warn('Could not parse webhook body as JSON:', text);
+          rawBody = { raw_text: text };
+        }
+      }
     } catch (err) {
-      // Fallback if Elementor sends as form-data instead of JSON
-      const formData = await request.formData();
-      rawBody = Object.fromEntries(formData.entries());
+      console.error('Error parsing request body:', err);
+      return NextResponse.json({ error: 'Invalid request body format' }, { status: 400 });
     }
 
     let body = rawBody;
