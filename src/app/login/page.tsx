@@ -55,18 +55,19 @@ export default function LoginPage() {
       }}>
         <div style={{ textAlign: 'center', marginBottom: '32px' }}>
           <div style={{
-            width: '64px',
-            height: '64px',
-            background: 'linear-gradient(135deg, #3b82f6, #8b5cf6)',
+            width: '80px',
+            height: '80px',
+            background: '#fff',
             borderRadius: '16px',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
             margin: '0 auto 16px',
-            fontSize: '28px',
-            color: '#fff',
-            fontWeight: 'bold',
-          }}>M</div>
+            boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)',
+            padding: '4px'
+          }}>
+            <img src="/logo.png" alt="MSTY Logo" style={{ width: '100%', height: '100%', objectFit: 'contain' }} />
+          </div>
           <h1 style={{ fontSize: '24px', fontWeight: '700', color: '#0f172a', margin: '0 0 4px' }}>
             MSTY CRM
           </h1>
@@ -111,7 +112,7 @@ export default function LoginPage() {
                 transition: 'border-color 0.2s',
                 boxSizing: 'border-box',
               }}
-              onFocus={(e) => e.target.style.borderColor = '#3b82f6'}
+              onFocus={(e) => e.target.style.borderColor = '#f97316'}
               onBlur={(e) => e.target.style.borderColor = '#d1d5db'}
             />
           </div>
@@ -137,7 +138,7 @@ export default function LoginPage() {
                 transition: 'border-color 0.2s',
                 boxSizing: 'border-box',
               }}
-              onFocus={(e) => e.target.style.borderColor = '#3b82f6'}
+              onFocus={(e) => e.target.style.borderColor = '#f97316'}
               onBlur={(e) => e.target.style.borderColor = '#d1d5db'}
             />
           </div>
@@ -149,7 +150,7 @@ export default function LoginPage() {
             style={{
               width: '100%',
               padding: '12px',
-              background: loading ? '#93c5fd' : 'linear-gradient(135deg, #3b82f6, #2563eb)',
+              background: loading ? '#fdba74' : 'linear-gradient(135deg, #f97316, #ea580c)',
               color: '#fff',
               border: 'none',
               borderRadius: '8px',
