@@ -56,9 +56,12 @@ export default function EnquiriesPage() {
   return (
     <div>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' }}>
-        <div>
-          <h1 style={{ fontSize: '24px', fontWeight: '700', color: '#0f172a', margin: 0 }}>Enquiries</h1>
-          <p style={{ color: '#64748b', margin: '4px 0 0', fontSize: '14px' }}>{enquiries.length} total enquiries</p>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
+          <div>
+            <h1 style={{ fontSize: '24px', fontWeight: '700', color: '#0f172a', margin: 0 }}>Enquiries</h1>
+            <p style={{ color: '#64748b', margin: '4px 0 0', fontSize: '14px' }}>{enquiries.length} total enquiries</p>
+          </div>
+          <button onClick={fetchEnquiries} style={{ padding: '8px 16px', background: '#f1f5f9', color: '#475569', border: '1px solid #cbd5e1', borderRadius: '6px', cursor: 'pointer', fontSize: '13px', fontWeight: '600' }}>↻ Refresh</button>
         </div>
       </div>
 
@@ -103,7 +106,16 @@ export default function EnquiriesPage() {
                       <div style={{ fontSize: '14px', fontWeight: '500', color: '#0f172a' }}>{e.customer?.name || 'Unknown'}</div>
                       <div style={{ fontSize: '12px', color: '#94a3b8' }}>{e.customer?.phone || ''}</div>
                     </td>
-                    <td style={{ padding: '12px 16px', fontSize: '13px', color: '#374151', maxWidth: '250px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{e.message}</td>
+                    <td style={{ padding: '12px 16px', fontSize: '13px', color: '#374151', maxWidth: '250px' }}>
+                      <details style={{ cursor: 'pointer' }}>
+                        <summary style={{ outline: 'none', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                          {e.message.split('\n')[0] || 'View message'}
+                        </summary>
+                        <div style={{ padding: '8px', background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: '6px', marginTop: '4px', whiteSpace: 'pre-wrap', fontSize: '12px', maxHeight: '150px', overflowY: 'auto' }}>
+                          {e.message}
+                        </div>
+                      </details>
+                    </td>
                     <td style={{ padding: '12px 16px' }}>
                       <span style={{ padding: '3px 10px', borderRadius: '10px', fontSize: '11px', fontWeight: '600', background: '#f1f5f9', color: '#475569', textTransform: 'capitalize' }}>{e.source}</span>
                     </td>
@@ -131,7 +143,10 @@ export default function EnquiriesPage() {
                         <option value="low">Low</option>
                       </select>
                     </td>
-                    <td style={{ padding: '12px 16px', fontSize: '13px', color: '#94a3b8' }}>{new Date(e.createdAt).toLocaleDateString()}</td>
+                    <td style={{ padding: '12px 16px', fontSize: '13px', color: '#94a3b8' }}>
+                      <div>{new Date(e.createdAt).toLocaleDateString()}</div>
+                      <div style={{ fontSize: '11px', marginTop: '2px' }}>{new Date(e.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</div>
+                    </td>
                     <td style={{ padding: '12px 16px' }}>
                       <button onClick={() => handleDelete(e._id)} style={{ padding: '4px 10px', background: '#fef2f2', color: '#dc2626', border: 'none', borderRadius: '4px', fontSize: '12px', cursor: 'pointer' }}>Delete</button>
                     </td>

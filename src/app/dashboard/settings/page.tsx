@@ -34,9 +34,12 @@ export default function SettingsPage() {
   return (
     <div>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' }}>
-        <div>
-          <h1 style={{ fontSize: '24px', fontWeight: '700', color: '#0f172a', margin: 0 }}>Staff Management</h1>
-          <p style={{ color: '#64748b', margin: '4px 0 0', fontSize: '14px' }}>{users.length} staff members</p>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
+          <div>
+            <h1 style={{ fontSize: '24px', fontWeight: '700', color: '#0f172a', margin: 0 }}>Staff Management</h1>
+            <p style={{ color: '#64748b', margin: '4px 0 0', fontSize: '14px' }}>{users.length} staff members</p>
+          </div>
+          <button onClick={fetchUsers} style={{ padding: '8px 16px', background: '#f1f5f9', color: '#475569', border: '1px solid #cbd5e1', borderRadius: '6px', cursor: 'pointer', fontSize: '13px', fontWeight: '600' }}>↻ Refresh</button>
         </div>
         <button onClick={() => setShowForm(true)} style={{ padding: '10px 20px', background: '#3b82f6', color: '#fff', border: 'none', borderRadius: '8px', fontWeight: '600', cursor: 'pointer', fontSize: '14px' }}>
           + Add Staff
@@ -85,7 +88,10 @@ export default function SettingsPage() {
                   <td style={{ padding: '12px 16px' }}>
                     <span style={{ padding: '3px 10px', borderRadius: '10px', fontSize: '11px', fontWeight: '600', background: u.isActive ? '#dcfce7' : '#fef2f2', color: u.isActive ? '#166534' : '#991b1b' }}>{u.isActive ? 'Active' : 'Inactive'}</span>
                   </td>
-                  <td style={{ padding: '12px 16px', fontSize: '13px', color: '#94a3b8' }}>{new Date(u.createdAt).toLocaleDateString()}</td>
+                  <td style={{ padding: '12px 16px', fontSize: '13px', color: '#94a3b8' }}>
+                    <div>{new Date(u.createdAt).toLocaleDateString()}</div>
+                    <div style={{ fontSize: '11px', marginTop: '2px' }}>{new Date(u.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</div>
+                  </td>
                 </tr>
               ))}
             </tbody>
