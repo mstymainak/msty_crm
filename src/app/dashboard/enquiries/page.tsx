@@ -22,6 +22,7 @@ export default function EnquiriesPage() {
   const [loading, setLoading] = useState(true);
   const [statusFilter, setStatusFilter] = useState('all');
   const [sourceFilter, setSourceFilter] = useState('all');
+  const [priorityFilter, setPriorityFilter] = useState('all');
   const [packages, setPackages] = useState<any[]>([]);
 
   const fetchEnquiries = () => {
@@ -65,6 +66,7 @@ export default function EnquiriesPage() {
   const filtered = enquiries.filter(e => {
     if (statusFilter !== 'all' && e.status !== statusFilter) return false;
     if (sourceFilter !== 'all' && e.source !== sourceFilter) return false;
+    if (priorityFilter !== 'all' && e.priority !== priorityFilter) return false;
     return true;
   });
 
@@ -82,7 +84,7 @@ export default function EnquiriesPage() {
         </div>
       </div>
 
-      <div style={{ display: 'flex', gap: '12px', marginBottom: '16px' }}>
+      <div style={{ display: 'flex', gap: '12px', marginBottom: '16px', flexWrap: 'wrap' }}>
         <select value={statusFilter} onChange={e => setStatusFilter(e.target.value)} style={selectStyle}>
           <option value="all">All Status</option>
           <option value="new">New</option>
@@ -90,6 +92,12 @@ export default function EnquiriesPage() {
           <option value="qualified">Qualified</option>
           <option value="booked">Booked</option>
           <option value="lost">Lost</option>
+        </select>
+        <select value={priorityFilter} onChange={e => setPriorityFilter(e.target.value)} style={selectStyle}>
+          <option value="all">All Priorities</option>
+          <option value="high">High</option>
+          <option value="medium">Medium</option>
+          <option value="low">Low</option>
         </select>
         <select value={sourceFilter} onChange={e => setSourceFilter(e.target.value)} style={selectStyle}>
           <option value="all">All Sources</option>
@@ -120,19 +128,21 @@ export default function EnquiriesPage() {
                 return (
                   <tr key={e._id} style={{ borderBottom: '1px solid #e2e8f0', background: pc.bg }}>
                     <td style={{ padding: '12px 16px' }}>
-                      <div style={{ fontSize: '14px', fontWeight: '500', color: '#0f172a' }}>{e.customer?.name || 'Unknown'}</div>
-                      <div style={{ fontSize: '12px', color: '#94a3b8' }}>{e.customer?.phone || ''}</div>
+                      <div style={{ fontSize: '14px', fontWeight: '600', color: '#0f172a' }}>{e.customer?.name || 'Unknown'}</div>
+                      <div style={{ fontSize: '12px', color: '#334155', fontWeight: '500' }}>{e.customer?.phone || ''}</div>
                     </td>
-                    <td style={{ padding: '12px 16px', fontSize: '13px', color: '#374151', maxWidth: '250px' }}>
+                    <td style={{ padding: '12px 16px', fontSize: '13px', color: '#1e293b', maxWidth: '250px' }}>
                       <details style={{ cursor: 'pointer' }}>
-                        <summary style={{ outline: 'none', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                        <summary style={{ outline: 'none', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', fontWeight: '500' }}>
                           {e.message.split('\n')[0] || 'View message'}
                         </summary>
-                        <div style={{ padding: '8px', background: '#fff', border: '1px solid #e2e8f0', borderRadius: '6px', marginTop: '4px', whiteSpace: 'pre-wrap', fontSize: '12px', maxHeight: '150px', overflowY: 'auto' }}>
-                          {e.message}
+                        <div style={{ padding: '8px', background: '#fff', border: '1px solid #cbd5e1', borderRadius: '6px', marginTop: '6px', fontSize: '12px', maxHeight: '200px', overflowY: 'auto' }}>
+                          <div style={{ whiteSpace: 'pre-wrap', marginBottom: '10px', color: '#334155' }}>{e.message}</div>
+                          <button onClick={() => addNote(e._id, e.message)} style={{ padding: '6px 10px', fontSize: '12px', background: '#f8fafc', color: '#0f172a', border: '1px solid #cbd5e1', borderRadius: '4px', cursor: 'pointer', display: 'inline-flex', alignItems: 'center', gap: '6px', fontWeight: '500' }}>
+                            📝 Add Note
+                          </button>
                         </div>
                       </details>
-                      <button onClick={() => addNote(e._id, e.message)} style={{ marginTop: '6px', padding: '2px 6px', fontSize: '11px', background: '#e2e8f0', border: 'none', borderRadius: '4px', cursor: 'pointer' }}>+ Add Note</button>
                     </td>
                     <td style={{ padding: '12px 16px' }}>
                       <select
@@ -173,9 +183,9 @@ export default function EnquiriesPage() {
                         <option value="low">Low</option>
                       </select>
                     </td>
-                    <td style={{ padding: '12px 16px', fontSize: '13px', color: '#94a3b8' }}>
+                    <td style={{ padding: '12px 16px', fontSize: '13px', color: '#334155', fontWeight: '500' }}>
                       <div>{new Date(e.createdAt).toLocaleDateString()}</div>
-                      <div style={{ fontSize: '11px', marginTop: '2px' }}>{new Date(e.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</div>
+                      <div style={{ fontSize: '11px', marginTop: '2px', color: '#475569' }}>{new Date(e.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</div>
                     </td>
                     <td style={{ padding: '12px 16px' }}>
                       <button onClick={() => handleDelete(e._id)} style={{ padding: '4px 10px', background: '#fef2f2', color: '#dc2626', border: 'none', borderRadius: '4px', fontSize: '12px', cursor: 'pointer' }}>Delete</button>
