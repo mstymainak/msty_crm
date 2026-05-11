@@ -7,7 +7,8 @@ const EnquirySchema = new Schema({
   status: { type: String, enum: ['new', 'contacted', 'qualified', 'booked', 'lost'], default: 'new' },
   priority: { type: String, enum: ['low', 'medium', 'high'], default: 'medium' },
   assignedTo: { type: Schema.Types.ObjectId, ref: 'User' },
-  notes: [{ type: String, timestamp: Date }],
+  package: { type: Schema.Types.ObjectId, ref: 'Package' },
+  notes: [{ type: String }],
   createdAt: { type: Date, default: Date.now },
   updatedAt: { type: Date, default: Date.now },
 });

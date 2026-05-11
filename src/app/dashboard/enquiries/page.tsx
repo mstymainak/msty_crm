@@ -22,12 +22,16 @@ export default function EnquiriesPage() {
   const [loading, setLoading] = useState(true);
   const [statusFilter, setStatusFilter] = useState('all');
   const [sourceFilter, setSourceFilter] = useState('all');
+  const [packages, setPackages] = useState<any[]>([]);
 
   const fetchEnquiries = () => {
     fetch('/api/enquiries').then(r => r.json()).then(d => { setEnquiries(Array.isArray(d) ? d : []); setLoading(false); }).catch(() => setLoading(false));
   };
 
-  useEffect(() => { fetchEnquiries(); }, []);
+  useEffect(() => { 
+    fetchEnquiries(); 
+    fetch('/api/packages').then(r => r.json()).then(d => setPackages(Array.isArray(d) ? d : []));
+  }, []);
 
   const updateStatus = async (id: string, status: string) => {
     await fetch(`/api/enquiries/${id}`, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ status }) });
@@ -36,6 +40,19 @@ export default function EnquiriesPage() {
 
   const updatePriority = async (id: string, priority: string) => {
     await fetch(`/api/enquiries/${id}`, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ priority }) });
+    fetchEnquiries();
+  };
+
+  const updatePackage = async (id: string, packageId: string) => {
+    await fetch(`/api/enquiries/${id}`, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ package: packageId || null }) });
+    fetchEnquiries();
+  };
+
+  const addNote = async (id: string, currentMessage: string) => {
+    const note = prompt('Enter custom note:');
+    if (!note) return;
+    const newMessage = currentMessage + '\n\n--- Note ---\n' + note;
+    await fetch(`/api/enquiries/${id}`, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ message: newMessage }) });
     fetchEnquiries();
   };
 
@@ -90,8 +107,8 @@ export default function EnquiriesPage() {
         filtered.length === 0 ? <div style={{ padding: '40px', textAlign: 'center', color: '#94a3b8' }}>No enquiries found</div> : (
           <table style={{ width: '100%', borderCollapse: 'collapse' }}>
             <thead>
-              <tr style={{ borderBottom: '1px solid #e2e8f0' }}>
-                {['Customer', 'Message', 'Source', 'Status', 'Priority', 'Date', 'Actions'].map(h => (
+              <tr style={{ borderBottom: '1px solid #e2e8f0', background: '#f8fafc' }}>
+                {['Customer', 'Message', 'Package', 'Source', 'Status', 'Priority', 'Date', 'Actions'].map(h => (
                   <th key={h} style={{ padding: '12px 16px', textAlign: 'left', fontSize: '12px', fontWeight: '600', color: '#64748b', textTransform: 'uppercase' }}>{h}</th>
                 ))}
               </tr>
@@ -101,7 +118,7 @@ export default function EnquiriesPage() {
                 const sc = statusColors[e.status] || { bg: '#f1f5f9', text: '#64748b' };
                 const pc = priorityColors[e.priority] || { bg: '#f1f5f9', text: '#64748b' };
                 return (
-                  <tr key={e._id} style={{ borderBottom: '1px solid #f8fafc' }}>
+                  <tr key={e._id} style={{ borderBottom: '1px solid #e2e8f0', background: pc.bg }}>
                     <td style={{ padding: '12px 16px' }}>
                       <div style={{ fontSize: '14px', fontWeight: '500', color: '#0f172a' }}>{e.customer?.name || 'Unknown'}</div>
                       <div style={{ fontSize: '12px', color: '#94a3b8' }}>{e.customer?.phone || ''}</div>
@@ -111,10 +128,23 @@ export default function EnquiriesPage() {
                         <summary style={{ outline: 'none', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                           {e.message.split('\n')[0] || 'View message'}
                         </summary>
-                        <div style={{ padding: '8px', background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: '6px', marginTop: '4px', whiteSpace: 'pre-wrap', fontSize: '12px', maxHeight: '150px', overflowY: 'auto' }}>
+                        <div style={{ padding: '8px', background: '#fff', border: '1px solid #e2e8f0', borderRadius: '6px', marginTop: '4px', whiteSpace: 'pre-wrap', fontSize: '12px', maxHeight: '150px', overflowY: 'auto' }}>
                           {e.message}
                         </div>
                       </details>
+                      <button onClick={() => addNote(e._id, e.message)} style={{ marginTop: '6px', padding: '2px 6px', fontSize: '11px', background: '#e2e8f0', border: 'none', borderRadius: '4px', cursor: 'pointer' }}>+ Add Note</button>
+                    </td>
+                    <td style={{ padding: '12px 16px' }}>
+                      <select
+                        value={e.package || ''}
+                        onChange={(ev) => updatePackage(e._id, ev.target.value)}
+                        style={{ padding: '4px 8px', borderRadius: '6px', fontSize: '12px', border: '1px solid #cbd5e1', background: '#fff', cursor: 'pointer', maxWidth: '120px' }}
+                      >
+                        <option value="">No Package</option>
+                        {packages.map(p => (
+                          <option key={p._id} value={p._id}>{p.name}</option>
+                        ))}
+                      </select>
                     </td>
                     <td style={{ padding: '12px 16px' }}>
                       <span style={{ padding: '3px 10px', borderRadius: '10px', fontSize: '11px', fontWeight: '600', background: '#f1f5f9', color: '#475569', textTransform: 'capitalize' }}>{e.source}</span>
