@@ -24,6 +24,8 @@ export default function EnquiriesPage() {
   const [sourceFilter, setSourceFilter] = useState('all');
   const [priorityFilter, setPriorityFilter] = useState('all');
   const [packages, setPackages] = useState<any[]>([]);
+  const [editingNoteId, setEditingNoteId] = useState<string | null>(null);
+  const [tempNote, setTempNote] = useState('');
 
   const fetchEnquiries = () => {
     fetch('/api/enquiries').then(r => r.json()).then(d => { setEnquiries(Array.isArray(d) ? d : []); setLoading(false); }).catch(() => setLoading(false));
@@ -49,10 +51,9 @@ export default function EnquiriesPage() {
     fetchEnquiries();
   };
 
-  const editNote = async (id: string, currentNote: string) => {
-    const note = prompt('Edit note:', currentNote || '');
-    if (note === null) return;
-    await fetch(`/api/enquiries/${id}`, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ adminNote: note }) });
+  const saveNote = async (id: string, noteText: string) => {
+    await fetch(`/api/enquiries/${id}`, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ adminNote: noteText }) });
+    setEditingNoteId(null);
     fetchEnquiries();
   };
 
@@ -141,21 +142,36 @@ export default function EnquiriesPage() {
                         <summary style={{ outline: 'none', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', fontWeight: '500' }}>
                           {e.message.split('\n')[0] || 'View message'}
                         </summary>
-                        <div style={{ position: 'relative', padding: '12px', background: '#fff', border: '1px solid #cbd5e1', borderRadius: '6px', marginTop: '6px', fontSize: '12px', maxHeight: '250px', overflowY: 'auto' }}>
+                        <div style={{ position: 'relative', padding: '12px', background: '#fff', border: '1px solid #cbd5e1', borderRadius: '6px', marginTop: '6px', fontSize: '12px', maxHeight: '350px', overflowY: 'auto' }}>
                           
                           <div style={{ position: 'absolute', top: '8px', right: '8px', display: 'flex', gap: '4px' }}>
-                            <button onClick={(ev) => { ev.preventDefault(); editNote(e._id, e.adminNote); }} style={{ background: 'transparent', border: 'none', cursor: 'pointer', fontSize: '14px' }} title={e.adminNote ? "Edit Note" : "Add Note"}>📝</button>
+                            <button onClick={(ev) => { ev.preventDefault(); setEditingNoteId(e._id); setTempNote(e.adminNote || ''); }} style={{ background: 'transparent', border: 'none', cursor: 'pointer', fontSize: '14px' }} title={e.adminNote ? "Edit Note" : "Add Note"}>📝</button>
                             {e.adminNote && <button onClick={(ev) => { ev.preventDefault(); deleteNote(e._id); }} style={{ background: 'transparent', border: 'none', cursor: 'pointer', fontSize: '14px' }} title="Delete Note">🗑️</button>}
                           </div>
 
                           <div style={{ whiteSpace: 'pre-wrap', marginBottom: '8px', color: '#334155', paddingRight: '45px' }}>{e.message}</div>
                           
-                          {e.adminNote && (
+                          {editingNoteId === e._id ? (
+                            <div style={{ marginTop: '10px', paddingTop: '10px', borderTop: '1px dashed #cbd5e1' }}>
+                              <span style={{ fontSize: '10px', textTransform: 'uppercase', color: '#64748b', display: 'block', marginBottom: '6px', fontWeight: '600' }}>Edit Note</span>
+                              <textarea
+                                value={tempNote}
+                                onChange={(ev) => setTempNote(ev.target.value)}
+                                style={{ width: '100%', padding: '8px', border: '1px solid #cbd5e1', borderRadius: '4px', fontSize: '12px', boxSizing: 'border-box', minHeight: '60px', resize: 'vertical' }}
+                                placeholder="Type your note here..."
+                                autoFocus
+                              />
+                              <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '8px', marginTop: '8px' }}>
+                                <button onClick={(ev) => { ev.preventDefault(); setEditingNoteId(null); }} style={{ padding: '6px 12px', fontSize: '11px', background: '#f1f5f9', color: '#475569', border: 'none', borderRadius: '4px', cursor: 'pointer', fontWeight: '500' }}>Cancel</button>
+                                <button onClick={(ev) => { ev.preventDefault(); saveNote(e._id, tempNote); }} style={{ padding: '6px 12px', fontSize: '11px', background: '#3b82f6', color: '#fff', border: 'none', borderRadius: '4px', cursor: 'pointer', fontWeight: '500' }}>Save</button>
+                              </div>
+                            </div>
+                          ) : e.adminNote ? (
                             <div style={{ marginTop: '10px', paddingTop: '10px', borderTop: '1px dashed #cbd5e1', color: '#0f172a', fontWeight: '500', whiteSpace: 'pre-wrap' }}>
                               <span style={{ fontSize: '10px', textTransform: 'uppercase', color: '#64748b', display: 'block', marginBottom: '4px', fontWeight: '600' }}>Note</span>
                               {e.adminNote}
                             </div>
-                          )}
+                          ) : null}
                         </div>
                       </details>
                     </td>
