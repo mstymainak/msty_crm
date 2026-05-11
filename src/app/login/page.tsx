@@ -6,6 +6,7 @@ import { useRouter } from 'next/navigation';
 export default function LoginPage() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const router = useRouter();
@@ -38,20 +39,32 @@ export default function LoginPage() {
   };
 
   return (
-    <div style={{
+    <div className="bg-responsive" style={{
       minHeight: '100vh',
       display: 'flex',
       alignItems: 'center',
       justifyContent: 'center',
-      background: 'linear-gradient(135deg, #0f172a 0%, #1e293b 50%, #0f172a 100%)',
+      backgroundSize: 'cover',
+      backgroundPosition: 'center',
     }}>
+      <style>{`
+        .bg-responsive {
+          background-image: linear-gradient(rgba(15, 23, 42, 0.75), rgba(30, 41, 59, 0.75)), url('/bg-mobile.jpeg');
+        }
+        @media (min-width: 768px) {
+          .bg-responsive {
+            background-image: linear-gradient(rgba(15, 23, 42, 0.75), rgba(30, 41, 59, 0.75)), url('/bg.jpeg');
+          }
+        }
+      `}</style>
       <div style={{
         width: '100%',
         maxWidth: '420px',
         padding: '40px',
-        background: '#fff',
+        background: 'rgba(255, 255, 255, 0.95)',
         borderRadius: '16px',
         boxShadow: '0 25px 50px rgba(0,0,0,0.25)',
+        backdropFilter: 'blur(8px)',
       }}>
         <div style={{ textAlign: 'center', marginBottom: '32px' }}>
           <div style={{
@@ -121,26 +134,46 @@ export default function LoginPage() {
             <label style={{ display: 'block', fontSize: '14px', fontWeight: '500', color: '#374151', marginBottom: '6px' }}>
               Password
             </label>
-            <input
-              id="login-password"
-              type="password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              required
-              placeholder="••••••••"
-              style={{
-                width: '100%',
-                padding: '10px 14px',
-                border: '1px solid #d1d5db',
-                borderRadius: '8px',
-                fontSize: '14px',
-                outline: 'none',
-                transition: 'border-color 0.2s',
-                boxSizing: 'border-box',
-              }}
-              onFocus={(e) => e.target.style.borderColor = '#f97316'}
-              onBlur={(e) => e.target.style.borderColor = '#d1d5db'}
-            />
+            <div style={{ position: 'relative' }}>
+              <input
+                id="login-password"
+                type={showPassword ? 'text' : 'password'}
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                required
+                placeholder="••••••••"
+                style={{
+                  width: '100%',
+                  padding: '10px 40px 10px 14px',
+                  border: '1px solid #d1d5db',
+                  borderRadius: '8px',
+                  fontSize: '14px',
+                  outline: 'none',
+                  transition: 'border-color 0.2s',
+                  boxSizing: 'border-box',
+                }}
+                onFocus={(e) => e.target.style.borderColor = '#f97316'}
+                onBlur={(e) => e.target.style.borderColor = '#d1d5db'}
+              />
+              <button
+                type="button"
+                onClick={() => setShowPassword(!showPassword)}
+                style={{
+                  position: 'absolute',
+                  right: '12px',
+                  top: '50%',
+                  transform: 'translateY(-50%)',
+                  background: 'none',
+                  border: 'none',
+                  cursor: 'pointer',
+                  fontSize: '16px',
+                  color: '#64748b',
+                  padding: 0,
+                }}
+              >
+                {showPassword ? '🙈' : '👁️'}
+              </button>
+            </div>
           </div>
 
           <button
@@ -163,7 +196,6 @@ export default function LoginPage() {
             {loading ? 'Signing in...' : 'Sign In'}
           </button>
         </form>
-
 
       </div>
     </div>

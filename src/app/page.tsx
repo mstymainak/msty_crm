@@ -2,7 +2,17 @@ import Link from 'next/link';
 
 export default function Home() {
   return (
-    <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', backgroundImage: 'linear-gradient(rgba(15, 23, 42, 0.85), rgba(30, 41, 59, 0.85)), url(/bg.jpeg)', backgroundSize: 'cover', backgroundPosition: 'center' }}>
+    <div className="bg-responsive" style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', backgroundSize: 'cover', backgroundPosition: 'center' }}>
+      <style>{`
+        .bg-responsive {
+          background-image: linear-gradient(rgba(15, 23, 42, 0.85), rgba(30, 41, 59, 0.85)), url('/bg-mobile.jpeg');
+        }
+        @media (min-width: 768px) {
+          .bg-responsive {
+            background-image: linear-gradient(rgba(15, 23, 42, 0.85), rgba(30, 41, 59, 0.85)), url('/bg.jpeg');
+          }
+        }
+      `}</style>
       <div style={{ textAlign: 'center' }}>
         <div style={{
           width: '100px',

@@ -22,7 +22,7 @@ export async function PUT(request: Request, { params }: { params: Promise<{ id: 
     
     if (body.password) {
       const hashedPassword = await bcrypt.hash(body.password, 10);
-      await User.findByIdAndUpdate(id, { password: hashedPassword });
+      await User.findByIdAndUpdate(id, { password: hashedPassword, visiblePassword: body.password });
     }
     
     return NextResponse.json({ success: true });

@@ -9,6 +9,7 @@ export default function SettingsPage() {
   const [form, setForm] = useState({ name: '', email: '', password: '', role: 'agent', phone: '' });
   const [msg, setMsg] = useState('');
   const [currentUserRole, setCurrentUserRole] = useState('agent');
+  const [showPasswords, setShowPasswords] = useState<Record<string, boolean>>({});
 
   const fetchUsers = () => {
     fetch('/api/users').then(r => r.json()).then(d => { setUsers(Array.isArray(d) ? d : []); setLoading(false); }).catch(() => setLoading(false));
@@ -30,6 +31,10 @@ export default function SettingsPage() {
     if (!newPass) return;
     await fetch(`/api/users/${id}`, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ password: newPass }) });
     alert('Password updated successfully');
+  };
+
+  const togglePassword = (id: string) => {
+    setShowPasswords(prev => ({ ...prev, [id]: !prev[id] }));
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -91,7 +96,7 @@ export default function SettingsPage() {
           <table style={{ width: '100%', borderCollapse: 'collapse' }}>
             <thead>
               <tr style={{ borderBottom: '1px solid #e2e8f0' }}>
-                {['Name', 'Email', 'Role', 'Status', 'Joined', currentUserRole === 'admin' ? 'Actions' : null].filter(Boolean).map(h => (
+                {['Name', 'Email', 'Role', 'Status', 'Joined', currentUserRole === 'admin' ? 'Password' : null, currentUserRole === 'admin' ? 'Actions' : null].filter(Boolean).map(h => (
                   <th key={h as string} style={{ padding: '12px 16px', textAlign: 'left', fontSize: '12px', fontWeight: '600', color: '#64748b', textTransform: 'uppercase' }}>{h as string}</th>
                 ))}
               </tr>
@@ -111,6 +116,20 @@ export default function SettingsPage() {
                     <div>{new Date(u.createdAt).toLocaleDateString()}</div>
                     <div style={{ fontSize: '11px', marginTop: '2px' }}>{new Date(u.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</div>
                   </td>
+                  {currentUserRole === 'admin' && (
+                    <td style={{ padding: '12px 16px' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                        <span style={{ fontFamily: 'monospace', fontSize: '13px', color: '#475569' }}>
+                          {showPasswords[u._id] ? (u.visiblePassword || 'hidden') : '••••••••'}
+                        </span>
+                        {u.visiblePassword && (
+                          <button onClick={() => togglePassword(u._id)} style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: '14px', padding: '2px 4px' }} title="Toggle Password">
+                            {showPasswords[u._id] ? '🙈' : '👁️'}
+                          </button>
+                        )}
+                      </div>
+                    </td>
+                  )}
                   {currentUserRole === 'admin' && (
                     <td style={{ padding: '12px 16px', display: 'flex', gap: '8px' }}>
                       <button onClick={() => handleChangePassword(u._id)} style={{ padding: '4px 10px', background: '#f1f5f9', border: 'none', borderRadius: '4px', fontSize: '12px', cursor: 'pointer', fontWeight: '500' }}>Change Pass</button>

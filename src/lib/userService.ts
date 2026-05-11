@@ -5,7 +5,7 @@ import { hashPassword } from '@/lib/auth';
 export async function createUser(data: any) {
   await dbConnect();
   const hashedPassword = await hashPassword(data.password);
-  const user = new User({ ...data, password: hashedPassword });
+  const user = new User({ ...data, password: hashedPassword, visiblePassword: data.password });
   return await user.save();
 }
 
