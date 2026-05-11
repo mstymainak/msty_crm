@@ -6,8 +6,8 @@ import Link from 'next/link';
 export default function CustomersPage() {
   const [customers, setCustomers] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
-  const [search, setSearch] = useState('');
   const [showAdd, setShowAdd] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
   const [form, setForm] = useState({ name: '', email: '', phone: '', address: '' });
 
   const fetchCustomers = () => {
@@ -31,9 +31,9 @@ export default function CustomersPage() {
   };
 
   const filtered = customers.filter(c =>
-    c.name?.toLowerCase().includes(search.toLowerCase()) ||
-    c.phone?.includes(search) ||
-    c.email?.toLowerCase().includes(search.toLowerCase())
+    c.name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    c.phone?.includes(searchQuery) ||
+    c.email?.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
   return (
@@ -51,12 +51,15 @@ export default function CustomersPage() {
         </button>
       </div>
 
-      <input
-        placeholder="Search by name, phone, or email..."
-        value={search}
-        onChange={(e) => setSearch(e.target.value)}
-        style={{ width: '100%', padding: '10px 16px', border: '1px solid #e2e8f0', borderRadius: '8px', fontSize: '14px', marginBottom: '16px', boxSizing: 'border-box', outline: 'none' }}
-      />
+      <div style={{ marginBottom: '16px' }}>
+        <input 
+          type="text" 
+          placeholder="Search customers by name, email, or phone..." 
+          value={searchQuery}
+          onChange={(e) => setSearchQuery(e.target.value)}
+          style={{ width: '100%', padding: '10px 16px', border: '1px solid #e2e8f0', borderRadius: '8px', fontSize: '14px', boxSizing: 'border-box', outline: 'none' }}
+        />
+      </div>
 
       {showAdd && (
         <div style={{ background: '#fff', borderRadius: '12px', padding: '24px', marginBottom: '16px', boxShadow: '0 1px 3px rgba(0,0,0,0.08)' }}>
@@ -75,15 +78,6 @@ export default function CustomersPage() {
       )}
 
       <div style={{ background: '#fff', borderRadius: '12px', boxShadow: '0 1px 3px rgba(0,0,0,0.08)', overflow: 'hidden' }}>
-        {loading ? <div style={{ padding: '40px', textAlign: 'center', color: '#94a3b8' }}>Loading...</div> :
-        filtered.length === 0 ? <div style={{ padding: '40px', textAlign: 'center', color: '#94a3b8' }}>No customers found</div> : (
-          <table style={{ width: '100%', borderCollapse: 'collapse' }}>
-            <thead>
-              <tr style={{ borderBottom: '1px solid #e2e8f0' }}>
-                {['Name', 'Email', 'Phone', 'Source', 'Date', 'Actions'].map(h => (
-                  <th key={h} style={{ padding: '12px 16px', textAlign: 'left', fontSize: '12px', fontWeight: '600', color: '#64748b', textTransform: 'uppercase' }}>{h}</th>
-                ))}
-              </tr>
             </thead>
             <tbody>
               {filtered.map(c => (

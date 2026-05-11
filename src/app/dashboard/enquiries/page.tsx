@@ -21,8 +21,9 @@ export default function EnquiriesPage() {
   const [enquiries, setEnquiries] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [statusFilter, setStatusFilter] = useState('all');
-  const [sourceFilter, setSourceFilter] = useState('all');
   const [priorityFilter, setPriorityFilter] = useState('all');
+  const [packageFilter, setPackageFilter] = useState('all');
+  const [searchQuery, setSearchQuery] = useState('');
   const [packages, setPackages] = useState<any[]>([]);
   const [editingNoteId, setEditingNoteId] = useState<string | null>(null);
   const [tempNote, setTempNote] = useState('');
@@ -47,7 +48,12 @@ export default function EnquiriesPage() {
   };
 
   const updatePackage = async (id: string, packageId: string) => {
-    await fetch(`/api/enquiries/${id}`, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ package: packageId || null }) });
+    await fetch(`/api/enquiries/${id}`, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ package: packageId || null, packageGroup: null }) });
+    fetchEnquiries();
+  };
+
+  const updatePackageGroup = async (id: string, groupId: string) => {
+    await fetch(`/api/enquiries/${id}`, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ packageGroup: groupId || null }) });
     fetchEnquiries();
   };
 
@@ -73,6 +79,14 @@ export default function EnquiriesPage() {
     if (statusFilter !== 'all' && e.status !== statusFilter) return false;
     if (sourceFilter !== 'all' && e.source !== sourceFilter) return false;
     if (priorityFilter !== 'all' && e.priority !== priorityFilter) return false;
+    if (packageFilter !== 'all' && e.package !== packageFilter) return false;
+    if (searchQuery) {
+      const q = searchQuery.toLowerCase();
+      const n = (e.customer?.name || '').toLowerCase();
+      const p = (e.customer?.phone || '').toLowerCase();
+      const em = (e.customer?.email || '').toLowerCase();
+      if (!n.includes(q) && !p.includes(q) && !em.includes(q)) return false;
+    }
     return true;
   });
 
@@ -84,13 +98,23 @@ export default function EnquiriesPage() {
         <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
           <div>
             <h1 style={{ fontSize: '24px', fontWeight: '700', color: '#0f172a', margin: 0 }}>Enquiries</h1>
-            <p style={{ color: '#64748b', margin: '4px 0 0', fontSize: '14px' }}>{enquiries.length} total enquiries</p>
+            <p style={{ color: '#64748b', margin: '4px 0 0', fontSize: '14px' }}>Manage and track customer enquiries</p>
           </div>
           <button onClick={fetchEnquiries} style={{ padding: '8px 16px', background: '#f1f5f9', color: '#475569', border: '1px solid #cbd5e1', borderRadius: '6px', cursor: 'pointer', fontSize: '13px', fontWeight: '600' }}>↻ Refresh</button>
         </div>
+        <a href="/contact" target="_blank" style={{ padding: '10px 20px', background: '#f97316', color: '#fff', border: 'none', borderRadius: '8px', fontWeight: '600', cursor: 'pointer', fontSize: '14px', textDecoration: 'none' }}>
+          + Add Enquiry
+        </a>
       </div>
 
-      <div style={{ display: 'flex', gap: '12px', marginBottom: '16px', flexWrap: 'wrap' }}>
+      <div style={{ display: 'flex', gap: '12px', marginBottom: '16px', flexWrap: 'wrap', alignItems: 'center' }}>
+        <input 
+          type="text" 
+          placeholder="Search name, phone, email..." 
+          value={searchQuery}
+          onChange={(e) => setSearchQuery(e.target.value)}
+          style={{ padding: '8px 12px', border: '1px solid #e2e8f0', borderRadius: '6px', fontSize: '13px', width: '250px' }}
+        />
         <select value={statusFilter} onChange={e => setStatusFilter(e.target.value)} style={selectStyle}>
           <option value="all">All Status</option>
           <option value="new">New</option>
@@ -113,6 +137,10 @@ export default function EnquiriesPage() {
           <option value="instagram">Instagram</option>
           <option value="phone">Phone</option>
           <option value="email">Email</option>
+        </select>
+        <select value={packageFilter} onChange={e => setPackageFilter(e.target.value)} style={selectStyle}>
+          <option value="all">All Packages</option>
+          {packages.map(p => <option key={p._id} value={p._id}>{p.name}</option>)}
         </select>
       </div>
 
@@ -176,16 +204,29 @@ export default function EnquiriesPage() {
                       </details>
                     </td>
                     <td style={{ padding: '12px 16px' }}>
-                      <select
-                        value={e.package || ''}
-                        onChange={(ev) => updatePackage(e._id, ev.target.value)}
-                        style={{ padding: '4px 8px', borderRadius: '6px', fontSize: '12px', border: '1px solid #cbd5e1', background: '#fff', cursor: 'pointer', maxWidth: '120px' }}
-                      >
-                        <option value="">No Package</option>
-                        {packages.map(p => (
-                          <option key={p._id} value={p._id}>{p.name}</option>
-                        ))}
-                      </select>
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                        <select
+                          value={e.package || ''}
+                          onChange={(ev) => updatePackage(e._id, ev.target.value)}
+                          style={{ padding: '4px 8px', fontSize: '12px', border: '1px solid #cbd5e1', borderRadius: '4px', background: '#fff', color: e.package ? '#0f172a' : '#94a3b8' }}
+                        >
+                          <option value="">No Package</option>
+                          {packages.map(p => <option key={p._id} value={p._id}>{p.name}</option>)}
+                        </select>
+                        
+                        {e.package && packages.find(p => p._id === e.package)?.groups?.length > 0 && (
+                          <select
+                            value={e.packageGroup || ''}
+                            onChange={(ev) => updatePackageGroup(e._id, ev.target.value)}
+                            style={{ padding: '4px 8px', fontSize: '12px', border: '1px solid #cbd5e1', borderRadius: '4px', background: '#fff', color: e.packageGroup ? '#0f172a' : '#94a3b8' }}
+                          >
+                            <option value="">No Group Selected</option>
+                            {packages.find(p => p._id === e.package)?.groups.map((g: any) => (
+                              <option key={g._id} value={g._id}>{g.name} ({g.date})</option>
+                            ))}
+                          </select>
+                        )}
+                      </div>
                     </td>
                     <td style={{ padding: '12px 16px' }}>
                       <span style={{ padding: '3px 10px', borderRadius: '10px', fontSize: '11px', fontWeight: '600', background: '#f1f5f9', color: '#475569', textTransform: 'capitalize' }}>{e.source}</span>

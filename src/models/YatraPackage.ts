@@ -10,6 +10,7 @@ const YatraPackageSchema = new Schema({
   inclusions: [{ type: String }],
   exclusions: [{ type: String }],
   startDates: [{ type: Date }],
+  groups: [{ name: String, date: String }],
   isActive: { type: Boolean, default: true },
   createdAt: { type: Date, default: Date.now },
   updatedAt: { type: Date, default: Date.now },

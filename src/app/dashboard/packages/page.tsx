@@ -7,6 +7,7 @@ export default function PackagesPage() {
   const [loading, setLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
   const [editId, setEditId] = useState<string | null>(null);
+  const [searchQuery, setSearchQuery] = useState('');
   const [form, setForm] = useState({
     name: '', destinations: '', duration: '', price: '', maxGroupSize: '50', description: '', inclusions: '', exclusions: '', isActive: true,
   });
@@ -59,6 +60,24 @@ export default function PackagesPage() {
     fetchPackages();
   };
 
+  const addGroup = async (pkg: any) => {
+    const groupName = prompt('Enter group name (e.g., 15 Aug Batch):');
+    if (!groupName) return;
+    const groupDate = prompt('Enter start date (e.g., 15-08-2026):');
+    if (!groupDate) return;
+    const newGroups = [...(pkg.groups || []), { name: groupName, date: groupDate }];
+    await fetch(`/api/packages/${pkg._id}`, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ groups: newGroups }) });
+    fetchPackages();
+  };
+
+  const filtered = packages.filter(p => {
+    if (searchQuery) {
+      const q = searchQuery.toLowerCase();
+      return p.name.toLowerCase().includes(q) || (p.destinations?.join(' ') || '').toLowerCase().includes(q);
+    }
+    return true;
+  });
+
   const inputStyle = { padding: '10px 14px', border: '1px solid #e2e8f0', borderRadius: '8px', fontSize: '14px', width: '100%', boxSizing: 'border-box' as const };
 
   return (
@@ -74,6 +93,16 @@ export default function PackagesPage() {
         <button onClick={() => { resetForm(); setShowForm(true); }} style={{ padding: '10px 20px', background: '#f97316', color: '#fff', border: 'none', borderRadius: '8px', fontWeight: '600', cursor: 'pointer', fontSize: '14px' }}>
           + Add Package
         </button>
+      </div>
+
+      <div style={{ marginBottom: '16px' }}>
+        <input 
+          type="text" 
+          placeholder="Search packages by name or destination..." 
+          value={searchQuery}
+          onChange={(e) => setSearchQuery(e.target.value)}
+          style={{ padding: '8px 12px', border: '1px solid #e2e8f0', borderRadius: '6px', fontSize: '13px', width: '300px' }}
+        />
       </div>
 
       {showForm && (
@@ -98,8 +127,8 @@ export default function PackagesPage() {
 
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(340px, 1fr))', gap: '16px' }}>
         {loading ? <div style={{ padding: '40px', textAlign: 'center', color: '#94a3b8', gridColumn: '1 / -1' }}>Loading...</div> :
-        packages.length === 0 ? <div style={{ padding: '40px', textAlign: 'center', color: '#94a3b8', gridColumn: '1 / -1' }}>No packages yet. Add your first yatra package!</div> :
-        packages.map(pkg => (
+        filtered.length === 0 ? <div style={{ padding: '40px', textAlign: 'center', color: '#94a3b8', gridColumn: '1 / -1' }}>No packages found.</div> :
+        filtered.map(pkg => (
           <div key={pkg._id} style={{ background: '#fff', borderRadius: '12px', boxShadow: '0 1px 3px rgba(0,0,0,0.08)', overflow: 'hidden' }}>
             <div style={{ padding: '20px' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '12px' }}>
@@ -122,9 +151,25 @@ export default function PackagesPage() {
                 </div>
               )}
               {pkg.description && <p style={{ margin: '0 0 12px', fontSize: '13px', color: '#64748b', lineHeight: '1.5' }}>{pkg.description.substring(0, 100)}{pkg.description.length > 100 ? '...' : ''}</p>}
-              <div style={{ display: 'flex', gap: '8px' }}>
+              <div style={{ display: 'flex', gap: '8px', marginBottom: '16px' }}>
                 <button onClick={() => editPackage(pkg)} style={{ padding: '6px 14px', background: '#f1f5f9', border: 'none', borderRadius: '6px', fontSize: '13px', cursor: 'pointer', fontWeight: '500' }}>Edit</button>
                 <button onClick={() => handleDelete(pkg._id)} style={{ padding: '6px 14px', background: '#fef2f2', color: '#dc2626', border: 'none', borderRadius: '6px', fontSize: '13px', cursor: 'pointer' }}>Delete</button>
+              </div>
+
+              <div style={{ borderTop: '1px solid #f1f5f9', paddingTop: '12px' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
+                  <span style={{ fontSize: '13px', fontWeight: '600', color: '#0f172a' }}>Groups / Batches</span>
+                  <button onClick={() => addGroup(pkg)} style={{ padding: '4px 8px', fontSize: '11px', background: '#f97316', color: '#fff', border: 'none', borderRadius: '4px', cursor: 'pointer' }}>+ Add Group</button>
+                </div>
+                {pkg.groups?.length > 0 ? (
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                    {pkg.groups.map((g: any, i: number) => (
+                      <div key={i} style={{ fontSize: '12px', color: '#475569', background: '#f8fafc', padding: '4px 8px', borderRadius: '4px' }}>
+                        <strong style={{ color: '#0f172a' }}>{g.name}</strong> - {g.date}
+                      </div>
+                    ))}
+                  </div>
+                ) : <div style={{ fontSize: '12px', color: '#94a3b8' }}>No groups created yet</div>}
               </div>
             </div>
           </div>
