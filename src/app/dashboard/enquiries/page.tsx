@@ -49,11 +49,16 @@ export default function EnquiriesPage() {
     fetchEnquiries();
   };
 
-  const addNote = async (id: string, currentMessage: string) => {
-    const note = prompt('Enter custom note:');
-    if (!note) return;
-    const newMessage = currentMessage + '\n\n--- Note ---\n' + note;
-    await fetch(`/api/enquiries/${id}`, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ message: newMessage }) });
+  const editNote = async (id: string, currentNote: string) => {
+    const note = prompt('Edit note:', currentNote || '');
+    if (note === null) return;
+    await fetch(`/api/enquiries/${id}`, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ adminNote: note }) });
+    fetchEnquiries();
+  };
+
+  const deleteNote = async (id: string) => {
+    if (!confirm('Delete this note?')) return;
+    await fetch(`/api/enquiries/${id}`, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ adminNote: '' }) });
     fetchEnquiries();
   };
 
@@ -136,11 +141,21 @@ export default function EnquiriesPage() {
                         <summary style={{ outline: 'none', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', fontWeight: '500' }}>
                           {e.message.split('\n')[0] || 'View message'}
                         </summary>
-                        <div style={{ padding: '8px', background: '#fff', border: '1px solid #cbd5e1', borderRadius: '6px', marginTop: '6px', fontSize: '12px', maxHeight: '200px', overflowY: 'auto' }}>
-                          <div style={{ whiteSpace: 'pre-wrap', marginBottom: '10px', color: '#334155' }}>{e.message}</div>
-                          <button onClick={() => addNote(e._id, e.message)} style={{ padding: '6px 10px', fontSize: '12px', background: '#f8fafc', color: '#0f172a', border: '1px solid #cbd5e1', borderRadius: '4px', cursor: 'pointer', display: 'inline-flex', alignItems: 'center', gap: '6px', fontWeight: '500' }}>
-                            📝 Add Note
-                          </button>
+                        <div style={{ position: 'relative', padding: '12px', background: '#fff', border: '1px solid #cbd5e1', borderRadius: '6px', marginTop: '6px', fontSize: '12px', maxHeight: '250px', overflowY: 'auto' }}>
+                          
+                          <div style={{ position: 'absolute', top: '8px', right: '8px', display: 'flex', gap: '4px' }}>
+                            <button onClick={(ev) => { ev.preventDefault(); editNote(e._id, e.adminNote); }} style={{ background: 'transparent', border: 'none', cursor: 'pointer', fontSize: '14px' }} title={e.adminNote ? "Edit Note" : "Add Note"}>📝</button>
+                            {e.adminNote && <button onClick={(ev) => { ev.preventDefault(); deleteNote(e._id); }} style={{ background: 'transparent', border: 'none', cursor: 'pointer', fontSize: '14px' }} title="Delete Note">🗑️</button>}
+                          </div>
+
+                          <div style={{ whiteSpace: 'pre-wrap', marginBottom: '8px', color: '#334155', paddingRight: '45px' }}>{e.message}</div>
+                          
+                          {e.adminNote && (
+                            <div style={{ marginTop: '10px', paddingTop: '10px', borderTop: '1px dashed #cbd5e1', color: '#0f172a', fontWeight: '500', whiteSpace: 'pre-wrap' }}>
+                              <span style={{ fontSize: '10px', textTransform: 'uppercase', color: '#64748b', display: 'block', marginBottom: '4px', fontWeight: '600' }}>Note</span>
+                              {e.adminNote}
+                            </div>
+                          )}
                         </div>
                       </details>
                     </td>

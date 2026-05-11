@@ -68,15 +68,18 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
         }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
             <div style={{
-              width: '40px', height: '40px',
-              background: 'linear-gradient(135deg, #3b82f6, #8b5cf6)',
-              borderRadius: '10px',
+              width: '44px', height: '44px',
+              borderRadius: '8px',
+              overflow: 'hidden',
+              background: '#fff',
               display: 'flex', alignItems: 'center', justifyContent: 'center',
-              fontSize: '20px', color: '#fff', fontWeight: 'bold',
-            }}>M</div>
+              padding: '2px'
+            }}>
+              <img src="/logo.png" alt="MSTY Logo" style={{ width: '100%', height: '100%', objectFit: 'contain' }} />
+            </div>
             <div>
-              <div style={{ fontWeight: '700', fontSize: '16px', color: '#f8fafc' }}>MSTY CRM</div>
-              <div style={{ fontSize: '11px', color: '#64748b' }}>Tirth Yatra Management</div>
+              <div style={{ fontWeight: '700', fontSize: '15px', color: '#f8fafc', lineHeight: '1.2' }}>Mahesh Sharma</div>
+              <div style={{ fontSize: '11px', color: '#94a3b8', letterSpacing: '0.5px' }}>Tirth Yatra</div>
             </div>
           </div>
         </div>

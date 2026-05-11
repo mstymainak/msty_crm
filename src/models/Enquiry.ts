@@ -8,6 +8,7 @@ const EnquirySchema = new Schema({
   priority: { type: String, enum: ['low', 'medium', 'high'], default: 'medium' },
   assignedTo: { type: Schema.Types.ObjectId, ref: 'User' },
   package: { type: Schema.Types.ObjectId, ref: 'Package' },
+  adminNote: { type: String, default: '' },
   notes: [{ type: String }],
   createdAt: { type: Date, default: Date.now },
   updatedAt: { type: Date, default: Date.now },
