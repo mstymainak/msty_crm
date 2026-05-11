@@ -12,7 +12,7 @@ const cardStyle = (color: string) => ({
 });
 
 const statusColors: Record<string, string> = {
-  new: '#3b82f6',
+  new: '#f97316',
   contacted: '#f59e0b',
   qualified: '#8b5cf6',
   booked: '#10b981',
@@ -54,10 +54,10 @@ export default function DashboardPage() {
 
       {/* Stats Grid */}
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '16px', marginBottom: '32px' }}>
-        <div style={cardStyle('#3b82f6')}>
+        <div style={cardStyle('#f97316')}>
           <div style={{ fontSize: '13px', color: '#64748b', fontWeight: '500' }}>Total Enquiries</div>
           <div style={{ fontSize: '32px', fontWeight: '700', color: '#0f172a' }}>{s.totalEnquiries}</div>
-          <div style={{ fontSize: '12px', color: '#3b82f6', marginTop: '4px' }}>{s.newEnquiries} new</div>
+          <div style={{ fontSize: '12px', color: '#f97316', marginTop: '4px' }}>{s.newEnquiries} new</div>
         </div>
         <div style={cardStyle('#10b981')}>
           <div style={{ fontSize: '13px', color: '#64748b', fontWeight: '500' }}>Total Customers</div>
@@ -84,7 +84,7 @@ export default function DashboardPage() {
         <div style={{ background: '#fff', borderRadius: '12px', boxShadow: '0 1px 3px rgba(0,0,0,0.08)', overflow: 'hidden' }}>
           <div style={{ padding: '16px 20px', borderBottom: '1px solid #f1f5f9', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
             <h3 style={{ margin: 0, fontSize: '15px', fontWeight: '600', color: '#0f172a' }}>Recent Enquiries</h3>
-            <Link href="/dashboard/enquiries" style={{ fontSize: '13px', color: '#3b82f6', textDecoration: 'none' }}>View all →</Link>
+            <Link href="/dashboard/enquiries" style={{ fontSize: '13px', color: '#f97316', textDecoration: 'none' }}>View all →</Link>
           </div>
           {stats.recentEnquiries?.length > 0 ? stats.recentEnquiries.map((e: any) => (
             <div key={e._id} style={{ padding: '12px 20px', borderBottom: '1px solid #f8fafc', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
@@ -109,7 +109,7 @@ export default function DashboardPage() {
           <div style={{ padding: '20px' }}>
             {stats.enquiriesBySource?.length > 0 ? stats.enquiriesBySource.map((s: any) => {
               const sourceColors: Record<string, string> = {
-                website: '#3b82f6', whatsapp: '#22c55e', facebook: '#1d4ed8', phone: '#f59e0b', email: '#8b5cf6', other: '#64748b',
+                website: '#f97316', whatsapp: '#22c55e', facebook: '#1d4ed8', phone: '#f59e0b', email: '#8b5cf6', other: '#64748b',
               };
               return (
                 <div key={s._id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '8px 0', borderBottom: '1px solid #f8fafc' }}>

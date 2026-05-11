@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react';
 import Link from 'next/link';
 
 const statusColors: Record<string, { bg: string; text: string }> = {
-  new: { bg: '#dbeafe', text: '#1e40af' },
+  new: { bg: '#ffedd5', text: '#c2410c' },
   contacted: { bg: '#fef3c7', text: '#92400e' },
   qualified: { bg: '#ede9fe', text: '#5b21b6' },
   booked: { bg: '#dcfce7', text: '#166534' },
@@ -163,7 +163,7 @@ export default function EnquiriesPage() {
                               />
                               <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '8px', marginTop: '8px' }}>
                                 <button onClick={(ev) => { ev.preventDefault(); setEditingNoteId(null); }} style={{ padding: '6px 12px', fontSize: '11px', background: '#f1f5f9', color: '#475569', border: 'none', borderRadius: '4px', cursor: 'pointer', fontWeight: '500' }}>Cancel</button>
-                                <button onClick={(ev) => { ev.preventDefault(); saveNote(e._id, tempNote); }} style={{ padding: '6px 12px', fontSize: '11px', background: '#3b82f6', color: '#fff', border: 'none', borderRadius: '4px', cursor: 'pointer', fontWeight: '500' }}>Save</button>
+                                <button onClick={(ev) => { ev.preventDefault(); saveNote(e._id, tempNote); }} style={{ padding: '6px 12px', fontSize: '11px', background: '#f97316', color: '#fff', border: 'none', borderRadius: '4px', cursor: 'pointer', fontWeight: '500' }}>Save</button>
                               </div>
                             </div>
                           ) : e.adminNote ? (

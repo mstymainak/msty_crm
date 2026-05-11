@@ -100,7 +100,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                 fontSize: '14px',
                 fontWeight: isActive(item.href) ? '600' : '400',
                 color: isActive(item.href) ? '#fff' : '#94a3b8',
-                background: isActive(item.href) ? '#1e40af' : 'transparent',
+                background: isActive(item.href) ? '#ea580c' : 'transparent',
                 textDecoration: 'none',
                 marginBottom: '4px',
                 transition: 'all 0.2s',

@@ -71,7 +71,7 @@ export default function PackagesPage() {
           </div>
           <button onClick={fetchPackages} style={{ padding: '8px 16px', background: '#f1f5f9', color: '#475569', border: '1px solid #cbd5e1', borderRadius: '6px', cursor: 'pointer', fontSize: '13px', fontWeight: '600' }}>↻ Refresh</button>
         </div>
-        <button onClick={() => { resetForm(); setShowForm(true); }} style={{ padding: '10px 20px', background: '#3b82f6', color: '#fff', border: 'none', borderRadius: '8px', fontWeight: '600', cursor: 'pointer', fontSize: '14px' }}>
+        <button onClick={() => { resetForm(); setShowForm(true); }} style={{ padding: '10px 20px', background: '#f97316', color: '#fff', border: 'none', borderRadius: '8px', fontWeight: '600', cursor: 'pointer', fontSize: '14px' }}>
           + Add Package
         </button>
       </div>
@@ -90,7 +90,7 @@ export default function PackagesPage() {
             <input placeholder="Exclusions (comma separated)" value={form.exclusions} onChange={e => setForm({ ...form, exclusions: e.target.value })} style={inputStyle} />
             <div style={{ gridColumn: '1 / -1', display: 'flex', gap: '8px', justifyContent: 'flex-end' }}>
               <button type="button" onClick={resetForm} style={{ padding: '8px 16px', background: '#f1f5f9', border: 'none', borderRadius: '6px', cursor: 'pointer' }}>Cancel</button>
-              <button type="submit" style={{ padding: '8px 16px', background: '#3b82f6', color: '#fff', border: 'none', borderRadius: '6px', fontWeight: '600', cursor: 'pointer' }}>{editId ? 'Update' : 'Save'}</button>
+              <button type="submit" style={{ padding: '8px 16px', background: '#f97316', color: '#fff', border: 'none', borderRadius: '6px', fontWeight: '600', cursor: 'pointer' }}>{editId ? 'Update' : 'Save'}</button>
             </div>
           </form>
         </div>
