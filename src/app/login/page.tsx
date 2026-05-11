@@ -164,9 +164,7 @@ export default function LoginPage() {
           </button>
         </form>
 
-        <p style={{ textAlign: 'center', fontSize: '12px', color: '#94a3b8', marginTop: '24px' }}>
-          Default: admin@mstycrm.com / admin123
-        </p>
+
       </div>
     </div>
   );

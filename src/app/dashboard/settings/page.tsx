@@ -8,12 +8,29 @@ export default function SettingsPage() {
   const [showForm, setShowForm] = useState(false);
   const [form, setForm] = useState({ name: '', email: '', password: '', role: 'agent', phone: '' });
   const [msg, setMsg] = useState('');
+  const [currentUserRole, setCurrentUserRole] = useState('agent');
 
   const fetchUsers = () => {
     fetch('/api/users').then(r => r.json()).then(d => { setUsers(Array.isArray(d) ? d : []); setLoading(false); }).catch(() => setLoading(false));
   };
 
-  useEffect(() => { fetchUsers(); }, []);
+  useEffect(() => { 
+    fetchUsers(); 
+    fetch('/api/auth/me').then(r => r.json()).then(d => { if(d?.user) setCurrentUserRole(d.user.role); });
+  }, []);
+
+  const handleDelete = async (id: string) => {
+    if (!confirm('Are you sure you want to delete this staff member?')) return;
+    await fetch(`/api/users/${id}`, { method: 'DELETE' });
+    fetchUsers();
+  };
+
+  const handleChangePassword = async (id: string) => {
+    const newPass = prompt('Enter new password for this user:');
+    if (!newPass) return;
+    await fetch(`/api/users/${id}`, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ password: newPass }) });
+    alert('Password updated successfully');
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -41,9 +58,11 @@ export default function SettingsPage() {
           </div>
           <button onClick={fetchUsers} style={{ padding: '8px 16px', background: '#f1f5f9', color: '#475569', border: '1px solid #cbd5e1', borderRadius: '6px', cursor: 'pointer', fontSize: '13px', fontWeight: '600' }}>↻ Refresh</button>
         </div>
-        <button onClick={() => setShowForm(true)} style={{ padding: '10px 20px', background: '#f97316', color: '#fff', border: 'none', borderRadius: '8px', fontWeight: '600', cursor: 'pointer', fontSize: '14px' }}>
-          + Add Staff
-        </button>
+        {currentUserRole === 'admin' && (
+          <button onClick={() => setShowForm(true)} style={{ padding: '10px 20px', background: '#f97316', color: '#fff', border: 'none', borderRadius: '8px', fontWeight: '600', cursor: 'pointer', fontSize: '14px' }}>
+            + Add Staff
+          </button>
+        )}
       </div>
 
       {showForm && (
@@ -72,8 +91,8 @@ export default function SettingsPage() {
           <table style={{ width: '100%', borderCollapse: 'collapse' }}>
             <thead>
               <tr style={{ borderBottom: '1px solid #e2e8f0' }}>
-                {['Name', 'Email', 'Role', 'Status', 'Joined'].map(h => (
-                  <th key={h} style={{ padding: '12px 16px', textAlign: 'left', fontSize: '12px', fontWeight: '600', color: '#64748b', textTransform: 'uppercase' }}>{h}</th>
+                {['Name', 'Email', 'Role', 'Status', 'Joined', currentUserRole === 'admin' ? 'Actions' : null].filter(Boolean).map(h => (
+                  <th key={h as string} style={{ padding: '12px 16px', textAlign: 'left', fontSize: '12px', fontWeight: '600', color: '#64748b', textTransform: 'uppercase' }}>{h as string}</th>
                 ))}
               </tr>
             </thead>
@@ -92,6 +111,12 @@ export default function SettingsPage() {
                     <div>{new Date(u.createdAt).toLocaleDateString()}</div>
                     <div style={{ fontSize: '11px', marginTop: '2px' }}>{new Date(u.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</div>
                   </td>
+                  {currentUserRole === 'admin' && (
+                    <td style={{ padding: '12px 16px', display: 'flex', gap: '8px' }}>
+                      <button onClick={() => handleChangePassword(u._id)} style={{ padding: '4px 10px', background: '#f1f5f9', border: 'none', borderRadius: '4px', fontSize: '12px', cursor: 'pointer', fontWeight: '500' }}>Change Pass</button>
+                      <button onClick={() => handleDelete(u._id)} style={{ padding: '4px 10px', background: '#fef2f2', color: '#dc2626', border: 'none', borderRadius: '4px', fontSize: '12px', cursor: 'pointer' }}>Delete</button>
+                    </td>
+                  )}
                 </tr>
               ))}
             </tbody>

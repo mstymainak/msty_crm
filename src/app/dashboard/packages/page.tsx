@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 
 export default function PackagesPage() {
   const [packages, setPackages] = useState<any[]>([]);
+  const [enquiries, setEnquiries] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
   const [editId, setEditId] = useState<string | null>(null);
@@ -15,8 +16,11 @@ export default function PackagesPage() {
   const fetchPackages = () => {
     fetch('/api/packages').then(r => r.json()).then(d => { setPackages(Array.isArray(d) ? d : []); setLoading(false); }).catch(() => setLoading(false));
   };
+  const fetchEnquiries = () => {
+    fetch('/api/enquiries').then(r => r.json()).then(d => setEnquiries(Array.isArray(d) ? d : []));
+  };
 
-  useEffect(() => { fetchPackages(); }, []);
+  useEffect(() => { fetchPackages(); fetchEnquiries(); }, []);
 
   const resetForm = () => {
     setForm({ name: '', destinations: '', duration: '', price: '', maxGroupSize: '50', description: '', inclusions: '', exclusions: '', isActive: true });
@@ -66,6 +70,13 @@ export default function PackagesPage() {
     const groupDate = prompt('Enter start date (e.g., 15-08-2026):');
     if (!groupDate) return;
     const newGroups = [...(pkg.groups || []), { name: groupName, date: groupDate }];
+    await fetch(`/api/packages/${pkg._id}`, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ groups: newGroups }) });
+    fetchPackages();
+  };
+
+  const deleteGroup = async (pkg: any, index: number) => {
+    if (!confirm('Delete this group?')) return;
+    const newGroups = pkg.groups.filter((_: any, i: number) => i !== index);
     await fetch(`/api/packages/${pkg._id}`, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ groups: newGroups }) });
     fetchPackages();
   };
@@ -163,11 +174,18 @@ export default function PackagesPage() {
                 </div>
                 {pkg.groups?.length > 0 ? (
                   <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
-                    {pkg.groups.map((g: any, i: number) => (
-                      <div key={i} style={{ fontSize: '12px', color: '#475569', background: '#f8fafc', padding: '4px 8px', borderRadius: '4px' }}>
-                        <strong style={{ color: '#0f172a' }}>{g.name}</strong> - {g.date}
-                      </div>
-                    ))}
+                    {pkg.groups.map((g: any, i: number) => {
+                      const pax = enquiries.filter(e => e.packageGroup === g._id).length;
+                      return (
+                        <div key={i} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '12px', color: '#475569', background: '#f8fafc', padding: '4px 8px', borderRadius: '4px' }}>
+                          <div><strong style={{ color: '#0f172a' }}>{g.name}</strong> - {g.date}</div>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                            <span style={{ fontWeight: '600', color: pax >= (pkg.maxGroupSize || 50) ? '#dc2626' : '#16a34a' }}>Pax: {pax}/{pkg.maxGroupSize || 50}</span>
+                            <button onClick={() => deleteGroup(pkg, i)} style={{ background: 'none', border: 'none', color: '#dc2626', cursor: 'pointer', fontSize: '14px', padding: 0 }} title="Delete Group">×</button>
+                          </div>
+                        </div>
+                      );
+                    })}
                   </div>
                 ) : <div style={{ fontSize: '12px', color: '#94a3b8' }}>No groups created yet</div>}
               </div>
