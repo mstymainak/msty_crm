@@ -21,6 +21,7 @@ export default function EnquiriesPage() {
   const [enquiries, setEnquiries] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [statusFilter, setStatusFilter] = useState('all');
+  const [sourceFilter, setSourceFilter] = useState('all');
   const [priorityFilter, setPriorityFilter] = useState('all');
   const [packageFilter, setPackageFilter] = useState('all');
   const [searchQuery, setSearchQuery] = useState('');

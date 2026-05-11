@@ -78,9 +78,18 @@ export default function CustomersPage() {
       )}
 
       <div style={{ background: '#fff', borderRadius: '12px', boxShadow: '0 1px 3px rgba(0,0,0,0.08)', overflow: 'hidden' }}>
-            </thead>
-            <tbody>
-              {filtered.map(c => (
+        <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+          <thead>
+            <tr style={{ borderBottom: '1px solid #e2e8f0' }}>
+              {['Name', 'Email', 'Phone', 'Source', 'Date', 'Actions'].map(h => (
+                <th key={h} style={{ padding: '12px 16px', textAlign: 'left', fontSize: '12px', fontWeight: '600', color: '#64748b', textTransform: 'uppercase' }}>{h}</th>
+              ))}
+            </tr>
+          </thead>
+          <tbody>
+            {loading ? <tr><td colSpan={6} style={{ padding: '20px', textAlign: 'center', color: '#94a3b8' }}>Loading...</td></tr> :
+            filtered.length === 0 ? <tr><td colSpan={6} style={{ padding: '20px', textAlign: 'center', color: '#94a3b8' }}>No customers found.</td></tr> :
+            filtered.map(c => (
                 <tr key={c._id} style={{ borderBottom: '1px solid #f8fafc' }}>
                   <td style={{ padding: '12px 16px', fontSize: '14px', fontWeight: '500', color: '#0f172a' }}>{c.name}</td>
                   <td style={{ padding: '12px 16px', fontSize: '14px', color: '#64748b' }}>{c.email}</td>
@@ -101,7 +110,6 @@ export default function CustomersPage() {
               ))}
             </tbody>
           </table>
-        )}
       </div>
     </div>
   );
