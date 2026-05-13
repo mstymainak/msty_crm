@@ -247,7 +247,7 @@ export default function EnquiriesPage() {
       </div>
 
       {/* Multi-select Action Banner */}
-      {isMultiSelect && selectedIds.length > 0 && (
+      {isMultiSelect && (
         <div style={{
           display: 'flex',
           justifyContent: 'space-between',
@@ -258,9 +258,26 @@ export default function EnquiriesPage() {
           padding: '12px 16px',
           marginBottom: '16px'
         }}>
-          <span style={{ fontSize: '14px', fontWeight: '600', color: '#1e293b' }}>
-            {selectedIds.length} {selectedIds.length === 1 ? 'enquiry' : 'enquiries'} selected
-          </span>
+          <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
+            <span style={{ fontSize: '14px', fontWeight: '600', color: '#1e293b' }}>
+              {selectedIds.length} {selectedIds.length === 1 ? 'enquiry' : 'enquiries'} selected
+            </span>
+            <button 
+              onClick={toggleSelectAllPage}
+              style={{
+                padding: '4px 10px',
+                fontSize: '12px',
+                background: '#eff6ff',
+                color: '#2563eb',
+                border: '1px solid #bfdbfe',
+                borderRadius: '6px',
+                cursor: 'pointer',
+                fontWeight: '500'
+              }}
+            >
+              {isAllPageSelected ? 'Deselect Page' : 'Select All on Page'}
+            </button>
+          </div>
           <div style={{ display: 'flex', gap: '8px' }}>
             <button 
               onClick={() => setSelectedIds([])}
@@ -278,16 +295,16 @@ export default function EnquiriesPage() {
             </button>
             <button 
               onClick={handleBulkDelete}
-              disabled={deletingBulk}
+              disabled={deletingBulk || selectedIds.length === 0}
               style={{
                 padding: '6px 12px',
                 fontSize: '13px',
-                background: '#fecaca',
-                color: '#dc2626',
-                border: '1px solid #fca5a5',
+                background: selectedIds.length === 0 ? '#f1f5f9' : '#fecaca',
+                color: selectedIds.length === 0 ? '#94a3b8' : '#dc2626',
+                border: selectedIds.length === 0 ? '1px solid #e2e8f0' : '1px solid #fca5a5',
                 borderRadius: '6px',
                 fontWeight: '600',
-                cursor: 'pointer'
+                cursor: selectedIds.length === 0 ? 'not-allowed' : 'pointer'
               }}
             >
               {deletingBulk ? 'Deleting...' : '🗑️ Delete Selected'}
@@ -303,16 +320,6 @@ export default function EnquiriesPage() {
           <table style={{ width: '100%', borderCollapse: 'collapse' }}>
             <thead>
               <tr style={{ borderBottom: '1px solid #e2e8f0', background: '#f8fafc' }}>
-                {isMultiSelect && (
-                  <th style={{ padding: '12px 16px', width: '40px', textAlign: 'left' }}>
-                    <input 
-                      type="checkbox" 
-                      checked={isAllPageSelected} 
-                      onChange={toggleSelectAllPage}
-                      style={{ transform: 'scale(1.25)', cursor: 'pointer' }}
-                    />
-                  </th>
-                )}
                 {['Customer', 'Message', 'Package', 'Source', 'Status', 'Priority', 'Date', 'Actions'].map(h => (
                   <th key={h} style={{ padding: '12px 16px', textAlign: 'left', fontSize: '12px', fontWeight: '600', color: '#64748b', textTransform: 'uppercase' }}>{h}</th>
                 ))}
@@ -324,17 +331,22 @@ export default function EnquiriesPage() {
                 const pc = priorityColors[e.priority] || { bg: '#f1f5f9', text: '#64748b' };
                 const isSelected = selectedIds.includes(e._id);
                 return (
-                  <tr key={e._id} style={{ borderBottom: '1px solid #e2e8f0', background: isSelected ? '#eff6ff' : pc.bg }}>
-                    {isMultiSelect && (
-                      <td style={{ padding: '12px 16px' }}>
-                        <input 
-                          type="checkbox" 
-                          checked={isSelected} 
-                          onChange={() => toggleSelectEnquiry(e._id)}
-                          style={{ transform: 'scale(1.2)', cursor: 'pointer' }}
-                        />
-                      </td>
-                    )}
+                  <tr 
+                    key={e._id} 
+                    onClick={(ev) => {
+                      if (!isMultiSelect) return;
+                      const target = ev.target as HTMLElement;
+                      if (['SELECT', 'BUTTON', 'TEXTAREA', 'INPUT', 'SUMMARY', 'DETAILS'].includes(target.tagName) || target.closest('select') || target.closest('button') || target.closest('details')) return;
+                      toggleSelectEnquiry(e._id);
+                    }}
+                    style={{ 
+                      borderBottom: '1px solid #e2e8f0', 
+                      background: isSelected ? '#f0f7ff' : pc.bg,
+                      borderLeft: isSelected ? '4px solid #3b82f6' : '4px solid transparent',
+                      cursor: isMultiSelect ? 'pointer' : 'default',
+                      transition: 'all 0.15s'
+                    }}
+                  >
                     <td style={{ padding: '12px 16px' }}>
                       <div style={{ fontSize: '14px', fontWeight: '600', color: '#0f172a' }}>{e.customer?.name || 'Unknown'}</div>
                       <div style={{ fontSize: '12px', color: '#334155', fontWeight: '500' }}>{e.customer?.phone || ''}</div>
@@ -454,27 +466,24 @@ export default function EnquiriesPage() {
               const pc = priorityColors[e.priority] || { bg: '#f1f5f9', text: '#64748b' };
               const isSelected = selectedIds.includes(e._id);
               return (
-                <div key={e._id} style={{
-                  background: isSelected ? '#eff6ff' : pc.bg,
-                  borderRadius: '12px',
-                  border: isSelected ? '1.5px solid #3b82f6' : `1px solid ${pc.text}20`,
-                  padding: '12px 14px',
-                  boxShadow: '0 1px 3px rgba(0,0,0,0.05)',
-                  display: 'flex',
-                  gap: '12px',
-                  alignItems: 'flex-start'
-                }}>
-                  {isMultiSelect && (
-                    <div style={{ paddingTop: '2px' }}>
-                      <input 
-                        type="checkbox" 
-                        checked={isSelected} 
-                        onChange={() => toggleSelectEnquiry(e._id)}
-                        style={{ transform: 'scale(1.2)', cursor: 'pointer' }}
-                      />
-                    </div>
-                  )}
-                  
+                <div 
+                  key={e._id} 
+                  onClick={(ev) => {
+                    if (!isMultiSelect) return;
+                    const target = ev.target as HTMLElement;
+                    if (['SELECT', 'BUTTON', 'TEXTAREA', 'INPUT', 'SUMMARY', 'DETAILS'].includes(target.tagName) || target.closest('select') || target.closest('button') || target.closest('details')) return;
+                    toggleSelectEnquiry(e._id);
+                  }}
+                  style={{
+                    background: isSelected ? '#f0f7ff' : pc.bg,
+                    borderRadius: '12px',
+                    border: isSelected ? '2px solid #3b82f6' : `1px solid ${pc.text}20`,
+                    padding: '12px 14px',
+                    boxShadow: '0 1px 3px rgba(0,0,0,0.05)',
+                    cursor: isMultiSelect ? 'pointer' : 'default',
+                    transition: 'all 0.15s'
+                  }}
+                >
                   <div style={{ flex: 1 }}>
                     {/* First Row: Name, Package Select, Source */}
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>

@@ -48,7 +48,6 @@ export default function CustomersPage() {
   const handleDelete = async (id: string) => {
     if (!confirm('Delete this customer?')) return;
     await fetch(`/api/customers/${id}`, { method: 'DELETE' });
-    // Reset selection if deleted item was selected
     setSelectedIds(prev => prev.filter(item => item !== id));
     fetchCustomers();
   };
@@ -186,7 +185,7 @@ export default function CustomersPage() {
       )}
 
       {/* Multi-select Action Banner */}
-      {isMultiSelect && selectedIds.length > 0 && (
+      {isMultiSelect && (
         <div style={{
           display: 'flex',
           justifyContent: 'space-between',
@@ -197,9 +196,26 @@ export default function CustomersPage() {
           padding: '12px 16px',
           marginBottom: '16px'
         }}>
-          <span style={{ fontSize: '14px', fontWeight: '600', color: '#1e293b' }}>
-            {selectedIds.length} {selectedIds.length === 1 ? 'customer' : 'customers'} selected
-          </span>
+          <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
+            <span style={{ fontSize: '14px', fontWeight: '600', color: '#1e293b' }}>
+              {selectedIds.length} {selectedIds.length === 1 ? 'customer' : 'customers'} selected
+            </span>
+            <button 
+              onClick={toggleSelectAllPage}
+              style={{
+                padding: '4px 10px',
+                fontSize: '12px',
+                background: '#eff6ff',
+                color: '#2563eb',
+                border: '1px solid #bfdbfe',
+                borderRadius: '6px',
+                cursor: 'pointer',
+                fontWeight: '500'
+              }}
+            >
+              {isAllPageSelected ? 'Deselect Page' : 'Select All on Page'}
+            </button>
+          </div>
           <div style={{ display: 'flex', gap: '8px' }}>
             <button 
               onClick={() => setSelectedIds([])}
@@ -217,16 +233,16 @@ export default function CustomersPage() {
             </button>
             <button 
               onClick={handleBulkDelete}
-              disabled={deletingBulk}
+              disabled={deletingBulk || selectedIds.length === 0}
               style={{
                 padding: '6px 12px',
                 fontSize: '13px',
-                background: '#fecaca',
-                color: '#dc2626',
-                border: '1px solid #fca5a5',
+                background: selectedIds.length === 0 ? '#f1f5f9' : '#fecaca',
+                color: selectedIds.length === 0 ? '#94a3b8' : '#dc2626',
+                border: selectedIds.length === 0 ? '1px solid #e2e8f0' : '1px solid #fca5a5',
                 borderRadius: '6px',
                 fontWeight: '600',
-                cursor: 'pointer'
+                cursor: selectedIds.length === 0 ? 'not-allowed' : 'pointer'
               }}
             >
               {deletingBulk ? 'Deleting...' : '🗑️ Delete Selected'}
@@ -240,53 +256,51 @@ export default function CustomersPage() {
         <table style={{ width: '100%', borderCollapse: 'collapse' }}>
           <thead>
             <tr style={{ borderBottom: '1px solid #e2e8f0', background: '#f8fafc' }}>
-              {isMultiSelect && (
-                <th style={{ padding: '12px 16px', width: '40px', textAlign: 'left' }}>
-                  <input 
-                    type="checkbox" 
-                    checked={isAllPageSelected} 
-                    onChange={toggleSelectAllPage}
-                    style={{ transform: 'scale(1.25)', cursor: 'pointer' }}
-                  />
-                </th>
-              )}
               {['Name', 'Email', 'Phone', 'Source', 'Date', 'Actions'].map(h => (
                 <th key={h} style={{ padding: '12px 16px', textAlign: 'left', fontSize: '12px', fontWeight: '600', color: '#64748b', textTransform: 'uppercase' }}>{h}</th>
               ))}
             </tr>
           </thead>
           <tbody>
-            {loading ? <tr><td colSpan={isMultiSelect ? 7 : 6} style={{ padding: '40px', textAlign: 'center', color: '#94a3b8' }}>Loading...</td></tr> :
-            paginatedCustomers.length === 0 ? <tr><td colSpan={isMultiSelect ? 7 : 6} style={{ padding: '40px', textAlign: 'center', color: '#94a3b8' }}>No customers found.</td></tr> :
-            paginatedCustomers.map(c => (
-              <tr key={c._id} style={{ borderBottom: '1px solid #f8fafc', background: selectedIds.includes(c._id) ? '#eff6ff' : 'transparent' }}>
-                {isMultiSelect && (
+            {loading ? <tr><td colSpan={6} style={{ padding: '40px', textAlign: 'center', color: '#94a3b8' }}>Loading...</td></tr> :
+            paginatedCustomers.length === 0 ? <tr><td colSpan={6} style={{ padding: '40px', textAlign: 'center', color: '#94a3b8' }}>No customers found.</td></tr> :
+            paginatedCustomers.map(c => {
+              const isSelected = selectedIds.includes(c._id);
+              return (
+                <tr 
+                  key={c._id} 
+                  onClick={(ev) => {
+                    if (!isMultiSelect) return;
+                    const target = ev.target as HTMLElement;
+                    if (target.tagName === 'BUTTON' || target.closest('button')) return;
+                    toggleSelectCustomer(c._id);
+                  }}
+                  style={{ 
+                    borderBottom: '1px solid #f8fafc', 
+                    background: isSelected ? '#f0f7ff' : 'transparent',
+                    borderLeft: isSelected ? '4px solid #3b82f6' : '4px solid transparent',
+                    cursor: isMultiSelect ? 'pointer' : 'default',
+                    transition: 'all 0.15s'
+                  }}
+                >
+                  <td style={{ padding: '12px 16px', fontSize: '14px', fontWeight: '500', color: '#0f172a' }}>{c.name}</td>
+                  <td style={{ padding: '12px 16px', fontSize: '14px', color: '#64748b' }}>{c.email}</td>
+                  <td style={{ padding: '12px 16px', fontSize: '14px', color: '#64748b' }}>{c.phone}</td>
                   <td style={{ padding: '12px 16px' }}>
-                    <input 
-                      type="checkbox" 
-                      checked={selectedIds.includes(c._id)} 
-                      onChange={() => toggleSelectCustomer(c._id)}
-                      style={{ transform: 'scale(1.2)', cursor: 'pointer' }}
-                    />
+                    {c.whatsappNumber && <span style={{ padding: '2px 8px', borderRadius: '10px', fontSize: '11px', background: '#dcfce7', color: '#166534' }}>WhatsApp</span>}
+                    {c.facebookId && <span style={{ padding: '2px 8px', borderRadius: '10px', fontSize: '11px', background: '#dbeafe', color: '#1e40af' }}>Facebook</span>}
+                    {!c.whatsappNumber && !c.facebookId && <span style={{ padding: '2px 8px', borderRadius: '10px', fontSize: '11px', background: '#f1f5f9', color: '#64748b' }}>Website</span>}
                   </td>
-                )}
-                <td style={{ padding: '12px 16px', fontSize: '14px', fontWeight: '500', color: '#0f172a' }}>{c.name}</td>
-                <td style={{ padding: '12px 16px', fontSize: '14px', color: '#64748b' }}>{c.email}</td>
-                <td style={{ padding: '12px 16px', fontSize: '14px', color: '#64748b' }}>{c.phone}</td>
-                <td style={{ padding: '12px 16px' }}>
-                  {c.whatsappNumber && <span style={{ padding: '2px 8px', borderRadius: '10px', fontSize: '11px', background: '#dcfce7', color: '#166534' }}>WhatsApp</span>}
-                  {c.facebookId && <span style={{ padding: '2px 8px', borderRadius: '10px', fontSize: '11px', background: '#dbeafe', color: '#1e40af' }}>Facebook</span>}
-                  {!c.whatsappNumber && !c.facebookId && <span style={{ padding: '2px 8px', borderRadius: '10px', fontSize: '11px', background: '#f1f5f9', color: '#64748b' }}>Website</span>}
-                </td>
-                <td style={{ padding: '12px 16px', fontSize: '13px', color: '#94a3b8' }}>
-                  <div>{new Date(c.createdAt).toLocaleDateString()}</div>
-                  <div style={{ fontSize: '11px', marginTop: '2px' }}>{new Date(c.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</div>
-                </td>
-                <td style={{ padding: '12px 16px' }}>
-                  <button onClick={() => handleDelete(c._id)} style={{ padding: '4px 10px', background: '#fef2f2', color: '#dc2626', border: 'none', borderRadius: '4px', fontSize: '12px', cursor: 'pointer' }}>Delete</button>
-                </td>
-              </tr>
-            ))}
+                  <td style={{ padding: '12px 16px', fontSize: '13px', color: '#94a3b8' }}>
+                    <div>{new Date(c.createdAt).toLocaleDateString()}</div>
+                    <div style={{ fontSize: '11px', marginTop: '2px' }}>{new Date(c.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</div>
+                  </td>
+                  <td style={{ padding: '12px 16px' }}>
+                    <button onClick={() => handleDelete(c._id)} style={{ padding: '4px 10px', background: '#fef2f2', color: '#dc2626', border: 'none', borderRadius: '4px', fontSize: '12px', cursor: 'pointer' }}>Delete</button>
+                  </td>
+                </tr>
+              );
+            })}
           </tbody>
         </table>
       </div>
@@ -299,26 +313,24 @@ export default function CustomersPage() {
             {paginatedCustomers.map(c => {
               const isSelected = selectedIds.includes(c._id);
               return (
-                <div key={c._id} style={{
-                  background: isSelected ? '#eff6ff' : '#fff',
-                  borderRadius: '12px',
-                  border: isSelected ? '1px solid #3b82f6' : '1px solid #e2e8f0',
-                  padding: '12px 14px',
-                  boxShadow: '0 1px 3px rgba(0,0,0,0.05)',
-                  display: 'flex',
-                  gap: '12px',
-                  alignItems: 'flex-start'
-                }}>
-                  {isMultiSelect && (
-                    <div style={{ paddingTop: '2px' }}>
-                      <input 
-                        type="checkbox" 
-                        checked={isSelected} 
-                        onChange={() => toggleSelectCustomer(c._id)}
-                        style={{ transform: 'scale(1.2)', cursor: 'pointer' }}
-                      />
-                    </div>
-                  )}
+                <div 
+                  key={c._id} 
+                  onClick={(ev) => {
+                    if (!isMultiSelect) return;
+                    const target = ev.target as HTMLElement;
+                    if (target.tagName === 'BUTTON' || target.closest('button')) return;
+                    toggleSelectCustomer(c._id);
+                  }}
+                  style={{
+                    background: isSelected ? '#f0f7ff' : '#fff',
+                    borderRadius: '12px',
+                    border: isSelected ? '2px solid #3b82f6' : '1px solid #e2e8f0',
+                    padding: '12px 14px',
+                    boxShadow: '0 1px 3px rgba(0,0,0,0.05)',
+                    cursor: isMultiSelect ? 'pointer' : 'default',
+                    transition: 'all 0.15s'
+                  }}
+                >
                   <div style={{ flex: 1 }}>
                     {/* Header: Name and Badge */}
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px' }}>
