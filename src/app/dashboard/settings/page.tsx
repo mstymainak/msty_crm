@@ -12,12 +12,22 @@ export default function SettingsPage() {
   const [showPasswords, setShowPasswords] = useState<Record<string, boolean>>({});
 
   const fetchUsers = () => {
-    fetch('/api/users').then(r => r.json()).then(d => { setUsers(Array.isArray(d) ? d : []); setLoading(false); }).catch(() => setLoading(false));
+    fetch('/api/users')
+      .then(r => r.json())
+      .then(d => {
+        setUsers(Array.isArray(d) ? d : []);
+        setLoading(false);
+      })
+      .catch(() => setLoading(false));
   };
 
   useEffect(() => { 
     fetchUsers(); 
-    fetch('/api/auth/me').then(r => r.json()).then(d => { if(d?.user) setCurrentUserRole(d.user.role); });
+    fetch('/api/auth/me')
+      .then(r => r.json())
+      .then(d => {
+        if(d?.user) setCurrentUserRole(d.user.role);
+      });
   }, []);
 
   const handleDelete = async (id: string) => {
@@ -55,6 +65,7 @@ export default function SettingsPage() {
 
   return (
     <div>
+      {/* Header and Controls */}
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px', flexWrap: 'wrap', gap: '12px' }}>
         <div>
           <h1 style={{ fontSize: '24px', fontWeight: '700', color: '#0f172a', margin: 0 }}>Staff Management</h1>
@@ -119,11 +130,12 @@ export default function SettingsPage() {
         </div>
       )}
 
-      <div style={{ background: '#fff', borderRadius: '12px', boxShadow: '0 1px 3px rgba(0,0,0,0.08)', overflow: 'hidden' }}>
+      {/* Desktop view (Table layout stays as it is) */}
+      <div className="hidden md:block" style={{ background: '#fff', borderRadius: '12px', boxShadow: '0 1px 3px rgba(0,0,0,0.08)', overflow: 'hidden' }}>
         {loading ? <div style={{ padding: '40px', textAlign: 'center', color: '#94a3b8' }}>Loading...</div> : (
           <table style={{ width: '100%', borderCollapse: 'collapse' }}>
             <thead>
-              <tr style={{ borderBottom: '1px solid #e2e8f0' }}>
+              <tr style={{ borderBottom: '1px solid #e2e8f0', background: '#f8fafc' }}>
                 {['Name', 'Email', 'Role', 'Status', 'Joined', currentUserRole === 'admin' ? 'Password' : null, currentUserRole === 'admin' ? 'Actions' : null].filter(Boolean).map(h => (
                   <th key={h as string} style={{ padding: '12px 16px', textAlign: 'left', fontSize: '12px', fontWeight: '600', color: '#64748b', textTransform: 'uppercase' }}>{h as string}</th>
                 ))}
@@ -159,15 +171,190 @@ export default function SettingsPage() {
                     </td>
                   )}
                   {currentUserRole === 'admin' && (
-                    <td style={{ padding: '12px 16px', display: 'flex', gap: '8px' }}>
-                      <button onClick={() => handleChangePassword(u._id)} style={{ padding: '4px 10px', background: '#f1f5f9', border: 'none', borderRadius: '4px', fontSize: '12px', cursor: 'pointer', fontWeight: '500' }}>Change Pass</button>
-                      <button onClick={() => handleDelete(u._id)} style={{ padding: '4px 10px', background: '#fef2f2', color: '#dc2626', border: 'none', borderRadius: '4px', fontSize: '12px', cursor: 'pointer' }}>Delete</button>
+                    <td style={{ padding: '12px 16px' }}>
+                      <div style={{ display: 'flex', gap: '8px' }}>
+                        <button onClick={() => handleChangePassword(u._id)} style={{ padding: '4px 10px', background: '#f1f5f9', border: 'none', borderRadius: '4px', fontSize: '12px', cursor: 'pointer', fontWeight: '500' }}>Change Pass</button>
+                        <button onClick={() => handleDelete(u._id)} style={{ padding: '4px 10px', background: '#fef2f2', color: '#dc2626', border: 'none', borderRadius: '4px', fontSize: '12px', cursor: 'pointer' }}>Delete</button>
+                      </div>
                     </td>
                   )}
                 </tr>
               ))}
             </tbody>
           </table>
+        )}
+      </div>
+
+      {/* Mobile view (EXACTLY matching the user's uploaded reference screenshot!) */}
+      <div className="block md:hidden">
+        {loading ? <div style={{ padding: '40px', textAlign: 'center', color: '#94a3b8' }}>Loading...</div> : (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+            {users.map(u => {
+              const firstLetter = u.name ? u.name.charAt(0).toUpperCase() : '👤';
+              const isAdmin = u.role === 'admin';
+              
+              return (
+                <div 
+                  key={u._id} 
+                  style={{
+                    background: '#fff',
+                    borderRadius: '12px',
+                    border: '1px solid #e2e8f0',
+                    padding: '16px',
+                    boxShadow: '0 1px 3px rgba(0,0,0,0.05)'
+                  }}
+                >
+                  {/* Top Row: Avatar, Name, Email, Status, and Three Dots Menu */}
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'start', marginBottom: '12px' }}>
+                    <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
+                      {/* Round Avatar Icon */}
+                      <div style={{
+                        width: '44px',
+                        height: '44px',
+                        borderRadius: '50%',
+                        background: isAdmin ? '#ede9fe' : '#e0f2fe',
+                        color: isAdmin ? '#5b21b6' : '#0369a1',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        fontSize: '18px',
+                        fontWeight: '700'
+                      }}>
+                        {firstLetter}
+                      </div>
+                      
+                      {/* Name & Email & Role Badges */}
+                      <div>
+                        <div style={{ fontSize: '16px', fontWeight: '700', color: '#0f172a' }}>{u.name}</div>
+                        <div style={{ fontSize: '13px', color: '#64748b', marginTop: '2px' }}>{u.email}</div>
+                        
+                        {/* Badges row */}
+                        <div style={{ display: 'flex', gap: '6px', marginTop: '6px' }}>
+                          <span style={{ 
+                            padding: '2px 8px', 
+                            borderRadius: '10px', 
+                            fontSize: '11px', 
+                            fontWeight: '600', 
+                            background: isAdmin ? '#ede9fe' : '#dbeafe', 
+                            color: isAdmin ? '#5b21b6' : '#1e40af',
+                            textTransform: 'capitalize'
+                          }}>
+                            {u.role}
+                          </span>
+                          
+                          <span style={{ 
+                            padding: '2px 8px', 
+                            borderRadius: '10px', 
+                            fontSize: '11px', 
+                            fontWeight: '600', 
+                            background: u.isActive ? '#dcfce7' : '#fef2f2', 
+                            color: u.isActive ? '#15803d' : '#dc2626'
+                          }}>
+                            {u.isActive ? 'Active' : 'Inactive'}
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Three Dots Icon */}
+                    <span style={{ fontSize: '20px', color: '#94a3b8', cursor: 'pointer' }}>⋮</span>
+                  </div>
+
+                  {/* Divider */}
+                  <div style={{ borderTop: '1px solid #f1f5f9', margin: '12px 0' }} />
+
+                  {/* Bottom Info Grid Layout (Joined | Password | Actions) */}
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1.2fr', gap: '8px', alignItems: 'start' }}>
+                    {/* Col 1: Joined */}
+                    <div>
+                      <div style={{ fontSize: '10px', color: '#94a3b8', fontWeight: '700', textTransform: 'uppercase', marginBottom: '4px' }}>
+                        📅 Joined
+                      </div>
+                      <div style={{ fontSize: '12px', color: '#475569', fontWeight: '600' }}>
+                        {new Date(u.createdAt).toLocaleDateString('en-GB')}
+                      </div>
+                      <div style={{ fontSize: '11px', color: '#94a3b8', marginTop: '2px' }}>
+                        {new Date(u.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                      </div>
+                    </div>
+
+                    {/* Col 2: Password with Eye Toggle Icon */}
+                    <div>
+                      <div style={{ fontSize: '10px', color: '#94a3b8', fontWeight: '700', textTransform: 'uppercase', marginBottom: '4px' }}>
+                        🔒 Password
+                      </div>
+                      {currentUserRole === 'admin' ? (
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                          <span style={{ fontFamily: 'monospace', fontSize: '13px', color: '#475569' }}>
+                            {showPasswords[u._id] ? (u.visiblePassword || 'hidden') : '••••••••'}
+                          </span>
+                          {u.visiblePassword && (
+                            <button 
+                              onClick={() => togglePassword(u._id)} 
+                              style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: '14px', padding: '2px' }}
+                              title="Toggle Password"
+                            >
+                              {showPasswords[u._id] ? '🙈' : '👁️'}
+                            </button>
+                          )}
+                        </div>
+                      ) : (
+                        <span style={{ color: '#94a3b8', fontSize: '12px' }}>🔒 Locked</span>
+                      )}
+                    </div>
+
+                    {/* Col 3: Actions (Change Pass & Delete) */}
+                    <div>
+                      <div style={{ fontSize: '10px', color: '#94a3b8', fontWeight: '700', textTransform: 'uppercase', marginBottom: '4px' }}>
+                        Actions
+                      </div>
+                      {currentUserRole === 'admin' ? (
+                        <div style={{ display: 'flex', gap: '6px' }}>
+                          <button 
+                            onClick={() => handleChangePassword(u._id)} 
+                            style={{ 
+                              padding: '6px 8px', 
+                              background: '#f1f5f9', 
+                              border: 'none', 
+                              borderRadius: '6px', 
+                              fontSize: '11px', 
+                              color: '#475569', 
+                              fontWeight: '600', 
+                              cursor: 'pointer',
+                              flex: 1,
+                              whiteSpace: 'nowrap',
+                              textAlign: 'center'
+                            }}
+                          >
+                            Change Pass
+                          </button>
+                          <button 
+                            onClick={() => handleDelete(u._id)} 
+                            style={{ 
+                              padding: '6px 8px', 
+                              background: '#fef2f2', 
+                              color: '#dc2626', 
+                              border: 'none', 
+                              borderRadius: '6px', 
+                              fontSize: '11px', 
+                              fontWeight: '600', 
+                              cursor: 'pointer',
+                              flex: 1,
+                              textAlign: 'center'
+                            }}
+                          >
+                            Delete
+                          </button>
+                        </div>
+                      ) : (
+                        <span style={{ color: '#94a3b8', fontSize: '12px' }}>No Access</span>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
         )}
       </div>
 
