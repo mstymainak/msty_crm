@@ -17,6 +17,12 @@ const priorityColors: Record<string, { bg: string; text: string }> = {
   low: { bg: '#f0fdf4', text: '#16a34a' },
 };
 
+const WhatsAppIcon = () => (
+  <svg viewBox="0 0 24 24" width="16" height="16" style={{ fill: '#22c55e', display: 'inline-block', verticalAlign: 'middle', marginLeft: '6px' }}>
+    <path d="M.057 24l1.687-6.163c-1.041-1.804-1.588-3.849-1.587-5.946C.06 5.348 5.397.01 12.008.01c3.202.001 6.212 1.246 8.477 3.513 2.266 2.268 3.507 5.28 3.505 8.484-.004 6.657-5.34 11.997-11.953 11.997-2.005-.001-3.973-.5-5.739-1.446L0 24zm6.59-4.846c1.6.95 3.188 1.449 4.825 1.451 5.436 0 9.86-4.42 9.864-9.864.002-2.637-1.03-5.114-2.905-6.99C16.455 1.875 13.983.845 11.35.845 5.914.845 1.493 5.26 1.489 10.696c-.001 1.714.453 3.39 1.314 4.873L1.87 20.35l4.777-1.196zm11.23-7.228c-.3-.149-1.772-.874-2.046-.973-.274-.1-.474-.149-.674.15-.2.299-.774.973-.949 1.173-.175.2-.35.224-.65.074-1.3-.65-2.262-1.15-3.076-2.55-.213-.364.213-.339.61-.132.357.186.4.224.5.399.1.199.05.399-.025.549-.075.15-.674 1.62-.924 2.222-.243.585-.488.505-.674.495l-.574-.01c-.199 0-.524.075-.799.374-.275.299-1.047 1.022-1.047 2.493 0 1.47 1.072 2.891 1.222 3.091.15.199 2.11 3.22 5.111 4.516.714.308 1.272.493 1.707.632.717.228 1.37.196 1.885.119.574-.085 1.772-.723 2.022-1.42.25-.697.25-1.293.175-1.417-.075-.124-.275-.199-.575-.349z" />
+  </svg>
+);
+
 export default function EnquiriesPage() {
   const [enquiries, setEnquiries] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
@@ -169,6 +175,15 @@ export default function EnquiriesPage() {
 
   const isAllPageSelected = paginatedEnquiries.length > 0 && paginatedEnquiries.map(e => e._id).every(id => selectedIds.includes(id));
 
+  const getWhatsAppLink = (phone: string) => {
+    const clean = phone.replace(/\D/g, '');
+    if (!clean) return '#';
+    if (clean.length === 10) {
+      return `https://wa.me/91${clean}`;
+    }
+    return `https://wa.me/${clean}`;
+  };
+
   const selectStyle = { padding: '8px 12px', border: '1px solid #e2e8f0', borderRadius: '6px', fontSize: '13px', background: '#fff', cursor: 'pointer' };
 
   return (
@@ -200,7 +215,7 @@ export default function EnquiriesPage() {
               transition: 'all 0.2s'
             }}
           >
-            {isMultiSelect ? 'Disable Select' : '⬜ Multi Select'}
+            {isMultiSelect ? 'Disable Select' : 'Multi Select'}
           </button>
           
           <a href="/contact" target="_blank" style={{ padding: '10px 20px', background: '#f97316', color: '#fff', border: 'none', borderRadius: '8px', fontWeight: '600', cursor: 'pointer', fontSize: '14px', textDecoration: 'none' }}>
@@ -246,7 +261,7 @@ export default function EnquiriesPage() {
         </select>
       </div>
 
-      {/* Multi-select Action Banner */}
+      {/* Multi-select Action Banner (Cancel button removed, sizes and styles adjusted) */}
       {isMultiSelect && (
         <div style={{
           display: 'flex',
@@ -254,57 +269,45 @@ export default function EnquiriesPage() {
           alignItems: 'center',
           background: '#f8fafc',
           border: '1px solid #e2e8f0',
-          borderRadius: '8px',
-          padding: '12px 16px',
-          marginBottom: '16px'
+          borderRadius: '12px',
+          padding: '10px 14px',
+          marginBottom: '16px',
+          flexWrap: 'wrap',
+          gap: '8px'
         }}>
-          <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
-            <span style={{ fontSize: '14px', fontWeight: '600', color: '#1e293b' }}>
-              {selectedIds.length} {selectedIds.length === 1 ? 'enquiry' : 'enquiries'} selected
-            </span>
+          <span style={{ fontSize: '14px', fontWeight: '700', color: '#0f172a' }}>
+            {selectedIds.length} selected
+          </span>
+          <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
             <button 
               onClick={toggleSelectAllPage}
               style={{
-                padding: '4px 10px',
+                padding: '8px 12px',
                 fontSize: '12px',
                 background: '#eff6ff',
                 color: '#2563eb',
                 border: '1px solid #bfdbfe',
-                borderRadius: '6px',
+                borderRadius: '8px',
                 cursor: 'pointer',
-                fontWeight: '500'
+                fontWeight: '600',
+                whiteSpace: 'nowrap'
               }}
             >
               {isAllPageSelected ? 'Deselect Page' : 'Select All on Page'}
-            </button>
-          </div>
-          <div style={{ display: 'flex', gap: '8px' }}>
-            <button 
-              onClick={() => setSelectedIds([])}
-              style={{
-                padding: '6px 12px',
-                fontSize: '13px',
-                background: '#fff',
-                color: '#475569',
-                border: '1px solid #cbd5e1',
-                borderRadius: '6px',
-                cursor: 'pointer'
-              }}
-            >
-              Cancel
             </button>
             <button 
               onClick={handleBulkDelete}
               disabled={deletingBulk || selectedIds.length === 0}
               style={{
-                padding: '6px 12px',
-                fontSize: '13px',
-                background: selectedIds.length === 0 ? '#f1f5f9' : '#fecaca',
+                padding: '8px 12px',
+                fontSize: '12px',
+                background: selectedIds.length === 0 ? '#f1f5f9' : '#fee2e2',
                 color: selectedIds.length === 0 ? '#94a3b8' : '#dc2626',
-                border: selectedIds.length === 0 ? '1px solid #e2e8f0' : '1px solid #fca5a5',
-                borderRadius: '6px',
-                fontWeight: '600',
-                cursor: selectedIds.length === 0 ? 'not-allowed' : 'pointer'
+                border: selectedIds.length === 0 ? '1px solid #e2e8f0' : '1px solid #fecaca',
+                borderRadius: '8px',
+                fontWeight: '700',
+                cursor: selectedIds.length === 0 ? 'not-allowed' : 'pointer',
+                whiteSpace: 'nowrap'
               }}
             >
               {deletingBulk ? 'Deleting...' : '🗑️ Delete Selected'}
@@ -336,7 +339,7 @@ export default function EnquiriesPage() {
                     onClick={(ev) => {
                       if (!isMultiSelect) return;
                       const target = ev.target as HTMLElement;
-                      if (['SELECT', 'BUTTON', 'TEXTAREA', 'INPUT', 'SUMMARY', 'DETAILS'].includes(target.tagName) || target.closest('select') || target.closest('button') || target.closest('details')) return;
+                      if (['SELECT', 'BUTTON', 'TEXTAREA', 'INPUT', 'SUMMARY', 'DETAILS'].includes(target.tagName) || target.closest('select') || target.closest('button') || target.closest('details') || target.tagName === 'A' || target.closest('a')) return;
                       toggleSelectEnquiry(e._id);
                     }}
                     style={{ 
@@ -349,7 +352,30 @@ export default function EnquiriesPage() {
                   >
                     <td style={{ padding: '12px 16px' }}>
                       <div style={{ fontSize: '14px', fontWeight: '600', color: '#0f172a' }}>{e.customer?.name || 'Unknown'}</div>
-                      <div style={{ fontSize: '12px', color: '#334155', fontWeight: '500' }}>{e.customer?.phone || ''}</div>
+                      <div style={{ fontSize: '12px', color: '#334155', fontWeight: '500', display: 'flex', alignItems: 'center' }}>
+                        {e.customer?.phone ? (
+                          <>
+                            <a 
+                              href={`tel:${e.customer.phone}`} 
+                              onClick={(ev) => ev.stopPropagation()}
+                              style={{ color: '#2563eb', textDecoration: 'none', fontWeight: '500' }}
+                              title="Click to call"
+                            >
+                              {e.customer.phone}
+                            </a>
+                            <a 
+                              href={getWhatsAppLink(e.customer.phone)} 
+                              target="_blank" 
+                              rel="noreferrer"
+                              onClick={(ev) => ev.stopPropagation()}
+                              style={{ textDecoration: 'none', display: 'inline-flex', alignItems: 'center' }}
+                              title="Open WhatsApp Chat"
+                            >
+                              <WhatsAppIcon />
+                            </a>
+                          </>
+                        ) : ''}
+                      </div>
                     </td>
                     <td style={{ padding: '12px 16px', fontSize: '13px', color: '#1e293b', maxWidth: '250px' }}>
                       <details style={{ cursor: 'pointer' }}>
@@ -471,7 +497,7 @@ export default function EnquiriesPage() {
                   onClick={(ev) => {
                     if (!isMultiSelect) return;
                     const target = ev.target as HTMLElement;
-                    if (['SELECT', 'BUTTON', 'TEXTAREA', 'INPUT', 'SUMMARY', 'DETAILS'].includes(target.tagName) || target.closest('select') || target.closest('button') || target.closest('details')) return;
+                    if (['SELECT', 'BUTTON', 'TEXTAREA', 'INPUT', 'SUMMARY', 'DETAILS'].includes(target.tagName) || target.closest('select') || target.closest('button') || target.closest('details') || target.tagName === 'A' || target.closest('a')) return;
                     toggleSelectEnquiry(e._id);
                   }}
                   style={{
@@ -527,7 +553,28 @@ export default function EnquiriesPage() {
                       <details style={{ cursor: 'pointer' }}>
                         <summary style={{ outline: 'none', fontWeight: '500', display: 'flex', alignItems: 'center', gap: '4px' }}>
                           <span>📞</span>
-                          <span>{e.customer?.phone || ''} {e.message ? ` - ${e.message.split('\n')[0]}` : ''}</span>
+                          {e.customer?.phone ? (
+                            <span style={{ display: 'inline-flex', alignItems: 'center' }}>
+                              <a 
+                                href={`tel:${e.customer.phone}`}
+                                onClick={(ev) => ev.stopPropagation()}
+                                style={{ color: '#2563eb', textDecoration: 'none', fontWeight: '600' }}
+                                title="Click to call"
+                              >
+                                {e.customer.phone}
+                              </a>
+                              <a 
+                                href={getWhatsAppLink(e.customer.phone)} 
+                                target="_blank" 
+                                rel="noreferrer"
+                                onClick={(ev) => ev.stopPropagation()}
+                                style={{ textDecoration: 'none', display: 'inline-flex', alignItems: 'center' }}
+                                title="Open WhatsApp Chat"
+                              >
+                                <WhatsAppIcon />
+                              </a>
+                            </span>
+                          ) : ''}
                         </summary>
                         <div style={{ padding: '8px', background: '#fff', border: '1px solid #cbd5e1', borderRadius: '6px', marginTop: '6px' }}>
                           <div style={{ whiteSpace: 'pre-wrap', marginBottom: '8px', color: '#1e293b' }}>{e.message}</div>
