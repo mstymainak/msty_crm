@@ -174,7 +174,23 @@ export default function RecycleBinPage() {
           </p>
         </div>
 
-        <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+        <div style={{ display: 'flex', gap: '8px', alignItems: 'center', flexWrap: 'wrap' }}>
+          <button 
+            onClick={fetchRecycled} 
+            style={{ 
+              padding: '10px 18px', 
+              background: '#f1f5f9', 
+              color: '#475569', 
+              border: '1px solid #cbd5e1', 
+              borderRadius: '8px', 
+              cursor: 'pointer', 
+              fontSize: '14px', 
+              fontWeight: '600' 
+            }}
+          >
+            ↻ Refresh
+          </button>
+
           <button 
             onClick={() => {
               setIsMultiSelect(!isMultiSelect);
@@ -193,10 +209,6 @@ export default function RecycleBinPage() {
             }}
           >
             {isMultiSelect ? 'Disable Select' : 'Multi Select'}
-          </button>
-          
-          <button onClick={fetchRecycled} style={{ padding: '10px 18px', background: '#f1f5f9', color: '#475569', border: '1px solid #cbd5e1', borderRadius: '8px', cursor: 'pointer', fontSize: '14px', fontWeight: '600' }}>
-            ↻ Refresh
           </button>
         </div>
       </div>
