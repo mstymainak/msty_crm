@@ -28,10 +28,24 @@ export default function EnquiriesPage() {
   const [packages, setPackages] = useState<any[]>([]);
   const [editingNoteId, setEditingNoteId] = useState<string | null>(null);
   const [tempNote, setTempNote] = useState('');
-  const [selectedEnquiryIds, setSelectedEnquiryIds] = useState<string[]>([]);
+
+  // Pagination states
+  const [currentPage, setCurrentPage] = useState(1);
+  const [pageSize, setPageSize] = useState(10);
+
+  // Multi-select states
+  const [isMultiSelect, setIsMultiSelect] = useState(false);
+  const [selectedIds, setSelectedIds] = useState<string[]>([]);
+  const [deletingBulk, setDeletingBulk] = useState(false);
 
   const fetchEnquiries = () => {
-    fetch('/api/enquiries').then(r => r.json()).then(d => { setEnquiries(Array.isArray(d) ? d : []); setLoading(false); }).catch(() => setLoading(false));
+    fetch('/api/enquiries')
+      .then(r => r.json())
+      .then(d => {
+        setEnquiries(Array.isArray(d) ? d : []);
+        setLoading(false);
+      })
+      .catch(() => setLoading(false));
   };
 
   useEffect(() => { 
@@ -74,34 +88,46 @@ export default function EnquiriesPage() {
   const handleDelete = async (id: string) => {
     if (!confirm('Delete this enquiry?')) return;
     await fetch(`/api/enquiries/${id}`, { method: 'DELETE' });
+    setSelectedIds(prev => prev.filter(item => item !== id));
     fetchEnquiries();
   };
 
   const handleBulkDelete = async () => {
-    if (!confirm(`Are you sure you want to delete ${selectedEnquiryIds.length} selected enquiries?`)) return;
-    setLoading(true);
+    if (selectedIds.length === 0) return;
+    if (!confirm(`Delete all ${selectedIds.length} selected enquiries?`)) return;
+
+    setDeletingBulk(true);
     try {
-      await Promise.all(selectedEnquiryIds.map(id => fetch(`/api/enquiries/${id}`, { method: 'DELETE' })));
-      setSelectedEnquiryIds([]);
+      await Promise.all(
+        selectedIds.map(id =>
+          fetch(`/api/enquiries/${id}`, { method: 'DELETE' })
+        )
+      );
+      setSelectedIds([]);
+      setIsMultiSelect(false);
       fetchEnquiries();
     } catch (err) {
-      console.error(err);
+      console.error('Error during bulk deletion:', err);
+      alert('An error occurred during bulk deletion. Some records might not have been deleted.');
     } finally {
-      setLoading(false);
+      setDeletingBulk(false);
     }
   };
 
   const toggleSelectEnquiry = (id: string) => {
-    setSelectedEnquiryIds(prev => prev.includes(id) ? prev.filter(x => x !== id) : [...prev, id]);
+    setSelectedIds(prev => {
+      if (prev.includes(id)) {
+        return prev.filter(x => x !== id);
+      } else {
+        return [...prev, id];
+      }
+    });
   };
 
-  const toggleSelectAllEnquiries = () => {
-    if (selectedEnquiryIds.length === filtered.length && filtered.length > 0) {
-      setSelectedEnquiryIds([]);
-    } else {
-      setSelectedEnquiryIds(filtered.map(e => e._id));
-    }
-  };
+  // Reset pagination when filter changes
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [statusFilter, sourceFilter, priorityFilter, packageFilter, searchQuery]);
 
   const filtered = enquiries.filter(e => {
     if (statusFilter !== 'all' && e.status !== statusFilter) return false;
@@ -118,11 +144,36 @@ export default function EnquiriesPage() {
     return true;
   });
 
+  // Pagination Calculations
+  const totalItems = filtered.length;
+  const totalPages = Math.ceil(totalItems / pageSize);
+  const activePage = Math.max(1, Math.min(currentPage, totalPages));
+
+  const startIndex = (activePage - 1) * pageSize;
+  const endIndex = Math.min(startIndex + pageSize, totalItems);
+  const paginatedEnquiries = filtered.slice(startIndex, endIndex);
+
+  const toggleSelectAllPage = () => {
+    const pageIds = paginatedEnquiries.map(e => e._id);
+    const allSelected = pageIds.every(id => selectedIds.includes(id));
+
+    if (allSelected) {
+      setSelectedIds(prev => prev.filter(id => !pageIds.includes(id)));
+    } else {
+      setSelectedIds(prev => {
+        const unique = new Set([...prev, ...pageIds]);
+        return Array.from(unique);
+      });
+    }
+  };
+
+  const isAllPageSelected = paginatedEnquiries.length > 0 && paginatedEnquiries.map(e => e._id).every(id => selectedIds.includes(id));
+
   const selectStyle = { padding: '8px 12px', border: '1px solid #e2e8f0', borderRadius: '6px', fontSize: '13px', background: '#fff', cursor: 'pointer' };
 
   return (
     <div>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px', flexWrap: 'wrap', gap: '12px' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
           <div>
             <h1 style={{ fontSize: '24px', fontWeight: '700', color: '#0f172a', margin: 0 }}>Enquiries</h1>
@@ -130,9 +181,32 @@ export default function EnquiriesPage() {
           </div>
           <button onClick={fetchEnquiries} style={{ padding: '8px 16px', background: '#f1f5f9', color: '#475569', border: '1px solid #cbd5e1', borderRadius: '6px', cursor: 'pointer', fontSize: '13px', fontWeight: '600' }}>↻ Refresh</button>
         </div>
-        <a href="/contact" target="_blank" style={{ padding: '10px 20px', background: '#f97316', color: '#fff', border: 'none', borderRadius: '8px', fontWeight: '600', cursor: 'pointer', fontSize: '14px', textDecoration: 'none' }}>
-          + Add Enquiry
-        </a>
+        
+        <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+          <button 
+            onClick={() => {
+              setIsMultiSelect(!isMultiSelect);
+              setSelectedIds([]);
+            }} 
+            style={{ 
+              padding: '10px 18px', 
+              background: isMultiSelect ? '#eff6ff' : '#fff', 
+              color: '#2563eb', 
+              border: '1px solid #2563eb', 
+              borderRadius: '8px', 
+              fontWeight: '600', 
+              cursor: 'pointer', 
+              fontSize: '14px',
+              transition: 'all 0.2s'
+            }}
+          >
+            {isMultiSelect ? 'Disable Select' : '⬜ Multi Select'}
+          </button>
+          
+          <a href="/contact" target="_blank" style={{ padding: '10px 20px', background: '#f97316', color: '#fff', border: 'none', borderRadius: '8px', fontWeight: '600', cursor: 'pointer', fontSize: '14px', textDecoration: 'none' }}>
+            + Add Enquiry
+          </a>
+        </div>
       </div>
 
       <div style={{ display: 'flex', gap: '12px', marginBottom: '16px', flexWrap: 'wrap', alignItems: 'center' }}>
@@ -172,79 +246,95 @@ export default function EnquiriesPage() {
         </select>
       </div>
 
-      {/* Bulk Actions Container */}
-      {selectedEnquiryIds.length > 0 && (
-        <div style={{ display: 'flex', alignItems: 'center', gap: '12px', background: '#fef2f2', border: '1px solid #fee2e2', borderRadius: '8px', padding: '12px 16px', marginBottom: '16px' }}>
-          <span style={{ fontSize: '14px', fontWeight: '600', color: '#991b1b' }}>
-            {selectedEnquiryIds.length} selected
+      {/* Multi-select Action Banner */}
+      {isMultiSelect && selectedIds.length > 0 && (
+        <div style={{
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'center',
+          background: '#f8fafc',
+          border: '1px solid #e2e8f0',
+          borderRadius: '8px',
+          padding: '12px 16px',
+          marginBottom: '16px'
+        }}>
+          <span style={{ fontSize: '14px', fontWeight: '600', color: '#1e293b' }}>
+            {selectedIds.length} {selectedIds.length === 1 ? 'enquiry' : 'enquiries'} selected
           </span>
-          <button
-            onClick={handleBulkDelete}
-            style={{
-              padding: '6px 12px',
-              background: '#dc2626',
-              color: '#fff',
-              border: 'none',
-              borderRadius: '6px',
-              fontWeight: '600',
-              fontSize: '13px',
-              cursor: 'pointer'
-            }}
-          >
-            Delete Selected
-          </button>
-          <button
-            onClick={() => setSelectedEnquiryIds([])}
-            style={{
-              padding: '6px 12px',
-              background: 'transparent',
-              color: '#475569',
-              border: '1px solid #cbd5e1',
-              borderRadius: '6px',
-              fontWeight: '500',
-              fontSize: '13px',
-              cursor: 'pointer'
-            }}
-          >
-            Deselect All
-          </button>
+          <div style={{ display: 'flex', gap: '8px' }}>
+            <button 
+              onClick={() => setSelectedIds([])}
+              style={{
+                padding: '6px 12px',
+                fontSize: '13px',
+                background: '#fff',
+                color: '#475569',
+                border: '1px solid #cbd5e1',
+                borderRadius: '6px',
+                cursor: 'pointer'
+              }}
+            >
+              Cancel
+            </button>
+            <button 
+              onClick={handleBulkDelete}
+              disabled={deletingBulk}
+              style={{
+                padding: '6px 12px',
+                fontSize: '13px',
+                background: '#fecaca',
+                color: '#dc2626',
+                border: '1px solid #fca5a5',
+                borderRadius: '6px',
+                fontWeight: '600',
+                cursor: 'pointer'
+              }}
+            >
+              {deletingBulk ? 'Deleting...' : '🗑️ Delete Selected'}
+            </button>
+          </div>
         </div>
       )}
 
       {/* Desktop view (Table layout) */}
       <div className="hidden md:block" style={{ background: '#fff', borderRadius: '12px', boxShadow: '0 1px 3px rgba(0,0,0,0.08)', overflow: 'hidden' }}>
         {loading ? <div style={{ padding: '40px', textAlign: 'center', color: '#94a3b8' }}>Loading...</div> :
-        filtered.length === 0 ? <div style={{ padding: '40px', textAlign: 'center', color: '#94a3b8' }}>No enquiries found</div> : (
+        paginatedEnquiries.length === 0 ? <div style={{ padding: '40px', textAlign: 'center', color: '#94a3b8' }}>No enquiries found</div> : (
           <table style={{ width: '100%', borderCollapse: 'collapse' }}>
             <thead>
               <tr style={{ borderBottom: '1px solid #e2e8f0', background: '#f8fafc' }}>
-                <th style={{ padding: '12px 16px', width: '40px', textAlign: 'left' }}>
-                  <input
-                    type="checkbox"
-                    checked={selectedEnquiryIds.length === filtered.length && filtered.length > 0}
-                    onChange={toggleSelectAllEnquiries}
-                    style={{ cursor: 'pointer', width: '15px', height: '15px' }}
-                  />
-                </th>
+                {isMultiSelect && (
+                  <th style={{ padding: '12px 16px', width: '40px', textAlign: 'left' }}>
+                    <input 
+                      type="checkbox" 
+                      checked={isAllPageSelected} 
+                      onChange={toggleSelectAllPage}
+                      style={{ transform: 'scale(1.25)', cursor: 'pointer' }}
+                    />
+                  </th>
+                )}
                 {['Customer', 'Message', 'Package', 'Source', 'Status', 'Priority', 'Date', 'Actions'].map(h => (
                   <th key={h} style={{ padding: '12px 16px', textAlign: 'left', fontSize: '12px', fontWeight: '600', color: '#64748b', textTransform: 'uppercase' }}>{h}</th>
                 ))}
               </tr>
             </thead>
             <tbody>
-              {filtered.map(e => {
+              {paginatedEnquiries.map(e => {
                 const sc = statusColors[e.status] || { bg: '#f1f5f9', text: '#64748b' };
                 const pc = priorityColors[e.priority] || { bg: '#f1f5f9', text: '#64748b' };
+                const isSelected = selectedIds.includes(e._id);
                 return (
-                  <tr key={e._id} style={{ borderBottom: '1px solid #e2e8f0', background: pc.bg }}>
-                    <td style={{ padding: '12px 16px', width: '40px' }}>
-                      <input
-                        type="checkbox"
-                        checked={selectedEnquiryIds.includes(e._id)}
-                        onChange={() => toggleSelectEnquiry(e._id)}
-                        style={{ cursor: 'pointer', width: '15px', height: '15px' }}
-                      />
-                    </td>
+                  <tr key={e._id} style={{ borderBottom: '1px solid #e2e8f0', background: isSelected ? '#eff6ff' : pc.bg }}>
+                    {isMultiSelect && (
+                      <td style={{ padding: '12px 16px' }}>
+                        <input 
+                          type="checkbox" 
+                          checked={isSelected} 
+                          onChange={() => toggleSelectEnquiry(e._id)}
+                          style={{ transform: 'scale(1.2)', cursor: 'pointer' }}
+                        />
+                      </td>
+                    )}
                     <td style={{ padding: '12px 16px' }}>
                       <div style={{ fontSize: '14px', fontWeight: '600', color: '#0f172a' }}>{e.customer?.name || 'Unknown'}</div>
                       <div style={{ fontSize: '12px', color: '#334155', fontWeight: '500' }}>{e.customer?.phone || ''}</div>
@@ -357,193 +447,202 @@ export default function EnquiriesPage() {
       {/* Mobile view (Card layout) */}
       <div className="block md:hidden">
         {loading ? <div style={{ padding: '40px', textAlign: 'center', color: '#94a3b8' }}>Loading...</div> :
-        filtered.length === 0 ? <div style={{ padding: '40px', textAlign: 'center', color: '#94a3b8' }}>No enquiries found</div> : (
+        paginatedEnquiries.length === 0 ? <div style={{ padding: '40px', textAlign: 'center', color: '#94a3b8' }}>No enquiries found</div> : (
           <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-            {filtered.map(e => {
+            {paginatedEnquiries.map(e => {
               const sc = statusColors[e.status] || { bg: '#f1f5f9', text: '#64748b' };
               const pc = priorityColors[e.priority] || { bg: '#f1f5f9', text: '#64748b' };
+              const isSelected = selectedIds.includes(e._id);
               return (
                 <div key={e._id} style={{
-                  background: pc.bg,
+                  background: isSelected ? '#eff6ff' : pc.bg,
                   borderRadius: '12px',
-                  border: `1px solid ${pc.text}20`,
+                  border: isSelected ? '1.5px solid #3b82f6' : `1px solid ${pc.text}20`,
                   padding: '12px 14px',
-                  boxShadow: '0 1px 3px rgba(0,0,0,0.05)'
+                  boxShadow: '0 1px 3px rgba(0,0,0,0.05)',
+                  display: 'flex',
+                  gap: '12px',
+                  alignItems: 'flex-start'
                 }}>
-                  {/* First Row: Name, Package Select, Source */}
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                      <input
-                        type="checkbox"
-                        checked={selectedEnquiryIds.includes(e._id)}
+                  {isMultiSelect && (
+                    <div style={{ paddingTop: '2px' }}>
+                      <input 
+                        type="checkbox" 
+                        checked={isSelected} 
                         onChange={() => toggleSelectEnquiry(e._id)}
-                        style={{ width: '16px', height: '16px', cursor: 'pointer' }}
+                        style={{ transform: 'scale(1.2)', cursor: 'pointer' }}
                       />
+                    </div>
+                  )}
+                  
+                  <div style={{ flex: 1 }}>
+                    {/* First Row: Name, Package Select, Source */}
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
                       <div style={{ fontSize: '15px', fontWeight: '700', color: '#0f172a' }}>
                         {e.customer?.name || 'Unknown'}
                       </div>
-                    </div>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                      <select
-                        value={e.package || ''}
-                        onChange={(ev) => updatePackage(e._id, ev.target.value)}
-                        style={{
-                          padding: '4px 8px',
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                        <select
+                          value={e.package || ''}
+                          onChange={(ev) => updatePackage(e._id, ev.target.value)}
+                          style={{
+                            padding: '4px 8px',
+                            fontSize: '11px',
+                            border: '1px solid #cbd5e1',
+                            borderRadius: '6px',
+                            background: '#fff',
+                            color: e.package ? '#0f172a' : '#94a3b8',
+                            outline: 'none',
+                            cursor: 'pointer'
+                          }}
+                        >
+                          <option value="">No Package</option>
+                          {packages.map(p => <option key={p._id} value={p._id}>{p.name}</option>)}
+                        </select>
+                        <span style={{
+                          padding: '2px 8px',
+                          borderRadius: '12px',
                           fontSize: '11px',
-                          border: '1px solid #cbd5e1',
-                          borderRadius: '6px',
-                          background: '#fff',
-                          color: e.package ? '#0f172a' : '#94a3b8',
-                          outline: 'none',
-                          cursor: 'pointer'
-                        }}
-                      >
-                        <option value="">No Package</option>
-                        {packages.map(p => <option key={p._id} value={p._id}>{p.name}</option>)}
-                      </select>
-                      <span style={{
-                        padding: '2px 8px',
-                        borderRadius: '12px',
-                        fontSize: '11px',
-                        fontWeight: '600',
-                        background: '#eff6ff',
-                        color: '#3b82f6',
-                        textTransform: 'capitalize'
-                      }}>
-                        {e.source}
-                      </span>
+                          fontWeight: '600',
+                          background: '#eff6ff',
+                          color: '#3b82f6',
+                          textTransform: 'capitalize'
+                        }}>
+                          {e.source}
+                        </span>
+                      </div>
                     </div>
-                  </div>
 
-                  {/* Second Row: Contact details / click to view full message & notes */}
-                  <div style={{ marginBottom: '12px', fontSize: '12px', color: '#475569' }}>
-                    <details style={{ cursor: 'pointer' }}>
-                      <summary style={{ outline: 'none', fontWeight: '500', display: 'flex', alignItems: 'center', gap: '4px' }}>
-                        <span>📞</span>
-                        <span>{e.customer?.phone || ''} {e.message ? ` - ${e.message.split('\n')[0]}` : ''}</span>
-                      </summary>
-                      <div style={{ padding: '8px', background: '#fff', border: '1px solid #cbd5e1', borderRadius: '6px', marginTop: '6px' }}>
-                        <div style={{ whiteSpace: 'pre-wrap', marginBottom: '8px', color: '#1e293b' }}>{e.message}</div>
-                        
-                        {e.package && packages.find(p => p._id === e.package)?.groups?.length > 0 && (
-                          <div style={{ marginBottom: '10px' }}>
-                            <span style={{ fontSize: '10px', textTransform: 'uppercase', color: '#64748b', display: 'block', marginBottom: '4px', fontWeight: '600' }}>Package Group</span>
-                            <select
-                              value={e.packageGroup || ''}
-                              onChange={(ev) => updatePackageGroup(e._id, ev.target.value)}
-                              style={{ padding: '4px 8px', fontSize: '12px', border: '1px solid #cbd5e1', borderRadius: '4px', background: '#fff', width: '100%' }}
-                            >
-                              <option value="">No Group Selected</option>
-                              {packages.find(p => p._id === e.package)?.groups.map((g: any) => (
-                                <option key={g._id} value={g._id}>{g.name} ({g.date})</option>
-                              ))}
-                            </select>
-                          </div>
-                        )}
+                    {/* Second Row: Contact details / click to view full message & notes */}
+                    <div style={{ marginBottom: '12px', fontSize: '12px', color: '#475569' }}>
+                      <details style={{ cursor: 'pointer' }}>
+                        <summary style={{ outline: 'none', fontWeight: '500', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                          <span>📞</span>
+                          <span>{e.customer?.phone || ''} {e.message ? ` - ${e.message.split('\n')[0]}` : ''}</span>
+                        </summary>
+                        <div style={{ padding: '8px', background: '#fff', border: '1px solid #cbd5e1', borderRadius: '6px', marginTop: '6px' }}>
+                          <div style={{ whiteSpace: 'pre-wrap', marginBottom: '8px', color: '#1e293b' }}>{e.message}</div>
+                          
+                          {e.package && packages.find(p => p._id === e.package)?.groups?.length > 0 && (
+                            <div style={{ marginBottom: '10px' }}>
+                              <span style={{ fontSize: '10px', textTransform: 'uppercase', color: '#64748b', display: 'block', marginBottom: '4px', fontWeight: '600' }}>Package Group</span>
+                              <select
+                                value={e.packageGroup || ''}
+                                onChange={(ev) => updatePackageGroup(e._id, ev.target.value)}
+                                style={{ padding: '4px 8px', fontSize: '12px', border: '1px solid #cbd5e1', borderRadius: '4px', background: '#fff', width: '100%' }}
+                              >
+                                <option value="">No Group Selected</option>
+                                {packages.find(p => p._id === e.package)?.groups.map((g: any) => (
+                                  <option key={g._id} value={g._id}>{g.name} ({g.date})</option>
+                                ))}
+                              </select>
+                            </div>
+                          )}
 
-                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderTop: '1px solid #e2e8f0', paddingTop: '8px', marginTop: '8px' }}>
-                          <span style={{ fontSize: '11px', fontWeight: '600', color: '#475569' }}>Admin Note</span>
-                          <div style={{ display: 'flex', gap: '8px' }}>
-                            <button onClick={(ev) => { ev.preventDefault(); setEditingNoteId(e._id); setTempNote(e.adminNote || ''); }} style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: '13px' }}>📝</button>
-                            {e.adminNote && <button onClick={(ev) => { ev.preventDefault(); deleteNote(e._id); }} style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: '13px' }}>🗑️</button>}
-                          </div>
-                        </div>
-
-                        {editingNoteId === e._id ? (
-                          <div style={{ marginTop: '6px' }}>
-                            <textarea
-                              value={tempNote}
-                              onChange={(ev) => setTempNote(ev.target.value)}
-                              style={{ width: '100%', padding: '6px', border: '1px solid #cbd5e1', borderRadius: '4px', fontSize: '12px', minHeight: '50px', boxSizing: 'border-box' }}
-                              placeholder="Type note..."
-                            />
-                            <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '6px', marginTop: '6px' }}>
-                              <button onClick={() => setEditingNoteId(null)} style={{ padding: '4px 8px', fontSize: '11px', background: '#f1f5f9', border: 'none', borderRadius: '4px', cursor: 'pointer' }}>Cancel</button>
-                              <button onClick={() => saveNote(e._id, tempNote)} style={{ padding: '4px 8px', fontSize: '11px', background: '#f97316', color: '#fff', border: 'none', borderRadius: '4px', cursor: 'pointer' }}>Save</button>
+                          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderTop: '1px solid #e2e8f0', paddingTop: '8px', marginTop: '8px' }}>
+                            <span style={{ fontSize: '11px', fontWeight: '600', color: '#475569' }}>Admin Note</span>
+                            <div style={{ display: 'flex', gap: '8px' }}>
+                              <button onClick={(ev) => { ev.preventDefault(); setEditingNoteId(e._id); setTempNote(e.adminNote || ''); }} style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: '13px' }}>📝</button>
+                              {e.adminNote && <button onClick={(ev) => { ev.preventDefault(); deleteNote(e._id); }} style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: '13px' }}>🗑️</button>}
                             </div>
                           </div>
-                        ) : e.adminNote ? (
-                          <div style={{ fontSize: '11px', color: '#0f172a', background: '#f8fafc', padding: '6px', borderRadius: '4px', marginTop: '4px' }}>
-                            {e.adminNote}
-                          </div>
-                        ) : null}
+
+                          {editingNoteId === e._id ? (
+                            <div style={{ marginTop: '6px' }}>
+                              <textarea
+                                value={tempNote}
+                                onChange={(ev) => setTempNote(ev.target.value)}
+                                style={{ width: '100%', padding: '6px', border: '1px solid #cbd5e1', borderRadius: '4px', fontSize: '12px', minHeight: '50px', boxSizing: 'border-box' }}
+                                placeholder="Type note..."
+                              />
+                              <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '6px', marginTop: '6px' }}>
+                                <button onClick={() => setEditingNoteId(null)} style={{ padding: '4px 8px', fontSize: '11px', background: '#f1f5f9', border: 'none', borderRadius: '4px', cursor: 'pointer' }}>Cancel</button>
+                                <button onClick={() => saveNote(e._id, tempNote)} style={{ padding: '4px 8px', fontSize: '11px', background: '#f97316', color: '#fff', border: 'none', borderRadius: '4px', cursor: 'pointer' }}>Save</button>
+                              </div>
+                            </div>
+                          ) : e.adminNote ? (
+                            <div style={{ fontSize: '11px', color: '#0f172a', background: '#f8fafc', padding: '6px', borderRadius: '4px', marginTop: '4px' }}>
+                              {e.adminNote}
+                            </div>
+                          ) : null}
+                        </div>
+                      </details>
+                    </div>
+
+                    {/* Third Row: Status select, Priority select, Date / Time, Delete */}
+                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr auto auto', alignItems: 'center', gap: '10px' }}>
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                        <span style={{ fontSize: '10px', color: '#64748b', fontWeight: '600', textTransform: 'uppercase' }}>Status</span>
+                        <select
+                          value={e.status}
+                          onChange={(ev) => updateStatus(e._id, ev.target.value)}
+                          style={{
+                            padding: '4px 8px',
+                            borderRadius: '6px',
+                            fontSize: '11px',
+                            fontWeight: '600',
+                            border: `1px solid ${sc.text}`,
+                            background: sc.bg,
+                            color: sc.text,
+                            cursor: 'pointer',
+                            outline: 'none'
+                          }}
+                        >
+                          <option value="new">New</option>
+                          <option value="contacted">Contacted</option>
+                          <option value="qualified">Qualified</option>
+                          <option value="booked">Booked</option>
+                          <option value="lost">Lost</option>
+                        </select>
                       </div>
-                    </details>
-                  </div>
 
-                  {/* Third Row: Status select, Priority select, Date / Time, Delete */}
-                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr auto auto', alignItems: 'center', gap: '10px' }}>
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
-                      <span style={{ fontSize: '10px', color: '#64748b', fontWeight: '600', textTransform: 'uppercase' }}>Status</span>
-                      <select
-                        value={e.status}
-                        onChange={(ev) => updateStatus(e._id, ev.target.value)}
-                        style={{
-                          padding: '4px 8px',
-                          borderRadius: '6px',
-                          fontSize: '11px',
-                          fontWeight: '600',
-                          border: `1px solid ${sc.text}`,
-                          background: sc.bg,
-                          color: sc.text,
-                          cursor: 'pointer',
-                          outline: 'none'
-                        }}
-                      >
-                        <option value="new">New</option>
-                        <option value="contacted">Contacted</option>
-                        <option value="qualified">Qualified</option>
-                        <option value="booked">Booked</option>
-                        <option value="lost">Lost</option>
-                      </select>
-                    </div>
-
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
-                      <span style={{ fontSize: '10px', color: '#64748b', fontWeight: '600', textTransform: 'uppercase' }}>Priority</span>
-                      <select
-                        value={e.priority}
-                        onChange={(ev) => updatePriority(e._id, ev.target.value)}
-                        style={{
-                          padding: '4px 8px',
-                          borderRadius: '6px',
-                          fontSize: '11px',
-                          fontWeight: '600',
-                          border: `1px solid ${pc.text}`,
-                          background: pc.bg,
-                          color: pc.text,
-                          cursor: 'pointer',
-                          outline: 'none'
-                        }}
-                      >
-                        <option value="high">High</option>
-                        <option value="medium">Medium</option>
-                        <option value="low">Low</option>
-                      </select>
-                    </div>
-
-                    <div style={{ fontSize: '11px', color: '#475569', fontWeight: '500', textAlign: 'right', lineHeight: '1.3', paddingRight: '4px' }}>
-                      <div>{new Date(e.createdAt).toLocaleDateString()}</div>
-                      <div style={{ fontSize: '10px', marginTop: '2px', color: '#64748b' }}>
-                        {new Date(e.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                        <span style={{ fontSize: '10px', color: '#64748b', fontWeight: '600', textTransform: 'uppercase' }}>Priority</span>
+                        <select
+                          value={e.priority}
+                          onChange={(ev) => updatePriority(e._id, ev.target.value)}
+                          style={{
+                            padding: '4px 8px',
+                            borderRadius: '6px',
+                            fontSize: '11px',
+                            fontWeight: '600',
+                            border: `1px solid ${pc.text}`,
+                            background: pc.bg,
+                            color: pc.text,
+                            cursor: 'pointer',
+                            outline: 'none'
+                          }}
+                        >
+                          <option value="high">High</option>
+                          <option value="medium">Medium</option>
+                          <option value="low">Low</option>
+                        </select>
                       </div>
-                    </div>
 
-                    <div>
-                      <button
-                        onClick={() => handleDelete(e._id)}
-                        style={{
-                          padding: '6px 8px',
-                          background: '#fef2f2',
-                          border: '1px solid #fee2e2',
-                          borderRadius: '6px',
-                          cursor: 'pointer',
-                          display: 'flex',
-                          alignItems: 'center',
-                          justifyContent: 'center'
-                        }}
-                      >
-                        <span style={{ color: '#dc2626', fontSize: '14px' }}>🗑️</span>
-                      </button>
+                      <div style={{ fontSize: '11px', color: '#475569', fontWeight: '500', textAlign: 'right', lineHeight: '1.3', paddingRight: '4px' }}>
+                        <div>{new Date(e.createdAt).toLocaleDateString()}</div>
+                        <div style={{ fontSize: '10px', marginTop: '2px', color: '#64748b' }}>
+                          {new Date(e.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                        </div>
+                      </div>
+
+                      <div>
+                        <button
+                          onClick={() => handleDelete(e._id)}
+                          style={{
+                            padding: '6px 8px',
+                            background: '#fef2f2',
+                            border: '1px solid #fee2e2',
+                            borderRadius: '6px',
+                            cursor: 'pointer',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center'
+                          }}
+                        >
+                          <span style={{ color: '#dc2626', fontSize: '14px' }}>🗑️</span>
+                        </button>
+                      </div>
                     </div>
                   </div>
                 </div>
@@ -552,6 +651,111 @@ export default function EnquiriesPage() {
           </div>
         )}
       </div>
+
+      {/* Pagination Bar (Matching Customers perfectly) */}
+      {totalItems > 0 && (
+        <div style={{
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'center',
+          marginTop: '20px',
+          padding: '12px 16px',
+          background: '#fff',
+          borderRadius: '12px',
+          boxShadow: '0 1px 3px rgba(0,0,0,0.05)',
+          flexWrap: 'wrap',
+          gap: '12px'
+        }}>
+          {/* Left info */}
+          <div style={{ fontSize: '13px', color: '#64748b' }}>
+            Showing <strong style={{ color: '#0f172a' }}>{startIndex + 1}</strong> to <strong style={{ color: '#0f172a' }}>{endIndex}</strong> of <strong style={{ color: '#0f172a' }}>{totalItems}</strong> enquiries
+          </div>
+
+          {/* Center page links */}
+          <div style={{ display: 'flex', gap: '4px', alignItems: 'center' }}>
+            <button 
+              disabled={activePage === 1}
+              onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
+              style={{
+                padding: '6px 10px',
+                borderRadius: '6px',
+                border: '1px solid #e2e8f0',
+                background: '#fff',
+                cursor: activePage === 1 ? 'not-allowed' : 'pointer',
+                opacity: activePage === 1 ? 0.5 : 1,
+                fontSize: '13px',
+                fontWeight: '500'
+              }}
+            >
+              ‹
+            </button>
+            {Array.from({ length: totalPages }).map((_, index) => {
+              const p = index + 1;
+              const isActive = p === activePage;
+              return (
+                <button
+                  key={p}
+                  onClick={() => setCurrentPage(p)}
+                  style={{
+                    padding: '6px 12px',
+                    borderRadius: '6px',
+                    border: isActive ? '1px solid #3b82f6' : '1px solid #e2e8f0',
+                    background: isActive ? '#3b82f6' : '#fff',
+                    color: isActive ? '#fff' : '#0f172a',
+                    cursor: 'pointer',
+                    fontSize: '13px',
+                    fontWeight: isActive ? '700' : '500',
+                    minWidth: '32px'
+                  }}
+                >
+                  {p}
+                </button>
+              );
+            })}
+            <button 
+              disabled={activePage === totalPages}
+              onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
+              style={{
+                padding: '6px 10px',
+                borderRadius: '6px',
+                border: '1px solid #e2e8f0',
+                background: '#fff',
+                cursor: activePage === totalPages ? 'not-allowed' : 'pointer',
+                opacity: activePage === totalPages ? 0.5 : 1,
+                fontSize: '13px',
+                fontWeight: '500'
+              }}
+            >
+              ›
+            </button>
+          </div>
+
+          {/* Right dropdown page limit selector */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <select
+              value={pageSize}
+              onChange={(e) => {
+                setPageSize(Number(e.target.value));
+                setCurrentPage(1);
+              }}
+              style={{
+                padding: '6px 12px',
+                border: '1px solid #e2e8f0',
+                borderRadius: '6px',
+                fontSize: '13px',
+                background: '#fff',
+                cursor: 'pointer',
+                outline: 'none',
+                color: '#475569'
+              }}
+            >
+              <option value={10}>10 per page</option>
+              <option value={25}>25 per page</option>
+              <option value={50}>50 per page</option>
+            </select>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
