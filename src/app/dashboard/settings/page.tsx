@@ -10,6 +10,9 @@ export default function SettingsPage() {
   const [msg, setMsg] = useState('');
   const [currentUserRole, setCurrentUserRole] = useState('agent');
   const [showPasswords, setShowPasswords] = useState<Record<string, boolean>>({});
+  
+  // Track open 3-dots action menu by User ID
+  const [activeMenuId, setActiveMenuId] = useState<string | null>(null);
 
   const fetchUsers = () => {
     fetch('/api/users')
@@ -28,6 +31,11 @@ export default function SettingsPage() {
       .then(d => {
         if(d?.user) setCurrentUserRole(d.user.role);
       });
+
+    // Close 3-dots menu on window click
+    const handleCloseMenus = () => setActiveMenuId(null);
+    window.addEventListener('click', handleCloseMenus);
+    return () => window.removeEventListener('click', handleCloseMenus);
   }, []);
 
   const handleDelete = async (id: string) => {
@@ -39,8 +47,22 @@ export default function SettingsPage() {
   const handleChangePassword = async (id: string) => {
     const newPass = prompt('Enter new password for this user:');
     if (!newPass) return;
-    await fetch(`/api/users/${id}`, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ password: newPass }) });
+    await fetch(`/api/users/${id}`, { 
+      method: 'PUT', 
+      headers: { 'Content-Type': 'application/json' }, 
+      body: JSON.stringify({ password: newPass }) 
+    });
     alert('Password updated successfully');
+    fetchUsers();
+  };
+
+  const handleToggleStatus = async (id: string, newActiveState: boolean) => {
+    await fetch(`/api/users/${id}`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ isActive: newActiveState })
+    });
+    fetchUsers();
   };
 
   const togglePassword = (id: string) => {
@@ -130,8 +152,8 @@ export default function SettingsPage() {
         </div>
       )}
 
-      {/* Desktop view (Table layout stays as it is) */}
-      <div className="hidden md:block" style={{ background: '#fff', borderRadius: '12px', boxShadow: '0 1px 3px rgba(0,0,0,0.08)', overflow: 'hidden' }}>
+      {/* Desktop view (Table layout stays clean with standardized 3-dots action dropdown menus!) */}
+      <div className="hidden md:block" style={{ background: '#fff', borderRadius: '12px', boxShadow: '0 1px 3px rgba(0,0,0,0.08)', overflow: 'visible' }}>
         {loading ? <div style={{ padding: '40px', textAlign: 'center', color: '#94a3b8' }}>Loading...</div> : (
           <table style={{ width: '100%', borderCollapse: 'collapse' }}>
             <thead>
@@ -163,7 +185,7 @@ export default function SettingsPage() {
                           {showPasswords[u._id] ? (u.visiblePassword || 'hidden') : '••••••••'}
                         </span>
                         {u.visiblePassword && (
-                          <button onClick={() => togglePassword(u._id)} style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: '14px', padding: '2px 4px' }} title="Toggle Password">
+                          <button onClick={(ev) => { ev.stopPropagation(); togglePassword(u._id); }} style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: '14px', padding: '2px 4px' }} title="Toggle Password">
                             {showPasswords[u._id] ? '🙈' : '👁️'}
                           </button>
                         )}
@@ -171,11 +193,100 @@ export default function SettingsPage() {
                     </td>
                   )}
                   {currentUserRole === 'admin' && (
-                    <td style={{ padding: '12px 16px' }}>
-                      <div style={{ display: 'flex', gap: '8px' }}>
-                        <button onClick={() => handleChangePassword(u._id)} style={{ padding: '4px 10px', background: '#f1f5f9', border: 'none', borderRadius: '4px', fontSize: '12px', cursor: 'pointer', fontWeight: '500' }}>Change Pass</button>
-                        <button onClick={() => handleDelete(u._id)} style={{ padding: '4px 10px', background: '#fef2f2', color: '#dc2626', border: 'none', borderRadius: '4px', fontSize: '12px', cursor: 'pointer' }}>Delete</button>
-                      </div>
+                    <td style={{ padding: '12px 16px', position: 'relative' }}>
+                      {/* Standardized 3-dots Menu trigger on Web */}
+                      <button 
+                        onClick={(ev) => {
+                          ev.stopPropagation();
+                          setActiveMenuId(activeMenuId === u._id ? null : u._id);
+                        }}
+                        style={{
+                          background: 'none',
+                          border: 'none',
+                          fontSize: '20px',
+                          fontWeight: 'bold',
+                          color: '#94a3b8',
+                          cursor: 'pointer',
+                          padding: '4px 8px'
+                        }}
+                      >
+                        ⋮
+                      </button>
+
+                      {/* Dropdown menu block */}
+                      {activeMenuId === u._id && (
+                        <div 
+                          onClick={(ev) => ev.stopPropagation()}
+                          style={{
+                            position: 'absolute',
+                            right: '16px',
+                            top: '40px',
+                            background: '#fff',
+                            border: '1px solid #e2e8f0',
+                            borderRadius: '8px',
+                            boxShadow: '0 4px 6px -1px rgba(0,0,0,0.1), 0 2px 4px -1px rgba(0,0,0,0.06)',
+                            zIndex: 100,
+                            display: 'flex',
+                            flexDirection: 'column',
+                            padding: '4px',
+                            minWidth: '140px'
+                          }}
+                        >
+                          {/* Toggle Active/Inactive */}
+                          <button
+                            onClick={() => handleToggleStatus(u._id, !u.isActive)}
+                            style={{
+                              padding: '8px 12px',
+                              textAlign: 'left',
+                              background: 'none',
+                              border: 'none',
+                              fontSize: '12px',
+                              fontWeight: '600',
+                              color: u.isActive ? '#d97706' : '#16a34a',
+                              cursor: 'pointer',
+                              borderRadius: '4px'
+                            }}
+                          >
+                            {u.isActive ? '⚠️ Inactive (Temp)' : '🟢 Active User'}
+                          </button>
+                          
+                          {/* Change password */}
+                          <button
+                            onClick={() => { handleChangePassword(u._id); setActiveMenuId(null); }}
+                            style={{
+                              padding: '8px 12px',
+                              textAlign: 'left',
+                              background: 'none',
+                              border: 'none',
+                              fontSize: '12px',
+                              fontWeight: '600',
+                              color: '#475569',
+                              cursor: 'pointer',
+                              borderRadius: '4px'
+                            }}
+                          >
+                            🔒 Change Pass
+                          </button>
+
+                          {/* Delete */}
+                          <button
+                            onClick={() => { handleDelete(u._id); setActiveMenuId(null); }}
+                            style={{
+                              padding: '8px 12px',
+                              textAlign: 'left',
+                              background: 'none',
+                              border: 'none',
+                              fontSize: '12px',
+                              fontWeight: '600',
+                              color: '#dc2626',
+                              cursor: 'pointer',
+                              borderRadius: '4px'
+                            }}
+                          >
+                            🗑️ Delete Staff
+                          </button>
+                        </div>
+                      )}
                     </td>
                   )}
                 </tr>
@@ -185,7 +296,7 @@ export default function SettingsPage() {
         )}
       </div>
 
-      {/* Mobile view (EXACTLY matching the user's uploaded reference screenshot!) */}
+      {/* Mobile view (EXACTLY matching the user's uploaded reference screenshot with interactive 3-dot dropdown!) */}
       <div className="block md:hidden">
         {loading ? <div style={{ padding: '40px', textAlign: 'center', color: '#94a3b8' }}>Loading...</div> : (
           <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
@@ -201,7 +312,8 @@ export default function SettingsPage() {
                     borderRadius: '12px',
                     border: '1px solid #e2e8f0',
                     padding: '16px',
-                    boxShadow: '0 1px 3px rgba(0,0,0,0.05)'
+                    boxShadow: '0 1px 3px rgba(0,0,0,0.05)',
+                    position: 'relative'
                   }}
                 >
                   {/* Top Row: Avatar, Name, Email, Status, and Three Dots Menu */}
@@ -256,8 +368,89 @@ export default function SettingsPage() {
                       </div>
                     </div>
 
-                    {/* Three Dots Icon */}
-                    <span style={{ fontSize: '20px', color: '#94a3b8', cursor: 'pointer' }}>⋮</span>
+                    {/* Three Dots Icon with dropdown on Mobile */}
+                    <div style={{ position: 'relative' }}>
+                      <button 
+                        onClick={(ev) => { ev.stopPropagation(); setActiveMenuId(activeMenuId === u._id ? null : u._id); }}
+                        style={{ background: 'none', border: 'none', fontSize: '20px', color: '#94a3b8', cursor: 'pointer', padding: '4px' }}
+                      >
+                        ⋮
+                      </button>
+
+                      {activeMenuId === u._id && (
+                        <div 
+                          onClick={(ev) => ev.stopPropagation()}
+                          style={{
+                            position: 'absolute',
+                            right: '0',
+                            top: '30px',
+                            background: '#fff',
+                            border: '1px solid #e2e8f0',
+                            borderRadius: '8px',
+                            boxShadow: '0 4px 6px -1px rgba(0,0,0,0.1), 0 2px 4px -1px rgba(0,0,0,0.06)',
+                            zIndex: 100,
+                            display: 'flex',
+                            flexDirection: 'column',
+                            padding: '4px',
+                            minWidth: '140px'
+                          }}
+                        >
+                          {/* Toggle Active/Inactive */}
+                          <button
+                            onClick={() => handleToggleStatus(u._id, !u.isActive)}
+                            style={{
+                              padding: '8px 12px',
+                              textAlign: 'left',
+                              background: 'none',
+                              border: 'none',
+                              fontSize: '12px',
+                              fontWeight: '600',
+                              color: u.isActive ? '#d97706' : '#16a34a',
+                              cursor: 'pointer',
+                              borderRadius: '4px'
+                            }}
+                          >
+                            {u.isActive ? '⚠️ Inactive (Temp)' : '🟢 Active User'}
+                          </button>
+                          
+                          {/* Change password */}
+                          <button
+                            onClick={() => { handleChangePassword(u._id); setActiveMenuId(null); }}
+                            style={{
+                              padding: '8px 12px',
+                              textAlign: 'left',
+                              background: 'none',
+                              border: 'none',
+                              fontSize: '12px',
+                              fontWeight: '600',
+                              color: '#475569',
+                              cursor: 'pointer',
+                              borderRadius: '4px'
+                            }}
+                          >
+                            🔒 Change Pass
+                          </button>
+
+                          {/* Delete */}
+                          <button
+                            onClick={() => { handleDelete(u._id); setActiveMenuId(null); }}
+                            style={{
+                              padding: '8px 12px',
+                              textAlign: 'left',
+                              background: 'none',
+                              border: 'none',
+                              fontSize: '12px',
+                              fontWeight: '600',
+                              color: '#dc2626',
+                              cursor: 'pointer',
+                              borderRadius: '4px'
+                            }}
+                          >
+                            🗑️ Delete Staff
+                          </button>
+                        </div>
+                      )}
+                    </div>
                   </div>
 
                   {/* Divider */}
@@ -290,7 +483,7 @@ export default function SettingsPage() {
                           </span>
                           {u.visiblePassword && (
                             <button 
-                              onClick={() => togglePassword(u._id)} 
+                              onClick={(ev) => { ev.stopPropagation(); togglePassword(u._id); }} 
                               style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: '14px', padding: '2px' }}
                               title="Toggle Password"
                             >
@@ -303,52 +496,14 @@ export default function SettingsPage() {
                       )}
                     </div>
 
-                    {/* Col 3: Actions (Change Pass & Delete) */}
+                    {/* Col 3: Actions (Quick status tag indicator) */}
                     <div>
                       <div style={{ fontSize: '10px', color: '#94a3b8', fontWeight: '700', textTransform: 'uppercase', marginBottom: '4px' }}>
                         Actions
                       </div>
-                      {currentUserRole === 'admin' ? (
-                        <div style={{ display: 'flex', gap: '6px' }}>
-                          <button 
-                            onClick={() => handleChangePassword(u._id)} 
-                            style={{ 
-                              padding: '6px 8px', 
-                              background: '#f1f5f9', 
-                              border: 'none', 
-                              borderRadius: '6px', 
-                              fontSize: '11px', 
-                              color: '#475569', 
-                              fontWeight: '600', 
-                              cursor: 'pointer',
-                              flex: 1,
-                              whiteSpace: 'nowrap',
-                              textAlign: 'center'
-                            }}
-                          >
-                            Change Pass
-                          </button>
-                          <button 
-                            onClick={() => handleDelete(u._id)} 
-                            style={{ 
-                              padding: '6px 8px', 
-                              background: '#fef2f2', 
-                              color: '#dc2626', 
-                              border: 'none', 
-                              borderRadius: '6px', 
-                              fontSize: '11px', 
-                              fontWeight: '600', 
-                              cursor: 'pointer',
-                              flex: 1,
-                              textAlign: 'center'
-                            }}
-                          >
-                            Delete
-                          </button>
-                        </div>
-                      ) : (
-                        <span style={{ color: '#94a3b8', fontSize: '12px' }}>No Access</span>
-                      )}
+                      <div style={{ fontSize: '12px', fontWeight: '600', color: u.isActive ? '#16a34a' : '#ef4444' }}>
+                        {u.isActive ? '🟢 Click ⋮ to Inactive' : '🔴 Click ⋮ to Active'}
+                      </div>
                     </div>
                   </div>
                 </div>

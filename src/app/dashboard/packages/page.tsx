@@ -13,14 +13,33 @@ export default function PackagesPage() {
     name: '', destinations: '', duration: '', price: '', maxGroupSize: '50', description: '', inclusions: '', exclusions: '', isActive: true,
   });
 
+  // Zoom Field States for mobile ratio typing convenience
+  const [activeZoomField, setActiveZoomField] = useState<'description' | 'inclusions' | 'exclusions' | null>(null);
+  const [zoomValue, setZoomValue] = useState('');
+
+  // Track expanded package details
+  const [expandedPkgId, setExpandedPkgId] = useState<string | null>(null);
+
   const fetchPackages = () => {
-    fetch('/api/packages').then(r => r.json()).then(d => { setPackages(Array.isArray(d) ? d : []); setLoading(false); }).catch(() => setLoading(false));
-  };
-  const fetchEnquiries = () => {
-    fetch('/api/enquiries').then(r => r.json()).then(d => setEnquiries(Array.isArray(d) ? d : []));
+    fetch('/api/packages')
+      .then(r => r.json())
+      .then(d => { 
+        setPackages(Array.isArray(d) ? d : []); 
+        setLoading(false); 
+      })
+      .catch(() => setLoading(false));
   };
 
-  useEffect(() => { fetchPackages(); fetchEnquiries(); }, []);
+  const fetchEnquiries = () => {
+    fetch('/api/enquiries')
+      .then(r => r.json())
+      .then(d => setEnquiries(Array.isArray(d) ? d : []));
+  };
+
+  useEffect(() => { 
+    fetchPackages(); 
+    fetchEnquiries(); 
+  }, []);
 
   const resetForm = () => {
     setForm({ name: '', destinations: '', duration: '', price: '', maxGroupSize: '50', description: '', inclusions: '', exclusions: '', isActive: true });
@@ -30,9 +49,15 @@ export default function PackagesPage() {
 
   const editPackage = (pkg: any) => {
     setForm({
-      name: pkg.name, destinations: pkg.destinations?.join(', ') || '', duration: pkg.duration,
-      price: String(pkg.price), maxGroupSize: String(pkg.maxGroupSize || 50), description: pkg.description || '',
-      inclusions: pkg.inclusions?.join(', ') || '', exclusions: pkg.exclusions?.join(', ') || '', isActive: pkg.isActive,
+      name: pkg.name, 
+      destinations: pkg.destinations?.join(', ') || '', 
+      duration: pkg.duration,
+      price: String(pkg.price), 
+      maxGroupSize: String(pkg.maxGroupSize || 50), 
+      description: pkg.description || '',
+      inclusions: pkg.inclusions?.join(', ') || '', 
+      exclusions: pkg.exclusions?.join(', ') || '', 
+      isActive: pkg.isActive,
     });
     setEditId(pkg._id);
     setShowForm(true);
@@ -81,6 +106,16 @@ export default function PackagesPage() {
     fetchPackages();
   };
 
+  // Trigger mobile typing zoom box helper
+  const handleFieldFocus = (field: 'description' | 'inclusions' | 'exclusions') => {
+    if (window.innerWidth < 768) {
+      setActiveZoomField(field);
+      setZoomValue(form[field] || '');
+      // Blur immediate keyboard focus on the main underlying screen
+      (document.activeElement as HTMLElement)?.blur();
+    }
+  };
+
   const filtered = packages.filter(p => {
     if (searchQuery) {
       const q = searchQuery.toLowerCase();
@@ -93,6 +128,7 @@ export default function PackagesPage() {
 
   return (
     <div>
+      {/* Header and Controls */}
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px', flexWrap: 'wrap', gap: '12px' }}>
         <div>
           <h1 style={{ fontSize: '24px', fontWeight: '700', color: '#0f172a', margin: 0 }}>Yatra Packages</h1>
@@ -144,6 +180,7 @@ export default function PackagesPage() {
         />
       </div>
 
+      {/* Package Form (Desktop/Mobile Inputs) */}
       {showForm && (
         <div style={{ background: '#fff', borderRadius: '12px', padding: '24px', marginBottom: '24px', boxShadow: '0 1px 3px rgba(0,0,0,0.08)' }}>
           <h3 style={{ margin: '0 0 16px', fontSize: '16px', fontWeight: '600' }}>{editId ? 'Edit Package' : 'Add New Package'}</h3>
@@ -153,9 +190,33 @@ export default function PackagesPage() {
             <input placeholder="Price (₹) *" required type="number" value={form.price} onChange={e => setForm({ ...form, price: e.target.value })} style={inputStyle} />
             <input placeholder="Max Group Size" type="number" value={form.maxGroupSize} onChange={e => setForm({ ...form, maxGroupSize: e.target.value })} style={inputStyle} />
             <input placeholder="Destinations (comma separated)" value={form.destinations} onChange={e => setForm({ ...form, destinations: e.target.value })} style={{ ...inputStyle, gridColumn: '1 / -1' }} />
-            <textarea placeholder="Description" value={form.description} onChange={e => setForm({ ...form, description: e.target.value })} rows={3} style={{ ...inputStyle, gridColumn: '1 / -1', resize: 'vertical' }} />
-            <input placeholder="Inclusions (comma separated)" value={form.inclusions} onChange={e => setForm({ ...form, inclusions: e.target.value })} style={inputStyle} />
-            <input placeholder="Exclusions (comma separated)" value={form.exclusions} onChange={e => setForm({ ...form, exclusions: e.target.value })} style={inputStyle} />
+            
+            {/* Description Textarea with Mobile-zoom Trigger support */}
+            <textarea 
+              placeholder="Description (Tap on mobile to open full zoom helper)" 
+              value={form.description} 
+              onChange={e => setForm({ ...form, description: e.target.value })} 
+              onFocus={() => handleFieldFocus('description')}
+              rows={3} 
+              style={{ ...inputStyle, gridColumn: '1 / -1', resize: 'vertical' }} 
+            />
+            
+            {/* Inclusions & Exclusions Inputs with Mobile-zoom Trigger support */}
+            <input 
+              placeholder="Inclusions (comma separated - Tap on mobile to zoom)" 
+              value={form.inclusions} 
+              onChange={e => setForm({ ...form, inclusions: e.target.value })} 
+              onFocus={() => handleFieldFocus('inclusions')}
+              style={inputStyle} 
+            />
+            <input 
+              placeholder="Exclusions (comma separated - Tap on mobile to zoom)" 
+              value={form.exclusions} 
+              onChange={e => setForm({ ...form, exclusions: e.target.value })} 
+              onFocus={() => handleFieldFocus('exclusions')}
+              style={inputStyle} 
+            />
+            
             <div style={{ gridColumn: '1 / -1', display: 'flex', gap: '8px', justifyContent: 'flex-end' }}>
               <button type="button" onClick={resetForm} style={{ padding: '8px 16px', background: '#f1f5f9', border: 'none', borderRadius: '6px', cursor: 'pointer' }}>Cancel</button>
               <button type="submit" style={{ padding: '8px 16px', background: '#f97316', color: '#fff', border: 'none', borderRadius: '6px', fontWeight: '600', cursor: 'pointer' }}>{editId ? 'Update' : 'Save'}</button>
@@ -164,6 +225,7 @@ export default function PackagesPage() {
         </div>
       )}
 
+      {/* Package Cards Grid */}
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(340px, 1fr))', gap: '16px' }}>
         {loading ? <div style={{ padding: '40px', textAlign: 'center', color: '#94a3b8', gridColumn: '1 / -1' }}>Loading...</div> :
         filtered.length === 0 ? <div style={{ padding: '40px', textAlign: 'center', color: '#94a3b8', gridColumn: '1 / -1' }}>No packages found.</div> :
@@ -181,7 +243,9 @@ export default function PackagesPage() {
                   color: pkg.isActive ? '#166534' : '#991b1b',
                 }}>{pkg.isActive ? 'Active' : 'Inactive'}</span>
               </div>
+              
               <div style={{ fontSize: '24px', fontWeight: '700', color: '#0f172a', marginBottom: '12px' }}>₹{pkg.price?.toLocaleString()}</div>
+              
               {pkg.destinations?.length > 0 && (
                 <div style={{ display: 'flex', flexWrap: 'wrap', gap: '4px', marginBottom: '12px' }}>
                   {pkg.destinations.map((d: string, i: number) => (
@@ -189,7 +253,85 @@ export default function PackagesPage() {
                   ))}
                 </div>
               )}
-              {pkg.description && <p style={{ margin: '0 0 12px', fontSize: '13px', color: '#64748b', lineHeight: '1.5' }}>{pkg.description.substring(0, 100)}{pkg.description.length > 100 ? '...' : ''}</p>}
+
+              {/* Click to expand description, inclusions & exclusions standard details! */}
+              <div 
+                onClick={() => setExpandedPkgId(expandedPkgId === pkg._id ? null : pkg._id)}
+                style={{
+                  background: '#f8fafc',
+                  border: '1px solid #f1f5f9',
+                  borderRadius: '10px',
+                  padding: '12px',
+                  marginBottom: '16px',
+                  cursor: 'pointer',
+                  transition: 'all 0.2s'
+                }}
+              >
+                {expandedPkgId === pkg._id ? (
+                  <div>
+                    {pkg.description && (
+                      <div style={{ marginBottom: '12px' }}>
+                        <div style={{ fontSize: '11px', fontWeight: '700', color: '#475569', textTransform: 'uppercase', marginBottom: '4px' }}>Description</div>
+                        <p style={{ margin: 0, fontSize: '13px', color: '#334155', lineHeight: '1.5', whiteSpace: 'pre-wrap' }}>
+                          {pkg.description}
+                        </p>
+                      </div>
+                    )}
+
+                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', borderTop: '1px solid #e2e8f0', paddingTop: '10px' }}>
+                      {/* Inclusions */}
+                      <div>
+                        <div style={{ fontSize: '11px', fontWeight: '700', color: '#16a34a', textTransform: 'uppercase', marginBottom: '6px' }}>Inclusions</div>
+                        {pkg.inclusions && pkg.inclusions.length > 0 ? (
+                          <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                            {pkg.inclusions.map((inc: string, idx: number) => (
+                              <div key={idx} style={{ fontSize: '12px', color: '#15803d', display: 'flex', gap: '4px', alignItems: 'start' }}>
+                                <span style={{ fontWeight: 'bold' }}>✓</span>
+                                <span>{inc}</span>
+                              </div>
+                            ))}
+                          </div>
+                        ) : <div style={{ fontSize: '11px', color: '#94a3b8' }}>None specified</div>}
+                      </div>
+
+                      {/* Exclusions */}
+                      <div>
+                        <div style={{ fontSize: '11px', fontWeight: '700', color: '#dc2626', textTransform: 'uppercase', marginBottom: '6px' }}>Exclusions</div>
+                        {pkg.exclusions && pkg.exclusions.length > 0 ? (
+                          <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                            {pkg.exclusions.map((exc: string, idx: number) => (
+                              <div key={idx} style={{ fontSize: '12px', color: '#b91c1c', display: 'flex', gap: '4px', alignItems: 'start' }}>
+                                <span style={{ fontWeight: 'bold' }}>×</span>
+                                <span>{exc}</span>
+                              </div>
+                            ))}
+                          </div>
+                        ) : <div style={{ fontSize: '11px', color: '#94a3b8' }}>None specified</div>}
+                      </div>
+                    </div>
+                    
+                    <div style={{ textAlign: 'center', fontSize: '11px', color: '#f97316', fontWeight: '700', marginTop: '12px', borderTop: '1px solid #e2e8f0', paddingTop: '8px' }}>
+                      Click to collapse details ▴
+                    </div>
+                  </div>
+                ) : (
+                  <div>
+                    {pkg.description ? (
+                      <p style={{ margin: '0 0 8px', fontSize: '13px', color: '#64748b', lineHeight: '1.5' }}>
+                        {pkg.description.substring(0, 85)}{pkg.description.length > 85 ? '...' : ''}
+                      </p>
+                    ) : (
+                      <p style={{ margin: '0 0 8px', fontSize: '13px', color: '#94a3b8', fontStyle: 'italic' }}>
+                        No description provided.
+                      </p>
+                    )}
+                    <div style={{ fontSize: '11px', color: '#2563eb', fontWeight: '700', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                      <span>📂</span> Click to view inclusions, exclusions & details ▾
+                    </div>
+                  </div>
+                )}
+              </div>
+
               <div style={{ display: 'flex', gap: '8px', marginBottom: '16px' }}>
                 <button onClick={() => editPackage(pkg)} style={{ padding: '6px 14px', background: '#f1f5f9', border: 'none', borderRadius: '6px', fontSize: '13px', cursor: 'pointer', fontWeight: '500' }}>Edit</button>
                 <button onClick={() => handleDelete(pkg._id)} style={{ padding: '6px 14px', background: '#fef2f2', color: '#dc2626', border: 'none', borderRadius: '6px', fontSize: '13px', cursor: 'pointer' }}>Delete</button>
@@ -221,6 +363,144 @@ export default function PackagesPage() {
           </div>
         ))}
       </div>
+
+      {/* Typing Zoom Box Modal overlay for description, inclusions & exclusions on Mobile size screen ratios */}
+      {activeZoomField && (
+        <div style={{
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          background: 'rgba(15, 23, 42, 0.65)',
+          backdropFilter: 'blur(4px)',
+          zIndex: 1000,
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          padding: '20px'
+        }}>
+          <div style={{
+            background: '#fff',
+            borderRadius: '16px',
+            width: '100%',
+            maxWidth: '500px',
+            boxShadow: '0 20px 25px -5px rgba(0,0,0,0.1), 0 10px 10px -5px rgba(0,0,0,0.04)',
+            overflow: 'hidden',
+            display: 'flex',
+            flexDirection: 'column'
+          }}>
+            {/* Modal Header */}
+            <div style={{
+              display: 'flex',
+              justifyContent: 'space-between',
+              alignItems: 'center',
+              padding: '16px 20px',
+              borderBottom: '1px solid #f1f5f9',
+              background: '#f8fafc'
+            }}>
+              <span style={{ fontSize: '15px', fontWeight: '700', color: '#0f172a', textTransform: 'capitalize' }}>
+                ✍️ Type {activeZoomField}
+              </span>
+              <button
+                type="button"
+                onClick={() => {
+                  setForm(prev => ({ ...prev, [activeZoomField]: zoomValue }));
+                  setActiveZoomField(null);
+                }}
+                style={{
+                  background: '#dcfce7',
+                  color: '#15803d',
+                  border: '1px solid #bbf7d0',
+                  borderRadius: '50%',
+                  width: '36px',
+                  height: '36px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  fontSize: '18px',
+                  fontWeight: 'bold',
+                  cursor: 'pointer',
+                  boxShadow: '0 2px 4px rgba(0,0,0,0.05)'
+                }}
+                title="Confirm & Save"
+              >
+                ✓
+              </button>
+            </div>
+
+            {/* Modal Body */}
+            <div style={{ padding: '20px' }}>
+              <p style={{ margin: '0 0 12px', fontSize: '13px', color: '#64748b' }}>
+                Write your complete text for {activeZoomField} below (comma separated for inclusions/exclusions):
+              </p>
+              <textarea
+                value={zoomValue}
+                onChange={(e) => setZoomValue(e.target.value)}
+                rows={8}
+                autoFocus
+                style={{
+                  width: '100%',
+                  padding: '12px',
+                  border: '1px solid #cbd5e1',
+                  borderRadius: '8px',
+                  fontSize: '14px',
+                  outline: 'none',
+                  boxSizing: 'border-box',
+                  resize: 'none',
+                  fontFamily: 'inherit'
+                }}
+              />
+            </div>
+
+            {/* Modal Footer */}
+            <div style={{
+              display: 'flex',
+              justifyContent: 'flex-end',
+              gap: '8px',
+              padding: '12px 20px',
+              background: '#f8fafc',
+              borderTop: '1px solid #f1f5f9'
+            }}>
+              <button
+                type="button"
+                onClick={() => setActiveZoomField(null)}
+                style={{
+                  padding: '8px 16px',
+                  background: '#f1f5f9',
+                  border: 'none',
+                  borderRadius: '6px',
+                  fontSize: '13px',
+                  color: '#475569',
+                  fontWeight: '600',
+                  cursor: 'pointer'
+                }}
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  setForm(prev => ({ ...prev, [activeZoomField]: zoomValue }));
+                  setActiveZoomField(null);
+                }}
+                style={{
+                  padding: '8px 16px',
+                  background: '#f97316',
+                  color: '#fff',
+                  border: 'none',
+                  borderRadius: '6px',
+                  fontSize: '13px',
+                  fontWeight: '600',
+                  cursor: 'pointer'
+                }}
+              >
+                Confirm ✓
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
