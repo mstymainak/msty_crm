@@ -11,6 +11,7 @@ const menuItems = [
   { label: 'Packages', href: '/dashboard/packages', icon: '🛕' },
   { label: 'Bookings', href: '/dashboard/bookings', icon: '📋' },
   { label: 'Staff', href: '/dashboard/settings', icon: '⚙️' },
+  { label: 'Recycle Bin', href: '/dashboard/recycle-bin', icon: '🗑️' },
 ];
 
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {

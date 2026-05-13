@@ -52,30 +52,59 @@ export default function DashboardPage() {
         <p style={{ color: '#64748b', margin: '4px 0 0', fontSize: '14px' }}>Welcome to Mahesh Sharma Tirth Yatra CRM</p>
       </div>
 
+      <style>{`
+        .stat-card-link {
+          text-decoration: none;
+          color: inherit;
+          display: block;
+          transition: transform 0.2s ease, box-shadow 0.2s ease;
+        }
+        .stat-card-link:hover {
+          transform: translateY(-4px);
+        }
+        .stat-card-link:hover .stat-card {
+          box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1), 0 4px 6px -2px rgba(0,0,0,0.05) !important;
+        }
+      `}</style>
+
       {/* Stats Grid */}
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '16px', marginBottom: '32px' }}>
-        <div style={cardStyle('#f97316')}>
-          <div style={{ fontSize: '13px', color: '#64748b', fontWeight: '500' }}>Total Enquiries</div>
-          <div style={{ fontSize: '32px', fontWeight: '700', color: '#0f172a' }}>{s.totalEnquiries}</div>
-          <div style={{ fontSize: '12px', color: '#f97316', marginTop: '4px' }}>{s.newEnquiries} new</div>
-        </div>
-        <div style={cardStyle('#10b981')}>
-          <div style={{ fontSize: '13px', color: '#64748b', fontWeight: '500' }}>Total Customers</div>
-          <div style={{ fontSize: '32px', fontWeight: '700', color: '#0f172a' }}>{s.totalCustomers}</div>
-        </div>
-        <div style={cardStyle('#8b5cf6')}>
-          <div style={{ fontSize: '13px', color: '#64748b', fontWeight: '500' }}>Total Bookings</div>
-          <div style={{ fontSize: '32px', fontWeight: '700', color: '#0f172a' }}>{s.totalBookings}</div>
-        </div>
-        <div style={cardStyle('#f59e0b')}>
-          <div style={{ fontSize: '13px', color: '#64748b', fontWeight: '500' }}>Active Packages</div>
-          <div style={{ fontSize: '32px', fontWeight: '700', color: '#0f172a' }}>{s.totalPackages}</div>
-        </div>
-        <div style={cardStyle('#10b981')}>
-          <div style={{ fontSize: '13px', color: '#64748b', fontWeight: '500' }}>Revenue</div>
-          <div style={{ fontSize: '32px', fontWeight: '700', color: '#0f172a' }}>₹{(s.revenue || 0).toLocaleString()}</div>
-          <div style={{ fontSize: '12px', color: '#10b981', marginTop: '4px' }}>₹{(s.collected || 0).toLocaleString()} collected</div>
-        </div>
+        <Link href="/dashboard/enquiries" className="stat-card-link">
+          <div className="stat-card" style={cardStyle('#f97316')}>
+            <div style={{ fontSize: '13px', color: '#64748b', fontWeight: '500' }}>Total Enquiries</div>
+            <div style={{ fontSize: '32px', fontWeight: '700', color: '#0f172a' }}>{s.totalEnquiries}</div>
+            <div style={{ fontSize: '12px', color: '#f97316', marginTop: '4px' }}>{s.newEnquiries} new</div>
+          </div>
+        </Link>
+
+        <Link href="/dashboard/customers" className="stat-card-link">
+          <div className="stat-card" style={cardStyle('#10b981')}>
+            <div style={{ fontSize: '13px', color: '#64748b', fontWeight: '500' }}>Total Customers</div>
+            <div style={{ fontSize: '32px', fontWeight: '700', color: '#0f172a' }}>{s.totalCustomers}</div>
+          </div>
+        </Link>
+
+        <Link href="/dashboard/bookings" className="stat-card-link">
+          <div className="stat-card" style={cardStyle('#8b5cf6')}>
+            <div style={{ fontSize: '13px', color: '#64748b', fontWeight: '500' }}>Total Bookings</div>
+            <div style={{ fontSize: '32px', fontWeight: '700', color: '#0f172a' }}>{s.totalBookings}</div>
+          </div>
+        </Link>
+
+        <Link href="/dashboard/packages" className="stat-card-link">
+          <div className="stat-card" style={cardStyle('#f59e0b')}>
+            <div style={{ fontSize: '13px', color: '#64748b', fontWeight: '500' }}>Active Packages</div>
+            <div style={{ fontSize: '32px', fontWeight: '700', color: '#0f172a' }}>{s.totalPackages}</div>
+          </div>
+        </Link>
+
+        <Link href="/dashboard/bookings" className="stat-card-link">
+          <div className="stat-card" style={cardStyle('#10b981')}>
+            <div style={{ fontSize: '13px', color: '#64748b', fontWeight: '500' }}>Revenue</div>
+            <div style={{ fontSize: '32px', fontWeight: '700', color: '#0f172a' }}>₹{(s.revenue || 0).toLocaleString()}</div>
+            <div style={{ fontSize: '12px', color: '#10b981', marginTop: '4px' }}>₹{(s.collected || 0).toLocaleString()} collected</div>
+          </div>
+        </Link>
       </div>
 
       {/* Recent Activity */}

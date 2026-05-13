@@ -9,20 +9,20 @@ export async function createEnquiry(data: any) {
 
 export async function getEnquiries() {
   await dbConnect();
-  return await Enquiry.find({}).populate('customer').sort({ createdAt: -1 });
+  return await Enquiry.find({ isDeleted: { $ne: true } }).populate('customer').sort({ createdAt: -1 });
 }
 
 export async function getEnquiryById(id: string) {
   await dbConnect();
-  return await Enquiry.findById(id).populate('customer');
+  return await Enquiry.findOne({ _id: id, isDeleted: { $ne: true } }).populate('customer');
 }
 
 export async function updateEnquiry(id: string, data: any) {
   await dbConnect();
-  return await Enquiry.findByIdAndUpdate(id, data, { new: true });
+  return await Enquiry.findOneAndUpdate({ _id: id, isDeleted: { $ne: true } }, data, { new: true });
 }
 
 export async function deleteEnquiry(id: string) {
   await dbConnect();
-  return await Enquiry.findByIdAndDelete(id);
+  return await Enquiry.findByIdAndUpdate(id, { isDeleted: true, deletedAt: new Date() }, { new: true });
 }
