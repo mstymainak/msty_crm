@@ -10,6 +10,12 @@ const EnquirySchema = new Schema({
   packageGroup: { type: String, default: null },
   adminNote: { type: String, default: '' },
   notes: [{ type: String }],
+  members: [{
+    name: { type: String, required: true },
+    phone: { type: String, default: '' },
+    relation: { type: String, default: '' },
+    age: { type: String, default: '' }
+  }],
   isDeleted: { type: Boolean, default: false },
   deletedAt: { type: Date, default: null },
   createdAt: { type: Date, default: Date.now },

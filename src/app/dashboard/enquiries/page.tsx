@@ -53,6 +53,11 @@ export default function EnquiriesPage() {
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const [deletingBulk, setDeletingBulk] = useState(false);
 
+  // Member Modal States for adding people/family members to an enquiry
+  const [memberModalEnquiry, setMemberModalEnquiry] = useState<any | null>(null);
+  const [newMemberForm, setNewMemberForm] = useState({ name: '', phone: '', relation: '', age: '' });
+  const [savingMember, setSavingMember] = useState(false);
+
   const fetchEnquiries = () => {
     fetch('/api/enquiries')
       .then(r => r.json())
@@ -139,12 +144,71 @@ export default function EnquiriesPage() {
     });
   };
 
-  // Reset pagination when filter changes
-  useEffect(() => {
-    setCurrentPage(1);
-  }, [statusFilter, sourceFilter, priorityFilter, packageFilter, searchQuery]);
+  // Add Member submit logic
+  const handleOpenAddMemberModal = (enquiry: any) => {
+    setMemberModalEnquiry(enquiry);
+    setNewMemberForm({ name: '', phone: '', relation: '', age: '' });
+  };
 
-  const filtered = enquiries.filter(e => {
+  const handleAddMemberSubmit = async () => {
+    if (!newMemberForm.name.trim()) {
+      alert('Please enter a full name.');
+      return;
+    }
+    setSavingMember(true);
+    try {
+      const updatedMembers = [...(memberModalEnquiry.members || []), newMemberForm];
+      const res = await fetch(`/api/enquiries/${memberModalEnquiry._id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ members: updatedMembers })
+      });
+      if (res.ok) {
+        const updatedEnquiry = await res.json();
+        setMemberModalEnquiry(updatedEnquiry);
+        setNewMemberForm({ name: '', phone: '', relation: '', age: '' });
+        fetchEnquiries();
+      } else {
+        alert('Failed to add member.');
+      }
+    } catch (e) {
+      console.error(e);
+      alert('Error adding member.');
+    } finally {
+      setSavingMember(false);
+    }
+  };
+
+  const handleRemoveMember = async (indexToRemove: number) => {
+    if (!confirm('Are you sure you want to remove this person?')) return;
+    try {
+      const updatedMembers = memberModalEnquiry.members.filter((_: any, idx: number) => idx !== indexToRemove);
+      const res = await fetch(`/api/enquiries/${memberModalEnquiry._id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ members: updatedMembers })
+      });
+      if (res.ok) {
+        const updatedEnquiry = await res.json();
+        setMemberModalEnquiry(updatedEnquiry);
+        fetchEnquiries();
+      } else {
+        alert('Failed to remove member.');
+      }
+    } catch (e) {
+      console.error(e);
+      alert('Error removing member.');
+    }
+  };
+
+  const getWhatsAppLink = (phone: string) => {
+    const clean = phone.replace(/\D/g, '');
+    const withCountry = clean.length === 10 ? `91${clean}` : clean;
+    return `https://wa.me/${withCountry}`;
+  };
+
+  // Filter logic
+  const filteredEnquiries = enquiries.filter(e => {
     if (statusFilter !== 'all' && e.status !== statusFilter) return false;
     if (sourceFilter !== 'all' && e.source !== sourceFilter) return false;
     if (priorityFilter !== 'all' && e.priority !== priorityFilter) return false;
@@ -157,49 +221,39 @@ export default function EnquiriesPage() {
     }
     if (searchQuery) {
       const q = searchQuery.toLowerCase();
-      const n = (e.customer?.name || '').toLowerCase();
-      const p = (e.customer?.phone || '').toLowerCase();
-      const em = (e.customer?.email || '').toLowerCase();
-      if (!n.includes(q) && !p.includes(q) && !em.includes(q)) return false;
+      const name = e.customer?.name?.toLowerCase() || '';
+      const phone = e.customer?.phone?.toLowerCase() || '';
+      const email = e.customer?.email?.toLowerCase() || '';
+      if (!name.includes(q) && !phone.includes(q) && !email.includes(q)) return false;
     }
     return true;
   });
 
-  // Pagination Calculations
-  const totalItems = filtered.length;
+  // Pagination calculations
+  const totalItems = filteredEnquiries.length;
   const totalPages = Math.ceil(totalItems / pageSize);
-  const activePage = Math.max(1, Math.min(currentPage, totalPages));
-
+  const activePage = Math.min(currentPage, totalPages || 1);
   const startIndex = (activePage - 1) * pageSize;
   const endIndex = Math.min(startIndex + pageSize, totalItems);
-  const paginatedEnquiries = filtered.slice(startIndex, endIndex);
+  const paginatedEnquiries = filteredEnquiries.slice(startIndex, endIndex);
 
   const toggleSelectAllPage = () => {
-    const pageIds = paginatedEnquiries.map(e => e._id);
+    const pageIds = paginatedEnquiries.map(item => item._id);
     const allSelected = pageIds.every(id => selectedIds.includes(id));
 
     if (allSelected) {
       setSelectedIds(prev => prev.filter(id => !pageIds.includes(id)));
     } else {
       setSelectedIds(prev => {
-        const unique = new Set([...prev, ...pageIds]);
-        return Array.from(unique);
+        const union = new Set([...prev, ...pageIds]);
+        return Array.from(union);
       });
     }
   };
 
-  const isAllPageSelected = paginatedEnquiries.length > 0 && paginatedEnquiries.map(e => e._id).every(id => selectedIds.includes(id));
+  const isAllPageSelected = paginatedEnquiries.length > 0 && paginatedEnquiries.map(item => item._id).every(id => selectedIds.includes(id));
 
-  const getWhatsAppLink = (phone: string) => {
-    const clean = phone.replace(/\D/g, '');
-    if (!clean) return '#';
-    if (clean.length === 10) {
-      return `https://wa.me/91${clean}`;
-    }
-    return `https://wa.me/${clean}`;
-  };
-
-  const selectStyle = { padding: '8px 12px', border: '1px solid #e2e8f0', borderRadius: '6px', fontSize: '13px', background: '#fff', cursor: 'pointer' };
+  const selectStyle = { padding: '8px 12px', border: '1px solid #e2e8f0', borderRadius: '6px', fontSize: '13px', background: '#fff', cursor: 'pointer', outline: 'none', color: '#475569' };
 
   return (
     <div>
@@ -290,7 +344,7 @@ export default function EnquiriesPage() {
         </select>
       </div>
 
-      {/* Multi-select Action Banner (Cancel button removed, sizes and styles adjusted) */}
+      {/* Multi-select Action Banner */}
       {isMultiSelect && (
         <div style={{
           display: 'flex',
@@ -381,7 +435,7 @@ export default function EnquiriesPage() {
                   >
                     <td style={{ padding: '12px 16px' }}>
                       <div style={{ fontSize: '14px', fontWeight: '600', color: '#0f172a' }}>{e.customer?.name || 'Unknown'}</div>
-                      <div style={{ fontSize: '12px', color: '#334155', fontWeight: '500', display: 'flex', alignItems: 'center' }}>
+                      <div style={{ fontSize: '12px', color: '#334155', fontWeight: '500', display: 'flex', alignItems: 'center', gap: '4px' }}>
                         {e.customer?.phone ? (
                           <>
                             <a 
@@ -404,6 +458,30 @@ export default function EnquiriesPage() {
                             </a>
                           </>
                         ) : ''}
+
+                        {/* ADD MEMBERS BUTTON ICON WITH COUNT BELOW IT */}
+                        <button 
+                          onClick={(ev) => { ev.stopPropagation(); handleOpenAddMemberModal(e); }}
+                          style={{
+                            background: '#ecfdf5',
+                            border: '1px solid #a7f3d0',
+                            borderRadius: '8px',
+                            cursor: 'pointer',
+                            display: 'inline-flex',
+                            alignItems: 'center',
+                            gap: '4px',
+                            padding: '3px 8px',
+                            marginLeft: '12px',
+                            verticalAlign: 'middle',
+                            color: '#047857',
+                            fontWeight: '600',
+                            fontSize: '11px'
+                          }}
+                          title="Add Family Member / Person"
+                        >
+                          <span>➕👤</span>
+                          <span>{e.members?.length || 0}</span>
+                        </button>
                       </div>
                     </td>
                     <td style={{ padding: '12px 16px', fontSize: '13px', color: '#1e293b', maxWidth: '250px' }}>
@@ -447,9 +525,9 @@ export default function EnquiriesPage() {
                     <td style={{ padding: '12px 16px' }}>
                       <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
                         <select
-                          value={e.package || ''}
-                          onChange={(ev) => updatePackage(e._id, ev.target.value)}
-                          style={{ padding: '4px 8px', fontSize: '12px', border: '1px solid #cbd5e1', borderRadius: '4px', background: '#fff', color: e.package ? '#0f172a' : '#94a3b8' }}
+                           value={e.package || ''}
+                           onChange={(ev) => updatePackage(e._id, ev.target.value)}
+                           style={{ padding: '4px 8px', fontSize: '12px', border: '1px solid #cbd5e1', borderRadius: '4px', background: '#fff', color: e.package ? '#0f172a' : '#94a3b8' }}
                         >
                           <option value="">No Package</option>
                           {packages.map(p => <option key={p._id} value={p._id}>{p.name}</option>)}
@@ -604,6 +682,30 @@ export default function EnquiriesPage() {
                               </a>
                             </span>
                           ) : ''}
+
+                          {/* ADD MEMBERS BUTTON ICON WITH COUNT BELOW IT (MOBILE) */}
+                          <button 
+                            onClick={(ev) => { ev.stopPropagation(); handleOpenAddMemberModal(e); }}
+                            style={{
+                              background: '#ecfdf5',
+                              border: '1px solid #a7f3d0',
+                              borderRadius: '6px',
+                              cursor: 'pointer',
+                              display: 'inline-flex',
+                              alignItems: 'center',
+                              gap: '4px',
+                              padding: '2px 6px',
+                              marginLeft: '12px',
+                              verticalAlign: 'middle',
+                              color: '#047857',
+                              fontWeight: '600',
+                              fontSize: '11px'
+                            }}
+                            title="Add Family Member / Person"
+                          >
+                            <span>➕👤</span>
+                            <span>{e.members?.length || 0}</span>
+                          </button>
                         </summary>
                         <div style={{ padding: '8px', background: '#fff', border: '1px solid #cbd5e1', borderRadius: '6px', marginTop: '6px' }}>
                           <div style={{ whiteSpace: 'pre-wrap', marginBottom: '8px', color: '#1e293b' }}>{e.message}</div>
@@ -654,24 +756,13 @@ export default function EnquiriesPage() {
                       </details>
                     </div>
 
-                    {/* Third Row: Status select, Priority select, Date / Time, Delete */}
-                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr auto auto', alignItems: 'center', gap: '10px' }}>
-                      <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
-                        <span style={{ fontSize: '10px', color: '#64748b', fontWeight: '600', textTransform: 'uppercase' }}>Status</span>
+                    {/* Status Select, Priority Select & Delete Button */}
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                      <div style={{ display: 'flex', gap: '6px' }}>
                         <select
                           value={e.status}
                           onChange={(ev) => updateStatus(e._id, ev.target.value)}
-                          style={{
-                            padding: '4px 8px',
-                            borderRadius: '6px',
-                            fontSize: '11px',
-                            fontWeight: '600',
-                            border: `1px solid ${sc.text}`,
-                            background: sc.bg,
-                            color: sc.text,
-                            cursor: 'pointer',
-                            outline: 'none'
-                          }}
+                          style={{ padding: '4px 8px', borderRadius: '6px', fontSize: '12px', fontWeight: '600', border: 'none', background: sc.bg, color: sc.text, cursor: 'pointer' }}
                         >
                           <option value="new">New</option>
                           <option value="contacted">Contacted</option>
@@ -679,24 +770,11 @@ export default function EnquiriesPage() {
                           <option value="booked">Booked</option>
                           <option value="lost">Lost</option>
                         </select>
-                      </div>
 
-                      <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
-                        <span style={{ fontSize: '10px', color: '#64748b', fontWeight: '600', textTransform: 'uppercase' }}>Priority</span>
                         <select
                           value={e.priority}
                           onChange={(ev) => updatePriority(e._id, ev.target.value)}
-                          style={{
-                            padding: '4px 8px',
-                            borderRadius: '6px',
-                            fontSize: '11px',
-                            fontWeight: '600',
-                            border: `1px solid ${pc.text}`,
-                            background: pc.bg,
-                            color: pc.text,
-                            cursor: 'pointer',
-                            outline: 'none'
-                          }}
+                          style={{ padding: '4px 8px', borderRadius: '6px', fontSize: '12px', fontWeight: '600', border: 'none', background: pc.bg, color: pc.text, cursor: 'pointer' }}
                         >
                           <option value="high">High</option>
                           <option value="medium">Medium</option>
@@ -704,30 +782,7 @@ export default function EnquiriesPage() {
                         </select>
                       </div>
 
-                      <div style={{ fontSize: '11px', color: '#475569', fontWeight: '500', textAlign: 'right', lineHeight: '1.3', paddingRight: '4px' }}>
-                        <div>{new Date(e.createdAt).toLocaleDateString()}</div>
-                        <div style={{ fontSize: '10px', marginTop: '2px', color: '#64748b' }}>
-                          {new Date(e.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                        </div>
-                      </div>
-
-                      <div>
-                        <button
-                          onClick={() => handleDelete(e._id)}
-                          style={{
-                            padding: '6px 8px',
-                            background: '#fef2f2',
-                            border: '1px solid #fee2e2',
-                            borderRadius: '6px',
-                            cursor: 'pointer',
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'center'
-                          }}
-                        >
-                          <span style={{ color: '#dc2626', fontSize: '14px' }}>🗑️</span>
-                        </button>
-                      </div>
+                      <button onClick={() => handleDelete(e._id)} style={{ padding: '4px 10px', background: '#fef2f2', color: '#dc2626', border: 'none', borderRadius: '6px', fontSize: '12px', cursor: 'pointer', fontWeight: '600' }}>Delete</button>
                     </div>
                   </div>
                 </div>
@@ -737,26 +792,24 @@ export default function EnquiriesPage() {
         )}
       </div>
 
-      {/* Pagination Bar (Matching Customers perfectly) */}
-      {totalItems > 0 && (
+      {/* Pagination Controls */}
+      {totalPages > 1 && (
         <div style={{
           display: 'flex',
           justifyContent: 'space-between',
           alignItems: 'center',
           marginTop: '20px',
-          padding: '12px 16px',
           background: '#fff',
           borderRadius: '12px',
+          padding: '12px 16px',
           boxShadow: '0 1px 3px rgba(0,0,0,0.05)',
           flexWrap: 'wrap',
           gap: '12px'
         }}>
-          {/* Left info */}
           <div style={{ fontSize: '13px', color: '#64748b' }}>
             Showing <strong style={{ color: '#0f172a' }}>{startIndex + 1}</strong> to <strong style={{ color: '#0f172a' }}>{endIndex}</strong> of <strong style={{ color: '#0f172a' }}>{totalItems}</strong> enquiries
           </div>
 
-          {/* Center page links */}
           <div style={{ display: 'flex', gap: '4px', alignItems: 'center' }}>
             <button 
               disabled={activePage === 1}
@@ -815,7 +868,6 @@ export default function EnquiriesPage() {
             </button>
           </div>
 
-          {/* Right dropdown page limit selector */}
           <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
             <select
               value={pageSize}
@@ -838,6 +890,213 @@ export default function EnquiriesPage() {
               <option value={25}>25 per page</option>
               <option value={50}>50 per page</option>
             </select>
+          </div>
+        </div>
+      )}
+
+      {/* ADD MEMBER DIALOG MODAL (COMPACT & BEAUTIFUL!) */}
+      {memberModalEnquiry && (
+        <div style={{
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          background: 'rgba(15, 23, 42, 0.6)',
+          backdropFilter: 'blur(4px)',
+          zIndex: 1000,
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          padding: '20px'
+        }}>
+          <div style={{
+            background: '#fff',
+            borderRadius: '16px',
+            width: '100%',
+            maxWidth: '500px',
+            boxShadow: '0 20px 25px -5px rgba(0,0,0,0.1), 0 10px 10px -5px rgba(0,0,0,0.04)',
+            overflow: 'hidden',
+            display: 'flex',
+            flexDirection: 'column'
+          }}>
+            {/* Header */}
+            <div style={{
+              display: 'flex',
+              justifyContent: 'space-between',
+              alignItems: 'center',
+              padding: '16px 20px',
+              borderBottom: '1px solid #f1f5f9',
+              background: '#f8fafc'
+            }}>
+              <div>
+                <h3 style={{ margin: 0, fontSize: '16px', fontWeight: '700', color: '#0f172a' }}>
+                  👥 Enquiry Members
+                </h3>
+                <p style={{ margin: '2px 0 0', fontSize: '12px', color: '#64748b' }}>
+                  For Customer: {memberModalEnquiry.customer?.name}
+                </p>
+              </div>
+              <button
+                onClick={() => setMemberModalEnquiry(null)}
+                style={{
+                  background: 'none',
+                  border: 'none',
+                  cursor: 'pointer',
+                  fontSize: '24px',
+                  color: '#94a3b8',
+                  padding: '4px',
+                  lineHeight: 1
+                }}
+              >
+                ×
+              </button>
+            </div>
+
+            {/* Modal Body */}
+            <div style={{ padding: '20px', overflowY: 'auto', maxHeight: '420px' }}>
+              {/* Existing Members List */}
+              <div style={{ marginBottom: '20px' }}>
+                <h4 style={{ margin: '0 0 10px', fontSize: '12px', fontWeight: '700', color: '#475569', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                  Current Members ({memberModalEnquiry.members?.length || 0})
+                </h4>
+                
+                {!memberModalEnquiry.members || memberModalEnquiry.members.length === 0 ? (
+                  <div style={{ textAlign: 'center', padding: '24px', background: '#f8fafc', borderRadius: '10px', color: '#94a3b8', fontSize: '13px', border: '1px dashed #e2e8f0' }}>
+                    No family members or additional persons added yet.
+                  </div>
+                ) : (
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                    {memberModalEnquiry.members.map((m: any, idx: number) => (
+                      <div 
+                        key={idx} 
+                        style={{
+                          display: 'flex',
+                          justifyContent: 'space-between',
+                          alignItems: 'center',
+                          padding: '10px 14px',
+                          background: '#f8fafc',
+                          border: '1px solid #f1f5f9',
+                          borderRadius: '8px'
+                        }}
+                      >
+                        <div>
+                          <div style={{ fontSize: '13px', fontWeight: '600', color: '#0f172a', display: 'flex', alignItems: 'center' }}>
+                            {m.name} 
+                            {m.relation && (
+                              <span style={{ fontSize: '10px', color: '#1e40af', background: '#dbeafe', padding: '2px 6px', borderRadius: '4px', marginLeft: '6px', fontWeight: '700' }}>
+                                {m.relation}
+                              </span>
+                            )}
+                          </div>
+                          <div style={{ fontSize: '11px', color: '#64748b', marginTop: '4px' }}>
+                            {m.phone && `📞 ${m.phone}`} {m.phone && m.age && '•'} {m.age && `Age: ${m.age}`}
+                          </div>
+                        </div>
+                        
+                        <button
+                          onClick={() => handleRemoveMember(idx)}
+                          style={{
+                            background: '#fef2f2',
+                            color: '#dc2626',
+                            border: 'none',
+                            padding: '4px 8px',
+                            borderRadius: '6px',
+                            fontSize: '11px',
+                            cursor: 'pointer',
+                            fontWeight: '700',
+                            transition: 'all 0.2s'
+                          }}
+                          title="Remove Member"
+                        >
+                          Remove
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+
+              {/* Add New Member Form */}
+              <div style={{ borderTop: '1px solid #f1f5f9', paddingTop: '16px' }}>
+                <h4 style={{ margin: '0 0 12px', fontSize: '12px', fontWeight: '700', color: '#475569', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                  ➕ Add New Person
+                </h4>
+                
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
+                  <input
+                    placeholder="Full Name *"
+                    value={newMemberForm.name}
+                    onChange={(e) => setNewMemberForm({ ...newMemberForm, name: e.target.value })}
+                    style={{ padding: '8px 12px', border: '1px solid #cbd5e1', borderRadius: '6px', fontSize: '13px', outline: 'none' }}
+                  />
+                  <input
+                    placeholder="Relation (e.g. Spouse)"
+                    value={newMemberForm.relation}
+                    onChange={(e) => setNewMemberForm({ ...newMemberForm, relation: e.target.value })}
+                    style={{ padding: '8px 12px', border: '1px solid #cbd5e1', borderRadius: '6px', fontSize: '13px', outline: 'none' }}
+                  />
+                  <input
+                    placeholder="Phone Number"
+                    value={newMemberForm.phone}
+                    onChange={(e) => setNewMemberForm({ ...newMemberForm, phone: e.target.value })}
+                    style={{ padding: '8px 12px', border: '1px solid #cbd5e1', borderRadius: '6px', fontSize: '13px', outline: 'none' }}
+                  />
+                  <input
+                    placeholder="Age"
+                    value={newMemberForm.age}
+                    onChange={(e) => setNewMemberForm({ ...newMemberForm, age: e.target.value })}
+                    style={{ padding: '8px 12px', border: '1px solid #cbd5e1', borderRadius: '6px', fontSize: '13px', outline: 'none' }}
+                  />
+                </div>
+                
+                <button
+                  onClick={handleAddMemberSubmit}
+                  disabled={savingMember}
+                  style={{
+                    width: '100%',
+                    padding: '10px',
+                    background: '#10b981',
+                    color: '#fff',
+                    border: 'none',
+                    borderRadius: '8px',
+                    fontWeight: '700',
+                    fontSize: '13px',
+                    cursor: 'pointer',
+                    marginTop: '12px',
+                    boxShadow: '0 2px 4px rgba(16, 185, 129, 0.1)',
+                    transition: 'all 0.2s'
+                  }}
+                >
+                  {savingMember ? 'Adding...' : 'Add Person to Enquiry'}
+                </button>
+              </div>
+            </div>
+            
+            {/* Footer */}
+            <div style={{
+              display: 'flex',
+              justifyContent: 'flex-end',
+              padding: '12px 20px',
+              background: '#f8fafc',
+              borderTop: '1px solid #f1f5f9'
+            }}>
+              <button
+                onClick={() => setMemberModalEnquiry(null)}
+                style={{
+                  padding: '8px 16px',
+                  background: '#f1f5f9',
+                  border: 'none',
+                  borderRadius: '6px',
+                  fontSize: '13px',
+                  color: '#475569',
+                  fontWeight: '600',
+                  cursor: 'pointer'
+                }}
+              >
+                Close Dialog
+              </button>
+            </div>
           </div>
         </div>
       )}
