@@ -459,13 +459,13 @@ export default function EnquiriesPage() {
                           </>
                         ) : ''}
 
-                        {/* ADD MEMBERS BUTTON ICON WITH COUNT BELOW IT */}
+                        {/* ADD MEMBERS BUTTON ICON WITH COUNT */}
                         <button 
                           onClick={(ev) => { ev.stopPropagation(); handleOpenAddMemberModal(e); }}
                           style={{
-                            background: '#ecfdf5',
-                            border: '1px solid #a7f3d0',
-                            borderRadius: '8px',
+                            background: '#fff3eb',
+                            border: '1px solid #ffd8bf',
+                            borderRadius: '6px',
                             cursor: 'pointer',
                             display: 'inline-flex',
                             alignItems: 'center',
@@ -473,14 +473,16 @@ export default function EnquiriesPage() {
                             padding: '3px 8px',
                             marginLeft: '12px',
                             verticalAlign: 'middle',
-                            color: '#047857',
-                            fontWeight: '600',
-                            fontSize: '11px'
+                            color: '#ea580c',
+                            fontWeight: '700',
+                            fontSize: '11px',
+                            transition: 'all 0.15s',
+                            boxShadow: '0 1px 2px rgba(249, 115, 22, 0.05)'
                           }}
                           title="Add Family Member / Person"
                         >
-                          <span>➕👤</span>
-                          <span>{e.members?.length || 0}</span>
+                          <span style={{ fontSize: '13px', lineHeight: 1 }}>➕👤</span>
+                          <span style={{ fontSize: '11px', lineHeight: 1 }}>{e.members?.length || 0}</span>
                         </button>
                       </div>
                     </td>
@@ -687,8 +689,8 @@ export default function EnquiriesPage() {
                           <button 
                             onClick={(ev) => { ev.stopPropagation(); handleOpenAddMemberModal(e); }}
                             style={{
-                              background: '#ecfdf5',
-                              border: '1px solid #a7f3d0',
+                              background: '#fff3eb',
+                              border: '1px solid #ffd8bf',
                               borderRadius: '6px',
                               cursor: 'pointer',
                               display: 'inline-flex',
@@ -697,14 +699,15 @@ export default function EnquiriesPage() {
                               padding: '2px 6px',
                               marginLeft: '12px',
                               verticalAlign: 'middle',
-                              color: '#047857',
-                              fontWeight: '600',
-                              fontSize: '11px'
+                              color: '#ea580c',
+                              fontWeight: '700',
+                              fontSize: '11px',
+                              height: '24px'
                             }}
                             title="Add Family Member / Person"
                           >
-                            <span>➕👤</span>
-                            <span>{e.members?.length || 0}</span>
+                            <span style={{ fontSize: '13px', lineHeight: 1 }}>➕👤</span>
+                            <span style={{ fontSize: '11px', lineHeight: 1 }}>{e.members?.length || 0}</span>
                           </button>
                         </summary>
                         <div style={{ padding: '8px', background: '#fff', border: '1px solid #cbd5e1', borderRadius: '6px', marginTop: '6px' }}>
@@ -984,7 +987,7 @@ export default function EnquiriesPage() {
                           <div style={{ fontSize: '13px', fontWeight: '600', color: '#0f172a', display: 'flex', alignItems: 'center' }}>
                             {m.name} 
                             {m.relation && (
-                              <span style={{ fontSize: '10px', color: '#1e40af', background: '#dbeafe', padding: '2px 6px', borderRadius: '4px', marginLeft: '6px', fontWeight: '700' }}>
+                              <span style={{ fontSize: '10px', color: '#ea580c', background: '#fff3eb', padding: '2px 6px', borderRadius: '4px', marginLeft: '6px', fontWeight: '700' }}>
                                 {m.relation}
                               </span>
                             )}
@@ -1056,7 +1059,7 @@ export default function EnquiriesPage() {
                   style={{
                     width: '100%',
                     padding: '10px',
-                    background: '#10b981',
+                    background: '#f97316',
                     color: '#fff',
                     border: 'none',
                     borderRadius: '8px',
@@ -1064,7 +1067,7 @@ export default function EnquiriesPage() {
                     fontSize: '13px',
                     cursor: 'pointer',
                     marginTop: '12px',
-                    boxShadow: '0 2px 4px rgba(16, 185, 129, 0.1)',
+                    boxShadow: '0 2px 4px rgba(249, 115, 22, 0.1)',
                     transition: 'all 0.2s'
                   }}
                 >
