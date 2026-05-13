@@ -657,58 +657,63 @@ export default function EnquiriesPage() {
                       </div>
                     </div>
 
-                    {/* Second Row: Contact details / click to view full message & notes */}
-                    <div style={{ marginBottom: '12px', fontSize: '12px', color: '#475569' }}>
-                      <details style={{ cursor: 'pointer' }}>
-                        <summary style={{ outline: 'none', fontWeight: '500', display: 'flex', alignItems: 'center', gap: '4px' }}>
-                          <span>📞</span>
-                          {e.customer?.phone ? (
-                            <span style={{ display: 'inline-flex', alignItems: 'center' }}>
-                              <a 
-                                href={getWhatsAppLink(e.customer.phone)} 
-                                target="_blank" 
-                                rel="noreferrer"
-                                onClick={(ev) => ev.stopPropagation()}
-                                style={{ textDecoration: 'none', display: 'inline-flex', alignItems: 'center' }}
-                                title="Open WhatsApp Chat"
-                              >
-                                <WhatsAppIcon />
-                              </a>
-                              <a 
-                                href={`tel:${e.customer.phone}`}
-                                onClick={(ev) => ev.stopPropagation()}
-                                style={{ color: '#2563eb', textDecoration: 'none', fontWeight: '600' }}
-                                title="Click to call"
-                              >
-                                {e.customer.phone}
-                              </a>
-                            </span>
-                          ) : ''}
-
-                          {/* ADD MEMBERS BUTTON ICON WITH COUNT BELOW IT (MOBILE) */}
-                          <button 
-                            onClick={(ev) => { ev.stopPropagation(); handleOpenAddMemberModal(e); }}
-                            style={{
-                              background: '#fff3eb',
-                              border: '1px solid #ffd8bf',
-                              borderRadius: '6px',
-                              cursor: 'pointer',
-                              display: 'inline-flex',
-                              alignItems: 'center',
-                              gap: '4px',
-                              padding: '2px 6px',
-                              marginLeft: '12px',
-                              verticalAlign: 'middle',
-                              color: '#ea580c',
-                              fontWeight: '700',
-                              fontSize: '11px',
-                              height: '24px'
-                            }}
-                            title="Add Family Member / Person"
+                    {/* Second Row: Non-overlapping Contact details (No click details toggler overlay!) */}
+                    <div style={{ marginBottom: '8px', fontSize: '13px', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                      <span style={{ color: '#64748b' }}>📞</span>
+                      {e.customer?.phone ? (
+                        <div style={{ display: 'inline-flex', alignItems: 'center' }}>
+                          <a 
+                            href={getWhatsAppLink(e.customer.phone)} 
+                            target="_blank" 
+                            rel="noreferrer"
+                            onClick={(ev) => ev.stopPropagation()}
+                            style={{ textDecoration: 'none', display: 'inline-flex', alignItems: 'center' }}
+                            title="Open WhatsApp Chat"
                           >
-                            <span style={{ fontSize: '13px', lineHeight: 1 }}>➕👤</span>
-                            <span style={{ fontSize: '11px', lineHeight: 1 }}>{e.members?.length || 0}</span>
-                          </button>
+                            <WhatsAppIcon />
+                          </a>
+                          <a 
+                            href={`tel:${e.customer.phone}`}
+                            onClick={(ev) => ev.stopPropagation()}
+                            style={{ color: '#2563eb', textDecoration: 'none', fontWeight: '600' }}
+                            title="Click to call"
+                          >
+                            {e.customer.phone}
+                          </a>
+                        </div>
+                      ) : <span style={{ color: '#94a3b8' }}>No phone</span>}
+
+                      {/* ADD MEMBERS BUTTON ICON WITH COUNT BELOW IT (MOBILE) */}
+                      <button 
+                        onClick={(ev) => { ev.stopPropagation(); handleOpenAddMemberModal(e); }}
+                        style={{
+                          background: '#fff3eb',
+                          border: '1px solid #ffd8bf',
+                          borderRadius: '6px',
+                          cursor: 'pointer',
+                          display: 'inline-flex',
+                          alignItems: 'center',
+                          gap: '4px',
+                          padding: '2px 6px',
+                          marginLeft: '12px',
+                          verticalAlign: 'middle',
+                          color: '#ea580c',
+                          fontWeight: '700',
+                          fontSize: '11px',
+                          height: '24px'
+                        }}
+                        title="Add Family Member / Person"
+                      >
+                        <span style={{ fontSize: '13px', lineHeight: 1 }}>➕👤</span>
+                        <span style={{ fontSize: '11px', lineHeight: 1 }}>{e.members?.length || 0}</span>
+                      </button>
+                    </div>
+
+                    {/* Third Row: Message details toggle (Separate click action so nothing overlaps!) */}
+                    <div style={{ marginBottom: '12px', fontSize: '12px' }}>
+                      <details style={{ cursor: 'pointer' }}>
+                        <summary style={{ outline: 'none', fontWeight: '600', color: '#2563eb', display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
+                          💬 Click to view message & notes ▾
                         </summary>
                         <div style={{ padding: '8px', background: '#fff', border: '1px solid #cbd5e1', borderRadius: '6px', marginTop: '6px' }}>
                           <div style={{ whiteSpace: 'pre-wrap', marginBottom: '8px', color: '#1e293b' }}>{e.message}</div>

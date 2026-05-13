@@ -61,6 +61,8 @@ export default function PackagesPage() {
     });
     setEditId(pkg._id);
     setShowForm(true);
+    // Scroll to top smoothly so the user sees the Edit Form immediately!
+    window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -345,7 +347,9 @@ export default function PackagesPage() {
                 {pkg.groups?.length > 0 ? (
                   <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
                     {pkg.groups.map((g: any, i: number) => {
-                      const pax = enquiries.filter(e => e.packageGroup === g._id).length;
+                      const pax = enquiries
+                        .filter(e => e.packageGroup === g._id)
+                        .reduce((sum, e) => sum + 1 + (e.members?.length || 0), 0);
                       return (
                         <div key={i} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '12px', color: '#475569', background: '#f8fafc', padding: '4px 8px', borderRadius: '4px' }}>
                           <div><strong style={{ color: '#0f172a' }}>{g.name}</strong> - {g.date}</div>
