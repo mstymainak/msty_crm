@@ -72,22 +72,18 @@ export default function ContactForm() {
   }
 
   return (
-    <div className="bg-responsive min-h-screen flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
+    <div className="bg-responsive min-h-screen flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8 bg-cover bg-center">
       <style>{`
         .bg-responsive {
           background-image: linear-gradient(rgba(15, 23, 42, 0.75), rgba(30, 41, 59, 0.75)), url('/bg-mobile.jpeg');
-          background-size: 100% 100%;
-          background-position: center;
-          background-repeat: no-repeat;
         }
         @media (min-width: 768px) {
           .bg-responsive {
             background-image: linear-gradient(rgba(15, 23, 42, 0.75), rgba(30, 41, 59, 0.75)), url('/bg.jpeg');
-            background-size: cover;
           }
         }
       `}</style>
-      <div className="max-w-md w-full bg-white/95 backdrop-blur-sm rounded-lg shadow-md p-6 sm:p-8">
+      <div className="max-w-md w-full bg-white/95 backdrop-blur-sm rounded-lg shadow-md p-8">
         <h2 className="text-2xl font-bold text-center text-gray-900 mb-8">
           Contact Us for Yatra Enquiry
         </h2>

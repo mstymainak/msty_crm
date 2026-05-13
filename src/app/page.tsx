@@ -2,18 +2,14 @@ import Link from 'next/link';
 
 export default function Home() {
   return (
-    <div className="bg-responsive" style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+    <div className="bg-responsive" style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', backgroundSize: 'cover', backgroundPosition: 'center' }}>
       <style>{`
         .bg-responsive {
           background-image: linear-gradient(rgba(15, 23, 42, 0.85), rgba(30, 41, 59, 0.85)), url('/bg-mobile.jpeg');
-          background-size: 100% 100%;
-          background-position: center;
-          background-repeat: no-repeat;
         }
         @media (min-width: 768px) {
           .bg-responsive {
             background-image: linear-gradient(rgba(15, 23, 42, 0.85), rgba(30, 41, 59, 0.85)), url('/bg.jpeg');
-            background-size: cover;
           }
         }
       `}</style>

@@ -145,7 +145,8 @@ export default function EnquiriesPage() {
         </select>
       </div>
 
-      <div style={{ background: '#fff', borderRadius: '12px', boxShadow: '0 1px 3px rgba(0,0,0,0.08)', overflow: 'hidden' }}>
+      {/* Desktop view (Table layout) */}
+      <div className="hidden md:block" style={{ background: '#fff', borderRadius: '12px', boxShadow: '0 1px 3px rgba(0,0,0,0.08)', overflow: 'hidden' }}>
         {loading ? <div style={{ padding: '40px', textAlign: 'center', color: '#94a3b8' }}>Loading...</div> :
         filtered.length === 0 ? <div style={{ padding: '40px', textAlign: 'center', color: '#94a3b8' }}>No enquiries found</div> : (
           <table style={{ width: '100%', borderCollapse: 'collapse' }}>
@@ -268,6 +269,197 @@ export default function EnquiriesPage() {
               })}
             </tbody>
           </table>
+        )}
+      </div>
+
+      {/* Mobile view (Card layout) */}
+      <div className="block md:hidden">
+        {loading ? <div style={{ padding: '40px', textAlign: 'center', color: '#94a3b8' }}>Loading...</div> :
+        filtered.length === 0 ? <div style={{ padding: '40px', textAlign: 'center', color: '#94a3b8' }}>No enquiries found</div> : (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+            {filtered.map(e => {
+              const sc = statusColors[e.status] || { bg: '#f1f5f9', text: '#64748b' };
+              const pc = priorityColors[e.priority] || { bg: '#f1f5f9', text: '#64748b' };
+              return (
+                <div key={e._id} style={{
+                  background: pc.bg,
+                  borderRadius: '12px',
+                  border: `1px solid ${pc.text}20`,
+                  padding: '12px 14px',
+                  boxShadow: '0 1px 3px rgba(0,0,0,0.05)'
+                }}>
+                  {/* First Row: Name, Package Select, Source */}
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
+                    <div style={{ fontSize: '15px', fontWeight: '700', color: '#0f172a' }}>
+                      {e.customer?.name || 'Unknown'}
+                    </div>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                      <select
+                        value={e.package || ''}
+                        onChange={(ev) => updatePackage(e._id, ev.target.value)}
+                        style={{
+                          padding: '4px 8px',
+                          fontSize: '11px',
+                          border: '1px solid #cbd5e1',
+                          borderRadius: '6px',
+                          background: '#fff',
+                          color: e.package ? '#0f172a' : '#94a3b8',
+                          outline: 'none',
+                          cursor: 'pointer'
+                        }}
+                      >
+                        <option value="">No Package</option>
+                        {packages.map(p => <option key={p._id} value={p._id}>{p.name}</option>)}
+                      </select>
+                      <span style={{
+                        padding: '2px 8px',
+                        borderRadius: '12px',
+                        fontSize: '11px',
+                        fontWeight: '600',
+                        background: '#eff6ff',
+                        color: '#3b82f6',
+                        textTransform: 'capitalize'
+                      }}>
+                        {e.source}
+                      </span>
+                    </div>
+                  </div>
+
+                  {/* Second Row: Contact details / click to view full message & notes */}
+                  <div style={{ marginBottom: '12px', fontSize: '12px', color: '#475569' }}>
+                    <details style={{ cursor: 'pointer' }}>
+                      <summary style={{ outline: 'none', fontWeight: '500', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                        <span>📞</span>
+                        <span>{e.customer?.phone || ''} {e.message ? ` - ${e.message.split('\n')[0]}` : ''}</span>
+                      </summary>
+                      <div style={{ padding: '8px', background: '#fff', border: '1px solid #cbd5e1', borderRadius: '6px', marginTop: '6px' }}>
+                        <div style={{ whiteSpace: 'pre-wrap', marginBottom: '8px', color: '#1e293b' }}>{e.message}</div>
+                        
+                        {e.package && packages.find(p => p._id === e.package)?.groups?.length > 0 && (
+                          <div style={{ marginBottom: '10px' }}>
+                            <span style={{ fontSize: '10px', textTransform: 'uppercase', color: '#64748b', display: 'block', marginBottom: '4px', fontWeight: '600' }}>Package Group</span>
+                            <select
+                              value={e.packageGroup || ''}
+                              onChange={(ev) => updatePackageGroup(e._id, ev.target.value)}
+                              style={{ padding: '4px 8px', fontSize: '12px', border: '1px solid #cbd5e1', borderRadius: '4px', background: '#fff', width: '100%' }}
+                            >
+                              <option value="">No Group Selected</option>
+                              {packages.find(p => p._id === e.package)?.groups.map((g: any) => (
+                                <option key={g._id} value={g._id}>{g.name} ({g.date})</option>
+                              ))}
+                            </select>
+                          </div>
+                        )}
+
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderTop: '1px solid #e2e8f0', paddingTop: '8px', marginTop: '8px' }}>
+                          <span style={{ fontSize: '11px', fontWeight: '600', color: '#475569' }}>Admin Note</span>
+                          <div style={{ display: 'flex', gap: '8px' }}>
+                            <button onClick={(ev) => { ev.preventDefault(); setEditingNoteId(e._id); setTempNote(e.adminNote || ''); }} style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: '13px' }}>📝</button>
+                            {e.adminNote && <button onClick={(ev) => { ev.preventDefault(); deleteNote(e._id); }} style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: '13px' }}>🗑️</button>}
+                          </div>
+                        </div>
+
+                        {editingNoteId === e._id ? (
+                          <div style={{ marginTop: '6px' }}>
+                            <textarea
+                              value={tempNote}
+                              onChange={(ev) => setTempNote(ev.target.value)}
+                              style={{ width: '100%', padding: '6px', border: '1px solid #cbd5e1', borderRadius: '4px', fontSize: '12px', minHeight: '50px', boxSizing: 'border-box' }}
+                              placeholder="Type note..."
+                            />
+                            <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '6px', marginTop: '6px' }}>
+                              <button onClick={() => setEditingNoteId(null)} style={{ padding: '4px 8px', fontSize: '11px', background: '#f1f5f9', border: 'none', borderRadius: '4px', cursor: 'pointer' }}>Cancel</button>
+                              <button onClick={() => saveNote(e._id, tempNote)} style={{ padding: '4px 8px', fontSize: '11px', background: '#f97316', color: '#fff', border: 'none', borderRadius: '4px', cursor: 'pointer' }}>Save</button>
+                            </div>
+                          </div>
+                        ) : e.adminNote ? (
+                          <div style={{ fontSize: '11px', color: '#0f172a', background: '#f8fafc', padding: '6px', borderRadius: '4px', marginTop: '4px' }}>
+                            {e.adminNote}
+                          </div>
+                        ) : null}
+                      </div>
+                    </details>
+                  </div>
+
+                  {/* Third Row: Status select, Priority select, Date / Time, Delete */}
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr auto auto', alignItems: 'center', gap: '10px' }}>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                      <span style={{ fontSize: '10px', color: '#64748b', fontWeight: '600', textTransform: 'uppercase' }}>Status</span>
+                      <select
+                        value={e.status}
+                        onChange={(ev) => updateStatus(e._id, ev.target.value)}
+                        style={{
+                          padding: '4px 8px',
+                          borderRadius: '6px',
+                          fontSize: '11px',
+                          fontWeight: '600',
+                          border: `1px solid ${sc.text}`,
+                          background: sc.bg,
+                          color: sc.text,
+                          cursor: 'pointer',
+                          outline: 'none'
+                        }}
+                      >
+                        <option value="new">New</option>
+                        <option value="contacted">Contacted</option>
+                        <option value="qualified">Qualified</option>
+                        <option value="booked">Booked</option>
+                        <option value="lost">Lost</option>
+                      </select>
+                    </div>
+
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                      <span style={{ fontSize: '10px', color: '#64748b', fontWeight: '600', textTransform: 'uppercase' }}>Priority</span>
+                      <select
+                        value={e.priority}
+                        onChange={(ev) => updatePriority(e._id, ev.target.value)}
+                        style={{
+                          padding: '4px 8px',
+                          borderRadius: '6px',
+                          fontSize: '11px',
+                          fontWeight: '600',
+                          border: `1px solid ${pc.text}`,
+                          background: pc.bg,
+                          color: pc.text,
+                          cursor: 'pointer',
+                          outline: 'none'
+                        }}
+                      >
+                        <option value="high">High</option>
+                        <option value="medium">Medium</option>
+                        <option value="low">Low</option>
+                      </select>
+                    </div>
+
+                    <div style={{ fontSize: '11px', color: '#475569', fontWeight: '500', textAlign: 'right', lineHeight: '1.3', paddingRight: '4px' }}>
+                      <div>{new Date(e.createdAt).toLocaleDateString()}</div>
+                      <div style={{ fontSize: '10px', marginTop: '2px', color: '#64748b' }}>
+                        {new Date(e.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                      </div>
+                    </div>
+
+                    <div>
+                      <button
+                        onClick={() => handleDelete(e._id)}
+                        style={{
+                          padding: '6px 8px',
+                          background: '#fef2f2',
+                          border: '1px solid #fee2e2',
+                          borderRadius: '6px',
+                          cursor: 'pointer',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center'
+                        }}
+                      >
+                        <span style={{ color: '#dc2626', fontSize: '14px' }}>🗑️</span>
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
         )}
       </div>
     </div>

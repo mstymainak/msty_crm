@@ -62,7 +62,7 @@ class WordPressSyncService {
         age: user.meta?.age || user.acf?.age,
         address: user.meta?.address || user.acf?.address || '',
         submittedAt: new Date(user.date_created || Date.now()),
-      })).filter((c: WordPressContact) => c.name && c.email); // Filter out incomplete records
+      })).filter((c: any) => c.name && c.email); // Filter out incomplete records
 
       console.log(`✅ Fetched ${contacts.length} users from WordPress`);
       return contacts;

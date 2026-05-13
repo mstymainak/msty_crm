@@ -44,37 +44,28 @@ export default function LoginPage() {
       display: 'flex',
       alignItems: 'center',
       justifyContent: 'center',
+      backgroundSize: 'cover',
+      backgroundPosition: 'center',
     }}>
       <style>{`
         .bg-responsive {
           background-image: linear-gradient(rgba(15, 23, 42, 0.75), rgba(30, 41, 59, 0.75)), url('/bg-mobile.jpeg');
-          background-size: 100% 100%;
-          background-position: center;
-          background-repeat: no-repeat;
         }
         @media (min-width: 768px) {
           .bg-responsive {
             background-image: linear-gradient(rgba(15, 23, 42, 0.75), rgba(30, 41, 59, 0.75)), url('/bg.jpeg');
-            background-size: cover;
-          }
-        }
-        .login-container {
-          width: 90%;
-          max-width: 420px;
-          padding: 24px;
-          background: rgba(255, 255, 255, 0.95);
-          border-radius: 16px;
-          box-shadow: 0 25px 50px rgba(0,0,0,0.25);
-          backdrop-filter: blur(8px);
-        }
-        @media (min-width: 768px) {
-          .login-container {
-            width: 100%;
-            padding: 40px;
           }
         }
       `}</style>
-      <div className="login-container">
+      <div style={{
+        width: '100%',
+        maxWidth: '420px',
+        padding: '40px',
+        background: 'rgba(255, 255, 255, 0.95)',
+        borderRadius: '16px',
+        boxShadow: '0 25px 50px rgba(0,0,0,0.25)',
+        backdropFilter: 'blur(8px)',
+      }}>
         <div style={{ textAlign: 'center', marginBottom: '32px' }}>
           <div style={{
             width: '80px',
