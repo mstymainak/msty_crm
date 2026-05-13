@@ -28,6 +28,7 @@ export default function EnquiriesPage() {
   const [packages, setPackages] = useState<any[]>([]);
   const [editingNoteId, setEditingNoteId] = useState<string | null>(null);
   const [tempNote, setTempNote] = useState('');
+  const [selectedEnquiryIds, setSelectedEnquiryIds] = useState<string[]>([]);
 
   const fetchEnquiries = () => {
     fetch('/api/enquiries').then(r => r.json()).then(d => { setEnquiries(Array.isArray(d) ? d : []); setLoading(false); }).catch(() => setLoading(false));
@@ -74,6 +75,32 @@ export default function EnquiriesPage() {
     if (!confirm('Delete this enquiry?')) return;
     await fetch(`/api/enquiries/${id}`, { method: 'DELETE' });
     fetchEnquiries();
+  };
+
+  const handleBulkDelete = async () => {
+    if (!confirm(`Are you sure you want to delete ${selectedEnquiryIds.length} selected enquiries?`)) return;
+    setLoading(true);
+    try {
+      await Promise.all(selectedEnquiryIds.map(id => fetch(`/api/enquiries/${id}`, { method: 'DELETE' })));
+      setSelectedEnquiryIds([]);
+      fetchEnquiries();
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const toggleSelectEnquiry = (id: string) => {
+    setSelectedEnquiryIds(prev => prev.includes(id) ? prev.filter(x => x !== id) : [...prev, id]);
+  };
+
+  const toggleSelectAllEnquiries = () => {
+    if (selectedEnquiryIds.length === filtered.length && filtered.length > 0) {
+      setSelectedEnquiryIds([]);
+    } else {
+      setSelectedEnquiryIds(filtered.map(e => e._id));
+    }
   };
 
   const filtered = enquiries.filter(e => {
@@ -145,6 +172,45 @@ export default function EnquiriesPage() {
         </select>
       </div>
 
+      {/* Bulk Actions Container */}
+      {selectedEnquiryIds.length > 0 && (
+        <div style={{ display: 'flex', alignItems: 'center', gap: '12px', background: '#fef2f2', border: '1px solid #fee2e2', borderRadius: '8px', padding: '12px 16px', marginBottom: '16px' }}>
+          <span style={{ fontSize: '14px', fontWeight: '600', color: '#991b1b' }}>
+            {selectedEnquiryIds.length} selected
+          </span>
+          <button
+            onClick={handleBulkDelete}
+            style={{
+              padding: '6px 12px',
+              background: '#dc2626',
+              color: '#fff',
+              border: 'none',
+              borderRadius: '6px',
+              fontWeight: '600',
+              fontSize: '13px',
+              cursor: 'pointer'
+            }}
+          >
+            Delete Selected
+          </button>
+          <button
+            onClick={() => setSelectedEnquiryIds([])}
+            style={{
+              padding: '6px 12px',
+              background: 'transparent',
+              color: '#475569',
+              border: '1px solid #cbd5e1',
+              borderRadius: '6px',
+              fontWeight: '500',
+              fontSize: '13px',
+              cursor: 'pointer'
+            }}
+          >
+            Deselect All
+          </button>
+        </div>
+      )}
+
       {/* Desktop view (Table layout) */}
       <div className="hidden md:block" style={{ background: '#fff', borderRadius: '12px', boxShadow: '0 1px 3px rgba(0,0,0,0.08)', overflow: 'hidden' }}>
         {loading ? <div style={{ padding: '40px', textAlign: 'center', color: '#94a3b8' }}>Loading...</div> :
@@ -152,6 +218,14 @@ export default function EnquiriesPage() {
           <table style={{ width: '100%', borderCollapse: 'collapse' }}>
             <thead>
               <tr style={{ borderBottom: '1px solid #e2e8f0', background: '#f8fafc' }}>
+                <th style={{ padding: '12px 16px', width: '40px', textAlign: 'left' }}>
+                  <input
+                    type="checkbox"
+                    checked={selectedEnquiryIds.length === filtered.length && filtered.length > 0}
+                    onChange={toggleSelectAllEnquiries}
+                    style={{ cursor: 'pointer', width: '15px', height: '15px' }}
+                  />
+                </th>
                 {['Customer', 'Message', 'Package', 'Source', 'Status', 'Priority', 'Date', 'Actions'].map(h => (
                   <th key={h} style={{ padding: '12px 16px', textAlign: 'left', fontSize: '12px', fontWeight: '600', color: '#64748b', textTransform: 'uppercase' }}>{h}</th>
                 ))}
@@ -163,6 +237,14 @@ export default function EnquiriesPage() {
                 const pc = priorityColors[e.priority] || { bg: '#f1f5f9', text: '#64748b' };
                 return (
                   <tr key={e._id} style={{ borderBottom: '1px solid #e2e8f0', background: pc.bg }}>
+                    <td style={{ padding: '12px 16px', width: '40px' }}>
+                      <input
+                        type="checkbox"
+                        checked={selectedEnquiryIds.includes(e._id)}
+                        onChange={() => toggleSelectEnquiry(e._id)}
+                        style={{ cursor: 'pointer', width: '15px', height: '15px' }}
+                      />
+                    </td>
                     <td style={{ padding: '12px 16px' }}>
                       <div style={{ fontSize: '14px', fontWeight: '600', color: '#0f172a' }}>{e.customer?.name || 'Unknown'}</div>
                       <div style={{ fontSize: '12px', color: '#334155', fontWeight: '500' }}>{e.customer?.phone || ''}</div>
@@ -290,8 +372,16 @@ export default function EnquiriesPage() {
                 }}>
                   {/* First Row: Name, Package Select, Source */}
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
-                    <div style={{ fontSize: '15px', fontWeight: '700', color: '#0f172a' }}>
-                      {e.customer?.name || 'Unknown'}
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                      <input
+                        type="checkbox"
+                        checked={selectedEnquiryIds.includes(e._id)}
+                        onChange={() => toggleSelectEnquiry(e._id)}
+                        style={{ width: '16px', height: '16px', cursor: 'pointer' }}
+                      />
+                      <div style={{ fontSize: '15px', fontWeight: '700', color: '#0f172a' }}>
+                        {e.customer?.name || 'Unknown'}
+                      </div>
                     </div>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                       <select
