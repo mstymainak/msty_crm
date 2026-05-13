@@ -4,8 +4,9 @@ import { useState, useEffect } from 'react';
 import Link from 'next/link';
 
 const WhatsAppIcon = () => (
-  <svg viewBox="0 0 24 24" width="16" height="16" style={{ fill: '#22c55e', display: 'inline-block', verticalAlign: 'middle', marginLeft: '6px' }}>
-    <path d="M.057 24l1.687-6.163c-1.041-1.804-1.588-3.849-1.587-5.946C.06 5.348 5.397.01 12.008.01c3.202.001 6.212 1.246 8.477 3.513 2.266 2.268 3.507 5.28 3.505 8.484-.004 6.657-5.34 11.997-11.953 11.997-2.005-.001-3.973-.5-5.739-1.446L0 24zm6.59-4.846c1.6.95 3.188 1.449 4.825 1.451 5.436 0 9.86-4.42 9.864-9.864.002-2.637-1.03-5.114-2.905-6.99C16.455 1.875 13.983.845 11.35.845 5.914.845 1.493 5.26 1.489 10.696c-.001 1.714.453 3.39 1.314 4.873L1.87 20.35l4.777-1.196zm11.23-7.228c-.3-.149-1.772-.874-2.046-.973-.274-.1-.474-.149-.674.15-.2.299-.774.973-.949 1.173-.175.2-.35.224-.65.074-1.3-.65-2.262-1.15-3.076-2.55-.213-.364.213-.339.61-.132.357.186.4.224.5.399.1.199.05.399-.025.549-.075.15-.674 1.62-.924 2.222-.243.585-.488.505-.674.495l-.574-.01c-.199 0-.524.075-.799.374-.275.299-1.047 1.022-1.047 2.493 0 1.47 1.072 2.891 1.222 3.091.15.199 2.11 3.22 5.111 4.516.714.308 1.272.493 1.707.632.717.228 1.37.196 1.885.119.574-.085 1.772-.723 2.022-1.42.25-.697.25-1.293.175-1.417-.075-.124-.275-.199-.575-.349z" />
+  <svg viewBox="0 0 24 24" width="18" height="18" style={{ display: 'inline-block', verticalAlign: 'middle', marginRight: '6px', cursor: 'pointer' }}>
+    <path fill="#25D366" d="M12.031 2c-5.524 0-10 4.476-10 10 0 1.758.455 3.407 1.25 4.86L2 22l5.344-1.25c1.422.766 3.016 1.25 4.688 1.25 5.524 0 10-4.476 10-10s-4.476-10-10-10z"/>
+    <path fill="#FFF" d="M16.922 15.531c-.273-.133-1.617-.797-1.867-.891-.25-.094-.43-.141-.617.141-.188.281-.727.891-.891 1.078-.164.188-.328.211-.602.078-1.195-.594-2.078-1.055-2.828-2.336-.195-.336.195-.313.555-.125.328.172.367.203.461.359.094.156.047.313-.023.453-.07-.141-.617-1.484-.844-2.039-.219-.531-.445-.461-.617-.469l-.523-.008c-.18 0-.477.07-.727.344-.25.273-.953.93-1.023 2.273 0 1.336.977 2.625 1.117 2.812.141.188 1.922 2.938 4.656 4.117.65.281 1.156.445 1.551.57.653.207 1.25.18 1.721.109.523-.078 1.617-.656 1.844-1.293.227-.637.227-1.18.156-1.293-.07-.113-.25-.18-.523-.313z"/>
   </svg>
 );
 
@@ -290,15 +291,7 @@ export default function CustomersPage() {
                   <td style={{ padding: '12px 16px', fontSize: '14px', color: '#64748b' }}>{c.email}</td>
                   <td style={{ padding: '12px 16px', fontSize: '14px', color: '#64748b' }}>
                     {c.phone ? (
-                      <div style={{ display: 'flex', alignItems: 'center', flexWrap: 'wrap' }}>
-                        <a 
-                          href={`tel:${c.phone}`} 
-                          onClick={(ev) => ev.stopPropagation()}
-                          style={{ color: '#2563eb', textDecoration: 'none', fontWeight: '500' }}
-                          title="Click to call"
-                        >
-                          {c.phone}
-                        </a>
+                      <div style={{ display: 'flex', alignItems: 'center' }}>
                         <a 
                           href={getWhatsAppLink(c.phone)} 
                           target="_blank" 
@@ -308,6 +301,14 @@ export default function CustomersPage() {
                           title="Open WhatsApp Chat"
                         >
                           <WhatsAppIcon />
+                        </a>
+                        <a 
+                          href={`tel:${c.phone}`} 
+                          onClick={(ev) => ev.stopPropagation()}
+                          style={{ color: '#2563eb', textDecoration: 'none', fontWeight: '500' }}
+                          title="Click to call"
+                        >
+                          {c.phone}
                         </a>
                       </div>
                     ) : '-'}
@@ -379,14 +380,6 @@ export default function CustomersPage() {
                         {c.phone ? (
                           <div style={{ display: 'inline-flex', alignItems: 'center' }}>
                             <a 
-                              href={`tel:${c.phone}`}
-                              onClick={(ev) => ev.stopPropagation()}
-                              style={{ color: '#2563eb', textDecoration: 'none', fontWeight: '600' }}
-                              title="Click to call"
-                            >
-                              {c.phone}
-                            </a>
-                            <a 
                               href={getWhatsAppLink(c.phone)} 
                               target="_blank" 
                               rel="noreferrer"
@@ -395,6 +388,14 @@ export default function CustomersPage() {
                               title="Open WhatsApp Chat"
                             >
                               <WhatsAppIcon />
+                            </a>
+                            <a 
+                              href={`tel:${c.phone}`}
+                              onClick={(ev) => ev.stopPropagation()}
+                              style={{ color: '#2563eb', textDecoration: 'none', fontWeight: '600' }}
+                              title="Click to call"
+                            >
+                              {c.phone}
                             </a>
                           </div>
                         ) : '-'}
