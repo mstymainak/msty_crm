@@ -112,6 +112,12 @@ export default function RecycleBinPage() {
     return remainingDays;
   };
 
+  const getWhatsAppLink = (phone: string) => {
+    const clean = phone.replace(/\D/g, '');
+    const withCountry = clean.startsWith('91') ? clean : '91' + clean;
+    return `https://api.whatsapp.com/send?phone=${withCountry}`;
+  };
+
   // Reset pagination & selections on search or tab change
   useEffect(() => {
     setCurrentPage(1);
@@ -242,28 +248,24 @@ export default function RecycleBinPage() {
         />
       </div>
 
-      {/* Multi-select Action Banner (Streamlined without cancel button, matching enquiries/customers) */}
+      {/* Multi-select Action Banner (Exact match to screenshot card layout!) */}
       {isMultiSelect && (
         <div style={{
-          display: 'flex',
-          justifyContent: 'space-between',
-          alignItems: 'center',
-          background: '#f8fafc',
+          background: '#fff',
           border: '1px solid #e2e8f0',
           borderRadius: '12px',
-          padding: '10px 14px',
+          padding: '16px',
           marginBottom: '16px',
-          flexWrap: 'wrap',
-          gap: '8px'
+          boxShadow: '0 1px 3px rgba(0,0,0,0.05)'
         }}>
-          <span style={{ fontSize: '14px', fontWeight: '700', color: '#0f172a' }}>
+          <div style={{ fontSize: '14px', fontWeight: '700', color: '#0f172a', marginBottom: '12px' }}>
             {selectedIds.length} selected
-          </span>
-          <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+          </div>
+          <div style={{ display: 'flex', gap: '8px', alignItems: 'center', flexWrap: 'wrap' }}>
             <button 
               onClick={toggleSelectAllPage}
               style={{
-                padding: '8px 12px',
+                padding: '8px 14px',
                 fontSize: '12px',
                 background: '#eff6ff',
                 color: '#2563eb',
@@ -274,41 +276,51 @@ export default function RecycleBinPage() {
                 whiteSpace: 'nowrap'
               }}
             >
-              {isAllPageSelected ? 'Deselect Page' : 'Select All on Page'}
+              Select All on Page
             </button>
+            
             <button 
               onClick={() => handleBulkAction('restore')}
               disabled={actioningBulk || selectedIds.length === 0}
               style={{
-                padding: '8px 12px',
+                padding: '8px 14px',
                 fontSize: '12px',
-                background: selectedIds.length === 0 ? '#f1f5f9' : '#dcfce7',
-                color: selectedIds.length === 0 ? '#94a3b8' : '#15803d',
-                border: selectedIds.length === 0 ? '1px solid #e2e8f0' : '1px solid #bbf7d0',
+                background: selectedIds.length === 0 ? '#f1f5f9' : '#e8f5e9',
+                color: selectedIds.length === 0 ? '#94a3b8' : '#2e7d32',
+                border: selectedIds.length === 0 ? '1px solid #e2e8f0' : '1px solid #c8e6c9',
                 borderRadius: '8px',
                 fontWeight: '700',
                 cursor: selectedIds.length === 0 ? 'not-allowed' : 'pointer',
-                whiteSpace: 'nowrap'
+                whiteSpace: 'nowrap',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '4px'
               }}
             >
-              🟢 Restore Selected
+              <span style={{ color: selectedIds.length === 0 ? '#cbd5e1' : '#2e7d32' }}>🟢</span>
+              Restore Selected
             </button>
+
             <button 
               onClick={() => handleBulkAction('delete')}
               disabled={actioningBulk || selectedIds.length === 0}
               style={{
-                padding: '8px 12px',
+                padding: '8px 14px',
                 fontSize: '12px',
                 background: selectedIds.length === 0 ? '#f1f5f9' : '#fee2e2',
-                color: selectedIds.length === 0 ? '#94a3b8' : '#dc2626',
-                border: selectedIds.length === 0 ? '1px solid #e2e8f0' : '1px solid #fecaca',
+                color: selectedIds.length === 0 ? '#94a3b8' : '#c62828',
+                border: selectedIds.length === 0 ? '1px solid #e2e8f0' : '1px solid #ffcdd2',
                 borderRadius: '8px',
                 fontWeight: '700',
                 cursor: selectedIds.length === 0 ? 'not-allowed' : 'pointer',
-                whiteSpace: 'nowrap'
+                whiteSpace: 'nowrap',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '4px'
               }}
             >
-              {actioningBulk ? 'Deleting...' : '🗑️ Delete Selected'}
+              <span style={{ fontSize: '13px' }}>🗑️</span>
+              Delete Selected
             </button>
           </div>
         </div>
@@ -345,6 +357,7 @@ export default function RecycleBinPage() {
               {paginatedItems.map(item => {
                 const isSelected = selectedIds.includes(item._id);
                 const daysLeft = getDaysRemaining(item.deletedAt);
+                const phone = activeTab === 'enquiry' ? (item.customer?.phone || '') : (item.phone || '');
                 return (
                   <tr 
                     key={item._id} 
@@ -366,7 +379,22 @@ export default function RecycleBinPage() {
                       {activeTab === 'enquiry' ? (
                         <>
                           <div>{item.customer?.name || 'Unknown'}</div>
-                          <div style={{ fontSize: '12px', fontWeight: '500', color: '#64748b', marginTop: '2px' }}>{item.customer?.phone || ''}</div>
+                          {phone && (
+                            <div style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', marginTop: '4px' }}>
+                              <a
+                                href={getWhatsAppLink(phone)}
+                                target="_blank"
+                                rel="noreferrer"
+                                onClick={(ev) => ev.stopPropagation()}
+                                style={{ display: 'inline-flex', alignItems: 'center' }}
+                              >
+                                <img src="/whatsapp.png" alt="WhatsApp" style={{ width: '16px', height: '16px' }} />
+                              </a>
+                              <a href={`tel:${phone}`} onClick={(ev) => ev.stopPropagation()} style={{ color: '#2563eb', textDecoration: 'none' }}>
+                                {phone}
+                              </a>
+                            </div>
+                          )}
                         </>
                       ) : (
                         item.name
@@ -380,7 +408,22 @@ export default function RecycleBinPage() {
                       ) : (
                         <>
                           <div>{item.email}</div>
-                          <div style={{ fontSize: '12px', color: '#64748b', marginTop: '2px' }}>{item.phone || '-'}</div>
+                          {phone && (
+                            <div style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', marginTop: '4px' }}>
+                              <a
+                                href={getWhatsAppLink(phone)}
+                                target="_blank"
+                                rel="noreferrer"
+                                onClick={(ev) => ev.stopPropagation()}
+                                style={{ display: 'inline-flex', alignItems: 'center' }}
+                              >
+                                <img src="/whatsapp.png" alt="WhatsApp" style={{ width: '16px', height: '16px' }} />
+                              </a>
+                              <a href={`tel:${phone}`} onClick={(ev) => ev.stopPropagation()} style={{ color: '#2563eb', textDecoration: 'none' }}>
+                                {phone}
+                              </a>
+                            </div>
+                          )}
                         </>
                       )}
                     </td>
@@ -474,13 +517,13 @@ export default function RecycleBinPage() {
                   onClick={(ev) => {
                     if (!isMultiSelect) return;
                     const target = ev.target as HTMLElement;
-                    if (target.tagName === 'BUTTON' || target.closest('button') || target.tagName === 'A' || target.closest('a')) return;
+                    if (target.tagName === 'BUTTON' || target.closest('button') || target.tagName === 'A' || target.closest('a') || target.tagName === 'IMG') return;
                     toggleSelectItem(item._id);
                   }}
                   style={{
                     background: '#fff',
                     borderRadius: '12px',
-                    border: isSelected ? '2px solid #2563eb' : '1px solid #e2e8f0',
+                    border: isSelected ? '2px solid #2563eb' : '2px solid #e2e8f0', // Fixed constant 2px size to prevent layout shift jumps!
                     padding: '16px',
                     boxShadow: '0 1px 3px rgba(0,0,0,0.05)',
                     position: 'relative',
@@ -511,7 +554,7 @@ export default function RecycleBinPage() {
                     </button>
                   </div>
 
-                  {/* Row 2: Contact Details (✉️ email | 📞 phone) */}
+                  {/* Row 2: Contact Details (✉️ email | WhatsApp icon + Clickable phone number) */}
                   <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap', fontSize: '13px', color: '#64748b', marginBottom: '12px' }}>
                     {email && (
                       <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
@@ -521,9 +564,27 @@ export default function RecycleBinPage() {
                     )}
                     {email && phone && <span style={{ color: '#cbd5e1' }}>|</span>}
                     {phone && (
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
-                        <span>📞</span>
-                        <span>{phone}</span>
+                      <div style={{ display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
+                        <a
+                          href={getWhatsAppLink(phone)}
+                          target="_blank"
+                          rel="noreferrer"
+                          onClick={(ev) => ev.stopPropagation()}
+                          style={{ display: 'inline-flex', alignItems: 'center' }}
+                        >
+                          <img 
+                            src="/whatsapp.png" 
+                            alt="WhatsApp" 
+                            style={{ width: '16px', height: '16px', cursor: 'pointer' }} 
+                          />
+                        </a>
+                        <a
+                          href={`tel:${phone}`}
+                          onClick={(ev) => ev.stopPropagation()}
+                          style={{ color: '#2563eb', textDecoration: 'none', fontWeight: '600' }}
+                        >
+                          {phone}
+                        </a>
                       </div>
                     )}
                   </div>
