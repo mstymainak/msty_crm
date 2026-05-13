@@ -147,15 +147,28 @@ export default function CustomersPage() {
   return (
     <div>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px', flexWrap: 'wrap', gap: '12px' }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
-          <div>
-            <h1 style={{ fontSize: '24px', fontWeight: '700', color: '#0f172a', margin: 0 }}>Customers</h1>
-            <p style={{ color: '#64748b', margin: '4px 0 0', fontSize: '14px' }}>{customers.length} total customers</p>
-          </div>
-          <button onClick={fetchCustomers} style={{ padding: '8px 16px', background: '#f1f5f9', color: '#475569', border: '1px solid #cbd5e1', borderRadius: '6px', cursor: 'pointer', fontSize: '13px', fontWeight: '600' }}>↻ Refresh</button>
+        <div>
+          <h1 style={{ fontSize: '24px', fontWeight: '700', color: '#0f172a', margin: 0 }}>Customers</h1>
+          <p style={{ color: '#64748b', margin: '4px 0 0', fontSize: '14px' }}>{customers.length} total customers</p>
         </div>
         
-        <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+        <div style={{ display: 'flex', gap: '8px', alignItems: 'center', flexWrap: 'wrap' }}>
+          <button 
+            onClick={fetchCustomers} 
+            style={{ 
+              padding: '10px 18px', 
+              background: '#f1f5f9', 
+              color: '#475569', 
+              border: '1px solid #cbd5e1', 
+              borderRadius: '8px', 
+              cursor: 'pointer', 
+              fontSize: '14px', 
+              fontWeight: '600' 
+            }}
+          >
+            ↻ Refresh
+          </button>
+
           <button 
             onClick={() => {
               setIsMultiSelect(!isMultiSelect);
