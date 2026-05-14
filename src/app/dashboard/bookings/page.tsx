@@ -18,6 +18,10 @@ export default function BookingsPage() {
   const [customerSearch, setCustomerSearch] = useState('');
   const [enquirySearch, setEnquirySearch] = useState('');
 
+  // Dropdowns state
+  const [openEnquiryDropdown, setOpenEnquiryDropdown] = useState(false);
+  const [openCustomerDropdown, setOpenCustomerDropdown] = useState(false);
+
   // Notes editing & Payment History state
   const [editingNoteId, setEditingNoteId] = useState<string | null>(null);
   const [tempNote, setTempNote] = useState('');
@@ -303,6 +307,9 @@ export default function BookingsPage() {
     }
   };
 
+  const selectedEnqObj = enquiries.find(eq => eq._id === form.enquiry);
+  const selectedCustObj = customers.find(c => c._id === form.customer);
+
   return (
     <div>
       <style>{`
@@ -416,88 +423,122 @@ export default function BookingsPage() {
           {!form.id && (
             <div style={{ background: '#fff7ed', border: '1px solid #fed7aa', padding: '16px', borderRadius: '8px', marginBottom: '20px' }}>
               <label style={{ display: 'block', fontSize: '13px', fontWeight: '700', color: '#ea580c', marginBottom: '8px' }}>
-                ⚡ Quick Fill: Choose Enquiry to Confirm (Auto-Fetches Family Members & Calculates Cost)
+                ⚡ Quick Fill: Search & Select Enquiry to Confirm (Auto-Fetches Family Members & Calculates Cost)
               </label>
-              <div style={{ background: '#fff', border: '1px solid #fdba74', borderRadius: '8px', padding: '8px', display: 'flex', flexDirection: 'column', gap: '6px' }}>
-                <input 
-                  type="text" 
-                  placeholder="🔍 Filter / search inside choose enquiry..." 
-                  value={enquirySearch} 
-                  onChange={(e) => setEnquirySearch(e.target.value)} 
-                  style={{ width: '100%', padding: '8px 12px', border: 'none', borderBottom: '1px solid #fed7aa', outline: 'none', background: '#fff', fontSize: '13px', color: '#0f172a' }} 
-                />
-                <select
-                  value={form.enquiry}
-                  onChange={(e) => {
-                    const val = e.target.value;
-                    const selEnq = enquiries.find(eq => eq._id === val);
-                    if (selEnq) {
-                      const pax = 1 + (selEnq.members?.length || 0);
-                      const selPkg = packages.find(p => p._id === selEnq.package);
-                      const calcAmount = selPkg ? selPkg.price * pax : 0;
-                      const memberNames = selEnq.members?.length > 0 ? '\nFamily members included: ' + selEnq.members.map((m: any) => `${m.name} (${m.relation || 'Relative'})`).join(', ') : '';
 
-                      let tDate = '';
-                      if (selPkg && selPkg.groups?.length > 0 && selEnq.packageGroup) {
-                        const grp = selPkg.groups.find((g: any) => g._id === selEnq.packageGroup || g._id?.toString() === selEnq.packageGroup);
-                        if (grp && grp.date) tDate = grp.date;
-                      }
-
-                      setForm({
-                        ...form,
-                        enquiry: selEnq._id,
-                        customer: selEnq.customer?._id || selEnq.customer || '',
-                        package: selEnq.package || '',
-                        packageGroup: selEnq.packageGroup || '',
-                        numberOfTravelers: String(pax),
-                        travelDate: tDate || form.travelDate,
-                        totalAmount: String(calcAmount),
-                        notes: selEnq.message ? selEnq.message + memberNames : memberNames
-                      });
-                    } else {
-                      setForm({ ...form, enquiry: '' });
-                    }
-                  }}
-                  style={{ width: '100%', padding: '8px', border: 'none', outline: 'none', background: '#fff', fontSize: '14px', color: '#0f172a', fontWeight: '600' }}
+              {/* Custom Combined Dropdown with Search */}
+              <div style={{ position: 'relative' }}>
+                <div 
+                  onClick={() => setOpenEnquiryDropdown(!openEnquiryDropdown)} 
+                  style={{ width: '100%', padding: '10px 14px', border: '1px solid #fdba74', borderRadius: '8px', background: '#fff', fontSize: '14px', color: '#0f172a', fontWeight: '600', cursor: 'pointer', display: 'flex', justifyContent: 'space-between', alignItems: 'center', boxShadow: '0 1px 2px rgba(0,0,0,0.05)' }}
                 >
-                  <option value="">-- Select Enquiry --</option>
-                  {filteredEnquiries.map(eq => (
-                    <option key={eq._id} value={eq._id}>
-                      {eq.submittedName || eq.customer?.name || 'Enquiry'} - {eq.source} ({eq.members?.length || 0} family members added)
-                    </option>
-                  ))}
-                </select>
+                  <span>{selectedEnqObj ? `✓ ${selectedEnqObj.submittedName || selectedEnqObj.customer?.name || 'Enquiry'} - ${selectedEnqObj.source} (${selectedEnqObj.members?.length || 0} family added)` : '-- Click to Search & Select Enquiry --'}</span>
+                  <span>{openEnquiryDropdown ? '▲' : '▼'}</span>
+                </div>
+
+                {openEnquiryDropdown && (
+                  <div style={{ position: 'absolute', top: '100%', left: 0, right: 0, marginTop: '6px', background: '#fff', border: '1px solid #fdba74', borderRadius: '8px', padding: '12px', boxShadow: '0 10px 25px -5px rgba(0,0,0,0.2)', zIndex: 50 }}>
+                    <input 
+                      type="text" 
+                      placeholder="🔍 Search enquiry by name, phone, or message details..." 
+                      value={enquirySearch} 
+                      onChange={(e) => setEnquirySearch(e.target.value)} 
+                      style={{ width: '100%', padding: '10px 12px', border: '1px solid #fdba74', borderRadius: '6px', outline: 'none', fontSize: '13px', marginBottom: '10px', background: '#fff7ed' }}
+                      autoFocus 
+                    />
+                    <div style={{ maxHeight: '220px', overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                      {filteredEnquiries.length === 0 ? (
+                        <div style={{ padding: '8px', color: '#64748b', fontSize: '13px', textAlign: 'center' }}>No enquiries match search criteria.</div>
+                      ) : (
+                        filteredEnquiries.map(eq => (
+                          <div 
+                            key={eq._id} 
+                            onClick={() => {
+                              const pax = 1 + (eq.members?.length || 0);
+                              const selPkg = packages.find(p => p._id === eq.package);
+                              const calcAmount = selPkg ? selPkg.price * pax : 0;
+                              const memberNames = eq.members?.length > 0 ? '\nFamily members included: ' + eq.members.map((m: any) => `${m.name} (${m.relation || 'Relative'})`).join(', ') : '';
+
+                              let tDate = '';
+                              if (selPkg && selPkg.groups?.length > 0 && eq.packageGroup) {
+                                const grp = selPkg.groups.find((g: any) => g._id === eq.packageGroup || g._id?.toString() === eq.packageGroup);
+                                if (grp && grp.date) tDate = grp.date;
+                              }
+
+                              setForm({
+                                ...form,
+                                enquiry: eq._id,
+                                customer: eq.customer?._id || eq.customer || '',
+                                package: eq.package || '',
+                                packageGroup: eq.packageGroup || '',
+                                numberOfTravelers: String(pax),
+                                travelDate: tDate || form.travelDate,
+                                totalAmount: String(calcAmount),
+                                notes: eq.message ? eq.message + memberNames : memberNames
+                              });
+                              setOpenEnquiryDropdown(false);
+                            }}
+                            style={{ padding: '10px 12px', borderRadius: '6px', cursor: 'pointer', background: form.enquiry === eq._id ? '#ffedd5' : '#fff', fontWeight: '500', fontSize: '13px', color: '#1e293b', borderBottom: '1px solid #f8fafc', transition: 'background 0.15s' }}
+                          >
+                            <div style={{ fontWeight: '600', color: '#ea580c', marginBottom: '2px' }}>{eq.submittedName || eq.customer?.name || 'Enquiry'}</div>
+                            <div style={{ fontSize: '12px', color: '#64748b' }}>Source: {eq.source} | Family members: {eq.members?.length || 0}</div>
+                          </div>
+                        ))
+                      )}
+                    </div>
+                  </div>
+                )}
               </div>
             </div>
           )}
 
           <form onSubmit={handleCreateOrUpdateBooking} style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))', gap: '16px' }}>
-            {/* Search & Choose Customer */}
+            {/* Custom Combined Search & Choose Customer */}
             <div style={{ background: '#f8fafc', padding: '12px', borderRadius: '8px', border: '1px solid #e2e8f0', gridColumn: '1 / -1' }}>
               <label style={{ display: 'block', fontSize: '13px', fontWeight: '600', color: '#475569', marginBottom: '8px' }}>
                 Search & Choose Customer * {form.enquiry && <span style={{ color: '#dc2626' }}>(Locked by Quick Fill)</span>}
               </label>
-              <div style={{ background: form.enquiry ? '#f1f5f9' : '#fff', border: '1px solid #cbd5e1', borderRadius: '8px', padding: '8px', display: 'flex', flexDirection: 'column', gap: '6px' }}>
-                <input 
-                  type="text" 
-                  placeholder="🔍 Filter / search inside choose customer..." 
-                  value={customerSearch} 
-                  disabled={!!form.enquiry}
-                  onChange={(e) => setCustomerSearch(e.target.value)} 
-                  style={{ width: '100%', padding: '8px 12px', border: 'none', borderBottom: '1px solid #e2e8f0', outline: 'none', background: 'transparent', fontSize: '13px', color: '#0f172a' }} 
-                />
-                <select 
-                  required 
-                  disabled={!!form.enquiry}
-                  value={form.customer} 
-                  onChange={(e) => setForm({...form, customer: e.target.value})} 
-                  style={{ width: '100%', padding: '8px', border: 'none', outline: 'none', background: 'transparent', fontSize: '14px', fontWeight: '600' }}
+              
+              <div style={{ position: 'relative' }}>
+                <div 
+                  onClick={() => { if (!form.enquiry) setOpenCustomerDropdown(!openCustomerDropdown); }} 
+                  style={{ width: '100%', padding: '10px 14px', border: '1px solid #cbd5e1', borderRadius: '8px', background: form.enquiry ? '#f1f5f9' : '#fff', fontSize: '14px', color: '#0f172a', fontWeight: '600', cursor: form.enquiry ? 'not-allowed' : 'pointer', display: 'flex', justifyContent: 'space-between', alignItems: 'center', boxShadow: '0 1px 2px rgba(0,0,0,0.05)' }}
                 >
-                  <option value="">-- Select Customer --</option>
-                  {filteredCustomers.map(c => (
-                    <option key={c._id} value={c._id}>{c.name} ({c.phone || c.email})</option>
-                  ))}
-                </select>
+                  <span>{selectedCustObj ? `👤 ${selectedCustObj.name} (${selectedCustObj.phone || selectedCustObj.email})` : '-- Click to Search & Select Customer --'}</span>
+                  <span>{openCustomerDropdown ? '▲' : '▼'}</span>
+                </div>
+
+                {openCustomerDropdown && !form.enquiry && (
+                  <div style={{ position: 'absolute', top: '100%', left: 0, right: 0, marginTop: '6px', background: '#fff', border: '1px solid #cbd5e1', borderRadius: '8px', padding: '12px', boxShadow: '0 10px 25px -5px rgba(0,0,0,0.2)', zIndex: 40 }}>
+                    <input 
+                      type="text" 
+                      placeholder="🔍 Search customer name, phone, or email..." 
+                      value={customerSearch} 
+                      onChange={(e) => setCustomerSearch(e.target.value)} 
+                      style={{ width: '100%', padding: '10px 12px', border: '1px solid #cbd5e1', borderRadius: '6px', outline: 'none', fontSize: '13px', marginBottom: '10px', background: '#f8fafc' }}
+                      autoFocus 
+                    />
+                    <div style={{ maxHeight: '220px', overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                      {filteredCustomers.length === 0 ? (
+                        <div style={{ padding: '8px', color: '#64748b', fontSize: '13px', textAlign: 'center' }}>No customers match search criteria.</div>
+                      ) : (
+                        filteredCustomers.map(c => (
+                          <div 
+                            key={c._id} 
+                            onClick={() => {
+                              setForm({...form, customer: c._id});
+                              setOpenCustomerDropdown(false);
+                            }}
+                            style={{ padding: '10px 12px', borderRadius: '6px', cursor: 'pointer', background: form.customer === c._id ? '#e2e8f0' : '#fff', fontWeight: '500', fontSize: '13px', color: '#1e293b', borderBottom: '1px solid #f8fafc', transition: 'background 0.15s' }}
+                          >
+                            <div style={{ fontWeight: '600', color: '#0f172a' }}>{c.name}</div>
+                            <div style={{ fontSize: '12px', color: '#64748b' }}>Phone: {c.phone} | Email: {c.email}</div>
+                          </div>
+                        ))
+                      )}
+                    </div>
+                  </div>
+                )}
               </div>
             </div>
 
@@ -767,7 +808,7 @@ export default function BookingsPage() {
                         {/* Expandable Form Details & Note Toggler */}
                         <details style={{ cursor: 'pointer' }}>
                           <summary style={{ outline: 'none', fontSize: '12px', color: '#2563eb', fontWeight: '600' }}>
-                            View Form Details & Notes 📝
+                            View Details
                           </summary>
                           <div style={{ position: 'relative', padding: '12px', background: '#fff', border: '1px solid #cbd5e1', borderRadius: '6px', marginTop: '6px', fontSize: '12px', maxHeight: '250px', overflowY: 'auto' }}>
                             <div style={{ position: 'absolute', top: '8px', right: '8px', display: 'flex', gap: '4px' }}>
@@ -968,7 +1009,7 @@ export default function BookingsPage() {
                     <div style={{ marginTop: '6px', paddingTop: '6px', borderTop: '1px solid #e2e8f0' }}>
                       <details style={{ cursor: 'pointer' }}>
                         <summary style={{ outline: 'none', fontSize: '12px', color: '#2563eb', fontWeight: '600' }}>
-                          View Form Details & Notes 📝
+                          View Details
                         </summary>
                         <div style={{ position: 'relative', padding: '12px', background: '#fff', border: '1px solid #cbd5e1', borderRadius: '6px', marginTop: '6px', fontSize: '12px' }}>
                           <div style={{ position: 'absolute', top: '8px', right: '8px', display: 'flex', gap: '4px' }}>

@@ -103,6 +103,7 @@ export default function DashboardPage() {
             <div style={{ fontSize: '13px', color: '#64748b', fontWeight: '500' }}>Revenue</div>
             <div style={{ fontSize: '32px', fontWeight: '700', color: '#0f172a' }}>₹{(s.revenue || 0).toLocaleString()}</div>
             <div style={{ fontSize: '12px', color: '#10b981', marginTop: '4px' }}>₹{(s.collected || 0).toLocaleString()} collected</div>
+            <div style={{ fontSize: '12px', color: '#dc2626', marginTop: '2px', fontWeight: '600' }}>₹{((s.revenue || 0) - (s.collected || 0)).toLocaleString()} total due</div>
           </div>
         </Link>
       </div>
