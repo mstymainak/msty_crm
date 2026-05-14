@@ -413,7 +413,7 @@ export default function BookingsPage() {
               transition: 'all 0.15s'
             }}
           >
-            {showCompletedOnly ? '📂 View Active Bookings' : '👁️ View Completed Bookings'}
+            {showCompletedOnly ? '📂 Active Bookings' : '👁️ Completed Bookings'}
           </button>
 
           <button 
