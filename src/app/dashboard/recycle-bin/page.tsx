@@ -21,16 +21,20 @@ export default function RecycleBinPage() {
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const [actioningBulk, setActioningBulk] = useState(false);
 
+  const [refreshing, setRefreshing] = useState(false);
+
   const fetchRecycled = () => {
     setLoading(true);
-    fetch('/api/recycle-bin')
+    setRefreshing(true);
+    fetch('/api/recycle-bin?_t=' + Date.now())
       .then(res => res.json())
       .then(data => {
         setEnquiries(Array.isArray(data.enquiries) ? data.enquiries : []);
         setCustomers(Array.isArray(data.customers) ? data.customers : []);
         setLoading(false);
+        setRefreshing(false);
       })
-      .catch(() => setLoading(false));
+      .catch(() => { setLoading(false); setRefreshing(false); });
   };
 
   useEffect(() => {
@@ -175,20 +179,27 @@ export default function RecycleBinPage() {
         </div>
 
         <div style={{ display: 'flex', gap: '8px', alignItems: 'center', flexWrap: 'wrap' }}>
+          <style>{`
+            @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+          `}</style>
           <button 
             onClick={fetchRecycled} 
+            disabled={refreshing}
             style={{ 
               padding: '10px 18px', 
               background: '#f1f5f9', 
               color: '#475569', 
               border: '1px solid #cbd5e1', 
               borderRadius: '8px', 
-              cursor: 'pointer', 
+              cursor: refreshing ? 'wait' : 'pointer', 
               fontSize: '14px', 
-              fontWeight: '600' 
+              fontWeight: '600',
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: '6px'
             }}
           >
-            ↻ Refresh
+            <span style={{ display: 'inline-block', animation: refreshing ? 'spin 1s linear infinite' : 'none' }}>↻</span> Refresh
           </button>
 
           <button 

@@ -34,14 +34,18 @@ export default function CustomersPage() {
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const [deletingBulk, setDeletingBulk] = useState(false);
 
+  const [refreshing, setRefreshing] = useState(false);
+
   const fetchCustomers = () => {
-    fetch('/api/customers')
+    setRefreshing(true);
+    fetch('/api/customers?_t=' + Date.now())
       .then(r => r.json())
       .then(d => {
         setCustomers(Array.isArray(d) ? d : []);
         setLoading(false);
+        setRefreshing(false);
       })
-      .catch(() => setLoading(false));
+      .catch(() => { setLoading(false); setRefreshing(false); });
   };
 
   useEffect(() => {
@@ -153,20 +157,27 @@ export default function CustomersPage() {
         </div>
         
         <div style={{ display: 'flex', gap: '8px', alignItems: 'center', flexWrap: 'wrap' }}>
+          <style>{`
+            @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+          `}</style>
           <button 
             onClick={fetchCustomers} 
+            disabled={refreshing}
             style={{ 
               padding: '10px 18px', 
               background: '#f1f5f9', 
               color: '#475569', 
               border: '1px solid #cbd5e1', 
               borderRadius: '8px', 
-              cursor: 'pointer', 
+              cursor: refreshing ? 'wait' : 'pointer', 
               fontSize: '14px', 
-              fontWeight: '600' 
+              fontWeight: '600',
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: '6px'
             }}
           >
-            ↻ Refresh
+            <span style={{ display: 'inline-block', animation: refreshing ? 'spin 1s linear infinite' : 'none' }}>↻</span> Refresh
           </button>
 
           <button 
