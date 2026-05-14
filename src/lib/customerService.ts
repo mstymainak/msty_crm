@@ -18,7 +18,7 @@ export async function createCustomer(data: any) {
 
 export async function getCustomers() {
   await dbConnect();
-  return await Customer.find({ isDeleted: { $ne: true } });
+  return await Customer.find({ isDeleted: { $ne: true } }).sort({ createdAt: -1 });
 }
 
 export async function getCustomerById(id: string) {
