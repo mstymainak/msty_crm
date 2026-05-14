@@ -8,6 +8,7 @@ const EnquirySchema = new Schema({
   priority: { type: String, enum: ['low', 'medium', 'high'], default: 'medium' },
   package: { type: Schema.Types.ObjectId, ref: 'YatraPackage' },
   packageGroup: { type: String, default: null },
+  submittedName: { type: String, default: '' },
   adminNote: { type: String, default: '' },
   notes: [{ type: String }],
   members: [{

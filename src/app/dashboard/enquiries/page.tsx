@@ -434,7 +434,7 @@ export default function EnquiriesPage() {
                     }}
                   >
                     <td style={{ padding: '12px 16px' }}>
-                      <div style={{ fontSize: '14px', fontWeight: '600', color: '#0f172a' }}>{e.customer?.name || 'Unknown'}</div>
+                      <div style={{ fontSize: '14px', fontWeight: '600', color: '#0f172a' }}>{e.submittedName || e.customer?.name || 'Unknown'}</div>
                       <div style={{ fontSize: '12px', color: '#334155', fontWeight: '500', display: 'flex', alignItems: 'center', gap: '4px' }}>
                         {e.customer?.phone ? (
                           <>
@@ -623,7 +623,7 @@ export default function EnquiriesPage() {
                     {/* First Row: Name, Package Select, Source */}
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
                       <div style={{ fontSize: '15px', fontWeight: '700', color: '#0f172a' }}>
-                        {e.customer?.name || 'Unknown'}
+                        {e.submittedName || e.customer?.name || 'Unknown'}
                       </div>
                       <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                         <select

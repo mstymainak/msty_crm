@@ -45,6 +45,7 @@ export default function ContactForm() {
           customer: customer._id,
           source: 'website',
           message: formData.message,
+          submittedName: formData.name,
         }),
       });
 
