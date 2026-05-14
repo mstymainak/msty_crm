@@ -28,7 +28,7 @@ class WordPressSyncService {
   constructor() {
     this.wpUrl = process.env.WORDPRESS_URL || 'https://tirthyatrawala.com';
     this.wpUser = process.env.WORDPRESS_API_USER || 'admin';
-    this.wpPassword = process.env.WORDPRESS_API_PASSWORD || '';
+    this.wpPassword = process.env.WORDPRESS_API_PASSWORD || 'Utkarsh@123';
 
     // Create axios instance with Basic Auth
     const auth = Buffer.from(`${this.wpUser}:${this.wpPassword}`).toString('base64');
@@ -79,7 +79,7 @@ class WordPressSyncService {
   async fetchContactFormSubmissions(): Promise<WordPressContact[]> {
     try {
       console.log('📥 Fetching Contact Form 7 submissions...');
-      
+
       // Try to fetch from custom post type if available
       const response = await this.axiosInstance.get('/contact-form-7', {
         params: {
@@ -122,7 +122,7 @@ class WordPressSyncService {
   async fetchCustomPostContacts(): Promise<WordPressContact[]> {
     try {
       console.log('📥 Fetching custom contact posts...');
-      
+
       const response = await this.axiosInstance.get('/posts', {
         params: {
           per_page: 100,
@@ -174,7 +174,7 @@ class WordPressSyncService {
       // Combine and deduplicate
       const allContacts = [...users, ...formSubmissions, ...customPosts];
       const uniqueContacts = this.deduplicateContacts(allContacts);
-      
+
       console.log(`\n📊 Total unique contacts found: ${uniqueContacts.length}`);
 
       let imported = 0;

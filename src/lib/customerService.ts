@@ -3,6 +3,27 @@ import Customer from '@/models/Customer';
 
 export async function createCustomer(data: any) {
   await dbConnect();
+
+  // Check if customer with same email or phone number already exists
+  const query: any[] = [];
+  if (data.email && typeof data.email === 'string' && data.email.trim()) {
+    query.push({ email: data.email.trim() });
+  }
+  if (data.phone && typeof data.phone === 'string' && data.phone.trim()) {
+    query.push({ phone: data.phone.trim() });
+  }
+
+  if (query.length > 0) {
+    const existing = await Customer.findOne({
+      $or: query,
+      isDeleted: { $ne: true }
+    });
+
+    if (existing) {
+      return existing;
+    }
+  }
+
   const customer = new Customer(data);
   return await customer.save();
 }
