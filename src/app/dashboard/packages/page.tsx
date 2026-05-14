@@ -20,18 +20,22 @@ export default function PackagesPage() {
   // Track expanded package details
   const [expandedPkgId, setExpandedPkgId] = useState<string | null>(null);
 
+  const [refreshing, setRefreshing] = useState(false);
+
   const fetchPackages = () => {
-    fetch('/api/packages')
+    setRefreshing(true);
+    fetch('/api/packages?_t=' + Date.now())
       .then(r => r.json())
       .then(d => { 
         setPackages(Array.isArray(d) ? d : []); 
         setLoading(false); 
+        setRefreshing(false);
       })
-      .catch(() => setLoading(false));
+      .catch(() => { setLoading(false); setRefreshing(false); });
   };
 
   const fetchEnquiries = () => {
-    fetch('/api/enquiries')
+    fetch('/api/enquiries?_t=' + Date.now())
       .then(r => r.json())
       .then(d => setEnquiries(Array.isArray(d) ? d : []));
   };
@@ -138,20 +142,27 @@ export default function PackagesPage() {
         </div>
         
         <div style={{ display: 'flex', gap: '8px', alignItems: 'center', flexWrap: 'wrap' }}>
+          <style>{`
+            @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+          `}</style>
           <button 
-            onClick={fetchPackages} 
+            onClick={() => { fetchPackages(); fetchEnquiries(); }} 
+            disabled={refreshing}
             style={{ 
               padding: '10px 18px', 
               background: '#f1f5f9', 
               color: '#475569', 
               border: '1px solid #cbd5e1', 
               borderRadius: '8px', 
-              cursor: 'pointer', 
+              cursor: refreshing ? 'wait' : 'pointer', 
               fontSize: '14px', 
-              fontWeight: '600' 
+              fontWeight: '600',
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: '6px'
             }}
           >
-            ↻ Refresh
+            <span style={{ display: 'inline-block', animation: refreshing ? 'spin 1s linear infinite' : 'none' }}>↻</span> Refresh
           </button>
 
           <button 
