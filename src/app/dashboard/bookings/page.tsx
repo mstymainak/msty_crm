@@ -15,6 +15,11 @@ export default function BookingsPage() {
   const [statusFilter, setStatusFilter] = useState('all');
   const [searchQuery, setSearchQuery] = useState('');
   const [customerSearch, setCustomerSearch] = useState('');
+  const [enquirySearch, setEnquirySearch] = useState('');
+
+  // Notes editing state
+  const [editingNoteId, setEditingNoteId] = useState<string | null>(null);
+  const [tempNote, setTempNote] = useState('');
 
   // Add / Edit Form State
   const [form, setForm] = useState({
@@ -67,6 +72,43 @@ export default function BookingsPage() {
     }
   };
 
+  const saveNote = async (id: string, newNote: string) => {
+    try {
+      const res = await fetch(`/api/bookings/${id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ notes: newNote }),
+      });
+      if (res.ok) {
+        setEditingNoteId(null);
+        fetchBookings();
+      } else {
+        alert('Failed to save note.');
+      }
+    } catch (err) {
+      alert('Error saving note.');
+    }
+  };
+
+  const deleteNote = async (id: string) => {
+    if (!confirm('Are you sure you want to delete this note?')) return;
+    try {
+      const res = await fetch(`/api/bookings/${id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ notes: '' }),
+      });
+      if (res.ok) {
+        setEditingNoteId(null);
+        fetchBookings();
+      } else {
+        alert('Failed to delete note.');
+      }
+    } catch (err) {
+      alert('Error deleting note.');
+    }
+  };
+
   const handleDelete = async (id: string) => {
     if (!confirm('Are you absolutely sure you want to cancel and delete this booking?')) return;
     try {
@@ -108,7 +150,6 @@ export default function BookingsPage() {
       });
 
       if (res.ok) {
-        // If confirmed from an enquiry, mark enquiry as booked
         if (form.enquiry) {
           try {
             await fetch(`/api/enquiries/${form.enquiry}`, {
@@ -134,6 +175,7 @@ export default function BookingsPage() {
           notes: '',
         });
         setCustomerSearch('');
+        setEnquirySearch('');
         fetchBookings();
       } else {
         alert('Failed to create booking.');
@@ -181,7 +223,17 @@ export default function BookingsPage() {
     return true;
   });
 
-  // Filter Customers for Form Dropdown
+  // Filter Enquiries for Quick Fill Dropdown
+  const filteredEnquiries = enquiries.filter(eq => eq.status !== 'lost').filter(eq => {
+    if (!enquirySearch) return true;
+    const q = enquirySearch.toLowerCase();
+    const name = eq.submittedName?.toLowerCase() || eq.customer?.name?.toLowerCase() || '';
+    const phone = eq.customer?.phone?.toLowerCase() || '';
+    const msg = eq.message?.toLowerCase() || '';
+    return name.includes(q) || phone.includes(q) || msg.includes(q);
+  });
+
+  // Filter Customers for Form Search Box
   const filteredCustomers = customers.filter(c => {
     if (!customerSearch) return true;
     const q = customerSearch.toLowerCase();
@@ -271,9 +323,16 @@ export default function BookingsPage() {
             <h2 style={{ fontSize: '18px', fontWeight: '700', color: '#0f172a', margin: 0 }}>Create New Yatra Booking</h2>
           </div>
 
-          {/* Optional: Quick Fill from Enquiry */}
+          {/* Quick Fill from Enquiry */}
           <div style={{ background: '#fff7ed', border: '1px solid #fed7aa', padding: '16px', borderRadius: '8px', marginBottom: '20px' }}>
             <label style={{ display: 'block', fontSize: '13px', fontWeight: '700', color: '#ea580c', marginBottom: '6px' }}>⚡ Quick Fill: Confirm Booking from Enquiry (Auto-Fetches Family Members & Calculates Cost)</label>
+            <input 
+              type="text" 
+              placeholder="🔍 Type enquiry name, phone, or message details to search..." 
+              value={enquirySearch} 
+              onChange={(e) => setEnquirySearch(e.target.value)} 
+              style={{ width: '100%', padding: '8px 12px', border: '1px solid #fdba74', borderRadius: '6px', outline: 'none', background: '#fff', fontSize: '13px', marginBottom: '8px' }} 
+            />
             <select
               value={form.enquiry}
               onChange={(e) => {
@@ -285,6 +344,12 @@ export default function BookingsPage() {
                   const calcAmount = selPkg ? selPkg.price * pax : 0;
                   const memberNames = selEnq.members?.length > 0 ? '\nFamily members included: ' + selEnq.members.map((m: any) => `${m.name} (${m.relation || 'Relative'})`).join(', ') : '';
 
+                  let tDate = '';
+                  if (selPkg && selPkg.groups?.length > 0 && selEnq.packageGroup) {
+                    const grp = selPkg.groups.find((g: any) => g._id === selEnq.packageGroup || g._id?.toString() === selEnq.packageGroup);
+                    if (grp && grp.date) tDate = grp.date;
+                  }
+
                   setForm({
                     ...form,
                     enquiry: selEnq._id,
@@ -292,6 +357,7 @@ export default function BookingsPage() {
                     package: selEnq.package || '',
                     packageGroup: selEnq.packageGroup || '',
                     numberOfTravelers: String(pax),
+                    travelDate: tDate || form.travelDate,
                     totalAmount: String(calcAmount),
                     notes: selEnq.message ? selEnq.message + memberNames : memberNames
                   });
@@ -302,7 +368,7 @@ export default function BookingsPage() {
               style={{ width: '100%', padding: '10px 12px', border: '1px solid #fdba74', borderRadius: '8px', outline: 'none', background: '#fff', fontSize: '14px', color: '#0f172a', fontWeight: '600' }}
             >
               <option value="">-- Choose Enquiry to Confirm --</option>
-              {enquiries.filter(eq => eq.status !== 'lost').map(eq => (
+              {filteredEnquiries.map(eq => (
                 <option key={eq._id} value={eq._id}>
                   {eq.submittedName || eq.customer?.name || 'Enquiry'} - {eq.source} ({eq.members?.length || 0} family members added)
                 </option>
@@ -311,35 +377,64 @@ export default function BookingsPage() {
           </div>
 
           <form onSubmit={handleCreateBooking} style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))', gap: '16px' }}>
-            {/* Customer Select with Search */}
-            <div style={{ background: '#f8fafc', padding: '12px', borderRadius: '8px', border: '1px solid #e2e8f0' }}>
-              <label style={{ display: 'block', fontSize: '13px', fontWeight: '600', color: '#475569', marginBottom: '6px' }}>Search & Select Customer *</label>
+            {/* Choose Customer with Results List */}
+            <div style={{ background: '#f8fafc', padding: '12px', borderRadius: '8px', border: '1px solid #e2e8f0', gridColumn: '1 / -1' }}>
+              <label style={{ display: 'block', fontSize: '13px', fontWeight: '600', color: '#475569', marginBottom: '6px' }}>
+                Search & Choose Customer * {form.enquiry && <span style={{ color: '#dc2626' }}>(Locked by Quick Fill)</span>}
+              </label>
+              
               <input 
                 type="text" 
-                placeholder="🔍 Type name/phone to filter list below..." 
+                placeholder="🔍 Type customer name, phone, or email to search..." 
                 value={customerSearch} 
+                disabled={!!form.enquiry}
                 onChange={(e) => setCustomerSearch(e.target.value)} 
-                style={{ width: '100%', padding: '8px 12px', border: '1px solid #cbd5e1', borderRadius: '6px', outline: 'none', background: '#fff', fontSize: '13px', marginBottom: '8px' }} 
+                style={{ width: '100%', padding: '10px 12px', border: '1px solid #cbd5e1', borderRadius: '6px', outline: 'none', background: form.enquiry ? '#f1f5f9' : '#fff', fontSize: '14px', marginBottom: '12px' }} 
               />
-              <select 
-                required 
-                value={form.customer} 
-                onChange={(e) => setForm({...form, customer: e.target.value})} 
-                style={{ width: '100%', padding: '10px 12px', border: '1px solid #cbd5e1', borderRadius: '6px', outline: 'none', background: '#fff', fontSize: '14px', fontWeight: '600' }}
-              >
-                <option value="">-- Choose Customer --</option>
-                {filteredCustomers.map(c => (
-                  <option key={c._id} value={c._id}>{c.name} ({c.phone || c.email})</option>
-                ))}
-              </select>
+
+              {/* Clickable Customer Search Results Below Search Box */}
+              <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', maxHeight: '140px', overflowY: 'auto' }}>
+                {filteredCustomers.slice(0, 15).map(c => {
+                  const isSelected = form.customer === c._id;
+                  return (
+                    <button
+                      key={c._id}
+                      type="button"
+                      disabled={!!form.enquiry}
+                      onClick={() => setForm({...form, customer: c._id})}
+                      style={{
+                        padding: '8px 12px',
+                        background: isSelected ? '#2563eb' : '#fff',
+                        color: isSelected ? '#fff' : '#0f172a',
+                        border: isSelected ? '1px solid #1d4ed8' : '1px solid #cbd5e1',
+                        borderRadius: '8px',
+                        fontSize: '13px',
+                        fontWeight: '600',
+                        cursor: form.enquiry ? 'not-allowed' : 'pointer',
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '6px',
+                        boxShadow: '0 1px 2px rgba(0,0,0,0.05)',
+                        transition: 'all 0.15s'
+                      }}
+                    >
+                      <span>{isSelected ? '✓' : '👤'}</span>
+                      <span>{c.name} ({c.phone || c.email})</span>
+                    </button>
+                  );
+                })}
+              </div>
             </div>
 
             {/* Package & Batch Select */}
             <div style={{ background: '#f8fafc', padding: '12px', borderRadius: '8px', border: '1px solid #e2e8f0', display: 'flex', flexDirection: 'column', gap: '8px' }}>
               <div>
-                <label style={{ display: 'block', fontSize: '13px', fontWeight: '600', color: '#475569', marginBottom: '6px' }}>Select Package *</label>
+                <label style={{ display: 'block', fontSize: '13px', fontWeight: '600', color: '#475569', marginBottom: '6px' }}>
+                  Select Package * {!!form.enquiry && !!form.package && <span style={{ color: '#dc2626' }}>(Locked by Quick Fill)</span>}
+                </label>
                 <select 
                   required 
+                  disabled={!!form.enquiry && !!form.package}
                   value={form.package} 
                   onChange={(e) => {
                     const val = e.target.value;
@@ -347,7 +442,7 @@ export default function BookingsPage() {
                     const calc = selPkg ? selPkg.price * Number(form.numberOfTravelers || 1) : form.totalAmount;
                     setForm({...form, package: val, packageGroup: '', totalAmount: String(calc)});
                   }} 
-                  style={{ width: '100%', padding: '10px 12px', border: '1px solid #cbd5e1', borderRadius: '6px', outline: 'none', background: '#fff', fontSize: '14px', fontWeight: '600' }}
+                  style={{ width: '100%', padding: '10px 12px', border: '1px solid #cbd5e1', borderRadius: '6px', outline: 'none', background: (!!form.enquiry && !!form.package) ? '#f1f5f9' : '#fff', fontSize: '14px', fontWeight: '600' }}
                 >
                   <option value="">-- Choose Package --</option>
                   {packages.map(p => (
@@ -358,10 +453,19 @@ export default function BookingsPage() {
 
               {form.package && packages.find(p => p._id === form.package)?.groups?.length > 0 && (
                 <div>
-                  <label style={{ display: 'block', fontSize: '12px', fontWeight: '700', color: '#2563eb', marginBottom: '4px' }}>Select Batch / Group</label>
+                  <label style={{ display: 'block', fontSize: '12px', fontWeight: '700', color: '#2563eb', marginBottom: '4px' }}>Select Batch / Group (Auto-Fetches Travel Date)</label>
                   <select
                     value={form.packageGroup}
-                    onChange={(e) => setForm({...form, packageGroup: e.target.value})}
+                    onChange={(e) => {
+                      const val = e.target.value;
+                      const selPkg = packages.find(p => p._id === form.package);
+                      let tDate = form.travelDate;
+                      if (selPkg && selPkg.groups) {
+                        const matched = selPkg.groups.find((g: any) => g._id === val || g._id?.toString() === val);
+                        if (matched && matched.date) tDate = matched.date;
+                      }
+                      setForm({...form, packageGroup: val, travelDate: tDate});
+                    }}
                     style={{ width: '100%', padding: '8px 10px', border: '1px solid #bfdbfe', borderRadius: '6px', outline: 'none', background: '#eff6ff', fontSize: '13px', color: '#1d4ed8', fontWeight: '600' }}
                   >
                     <option value="">-- No Specific Batch --</option>
@@ -521,7 +625,7 @@ export default function BookingsPage() {
                   <th>Customer</th>
                   <th>Yatra Package & Batch</th>
                   <th>Travel Date</th>
-                  <th>Travelers</th>
+                  <th>Travelers & Form Details</th>
                   <th>Financial Breakdown</th>
                   <th>Status</th>
                   <th>Actions</th>
@@ -530,11 +634,14 @@ export default function BookingsPage() {
               <tbody>
                 {filteredBookings.map(b => {
                   const badge = getStatusBadgeColor(b.status);
-                  // Find batch name if available
                   let batchName = '';
+                  let batchDate = '';
                   if (b.package?.groups?.length > 0 && b.packageGroup) {
                     const matchedGrp = b.package.groups.find((g: any) => g._id === b.packageGroup || g._id?.toString() === b.packageGroup);
-                    if (matchedGrp) batchName = `${matchedGrp.name} (${matchedGrp.date})`;
+                    if (matchedGrp) {
+                      batchName = matchedGrp.name;
+                      batchDate = matchedGrp.date;
+                    }
                   }
 
                   return (
@@ -554,20 +661,51 @@ export default function BookingsPage() {
                       </td>
 
                       <td>
-                        <div style={{ fontWeight: '500', color: '#334155' }}>
-                          {b.travelDate ? new Date(b.travelDate).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' }) : 'Unassigned'}
+                        <div style={{ fontWeight: '600', color: '#0f172a' }}>
+                          {batchDate ? batchDate : b.travelDate ? new Date(b.travelDate).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' }) : 'Unassigned'}
                         </div>
                       </td>
 
-                      <td>
-                        <span style={{ display: 'inline-block', padding: '2px 8px', background: '#fff3eb', color: '#ea580c', border: '1px solid #ffd8bf', borderRadius: '6px', fontWeight: '700', fontSize: '12px' }}>
-                          {b.numberOfTravelers} Pax
-                        </span>
-                        {b.notes && b.notes.includes('Family') && (
-                          <div style={{ fontSize: '11px', color: '#64748b', marginTop: '4px', maxWidth: '180px' }}>
-                            {b.notes}
+                      <td style={{ maxWidth: '280px' }}>
+                        <div style={{ marginBottom: '6px' }}>
+                          <span style={{ display: 'inline-block', padding: '2px 8px', background: '#fff3eb', color: '#ea580c', border: '1px solid #ffd8bf', borderRadius: '6px', fontWeight: '700', fontSize: '12px' }}>
+                            {b.numberOfTravelers} Pax
+                          </span>
+                        </div>
+
+                        {/* Expandable Form Details & Note Toggler exactly like Enquiry page */}
+                        <details style={{ cursor: 'pointer' }}>
+                          <summary style={{ outline: 'none', fontSize: '12px', color: '#2563eb', fontWeight: '600' }}>
+                            View Form Details & Notes 📝
+                          </summary>
+                          <div style={{ position: 'relative', padding: '12px', background: '#fff', border: '1px solid #cbd5e1', borderRadius: '6px', marginTop: '6px', fontSize: '12px', maxHeight: '250px', overflowY: 'auto' }}>
+                            <div style={{ position: 'absolute', top: '8px', right: '8px', display: 'flex', gap: '4px' }}>
+                              <button onClick={(ev) => { ev.preventDefault(); setEditingNoteId(b._id); setTempNote(b.notes || ''); }} style={{ background: 'transparent', border: 'none', cursor: 'pointer', fontSize: '14px' }} title="Edit Note">📝</button>
+                              {b.notes && <button onClick={(ev) => { ev.preventDefault(); deleteNote(b._id); }} style={{ background: 'transparent', border: 'none', cursor: 'pointer', fontSize: '14px' }} title="Delete Note">🗑️</button>}
+                            </div>
+
+                            <div style={{ whiteSpace: 'pre-wrap', color: '#334155', paddingRight: '45px', fontWeight: '500' }}>
+                              {b.notes || 'No notes added yet.'}
+                            </div>
+
+                            {editingNoteId === b._id && (
+                              <div style={{ marginTop: '10px', paddingTop: '10px', borderTop: '1px dashed #cbd5e1' }}>
+                                <span style={{ fontSize: '10px', textTransform: 'uppercase', color: '#64748b', display: 'block', marginBottom: '6px', fontWeight: '600' }}>Edit Booking Note</span>
+                                <textarea
+                                  value={tempNote}
+                                  onChange={(ev) => setTempNote(ev.target.value)}
+                                  style={{ width: '100%', padding: '8px', border: '1px solid #cbd5e1', borderRadius: '4px', fontSize: '12px', boxSizing: 'border-box', minHeight: '60px', resize: 'vertical' }}
+                                  placeholder="Type booking note or family members here..."
+                                  autoFocus
+                                />
+                                <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '8px', marginTop: '8px' }}>
+                                  <button onClick={(ev) => { ev.preventDefault(); setEditingNoteId(null); }} style={{ padding: '6px 12px', fontSize: '11px', background: '#f1f5f9', color: '#475569', border: 'none', borderRadius: '4px', cursor: 'pointer', fontWeight: '500' }}>Cancel</button>
+                                  <button onClick={(ev) => { ev.preventDefault(); saveNote(b._id, tempNote); }} style={{ padding: '6px 12px', fontSize: '11px', background: '#f97316', color: '#fff', border: 'none', borderRadius: '4px', cursor: 'pointer', fontWeight: '500' }}>Save</button>
+                                </div>
+                              </div>
+                            )}
                           </div>
-                        )}
+                        </details>
                       </td>
 
                       <td>
@@ -633,9 +771,13 @@ export default function BookingsPage() {
             {filteredBookings.map(b => {
               const badge = getStatusBadgeColor(b.status);
               let batchName = '';
+              let batchDate = '';
               if (b.package?.groups?.length > 0 && b.packageGroup) {
                 const matchedGrp = b.package.groups.find((g: any) => g._id === b.packageGroup || g._id?.toString() === b.packageGroup);
-                if (matchedGrp) batchName = `${matchedGrp.name} (${matchedGrp.date})`;
+                if (matchedGrp) {
+                  batchName = matchedGrp.name;
+                  batchDate = matchedGrp.date;
+                }
               }
 
               return (
@@ -685,22 +827,52 @@ export default function BookingsPage() {
                     <div style={{ display: 'flex', justifyContent: 'space-between' }}>
                       <span style={{ color: '#64748b' }}>Travel Date:</span>
                       <strong style={{ color: '#1e293b' }}>
-                        {b.travelDate ? new Date(b.travelDate).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' }) : 'Unassigned'}
+                        {batchDate ? batchDate : b.travelDate ? new Date(b.travelDate).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' }) : 'Unassigned'}
                       </strong>
                     </div>
 
-                    <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                       <span style={{ color: '#64748b' }}>Travelers:</span>
                       <span style={{ background: '#fff3eb', color: '#ea580c', border: '1px solid #ffd8bf', padding: '1px 6px', borderRadius: '4px', fontWeight: '700', fontSize: '11px' }}>
                         {b.numberOfTravelers} Pax
                       </span>
                     </div>
 
-                    {b.notes && (
-                      <div style={{ fontSize: '12px', color: '#64748b', background: '#fff', padding: '6px 8px', borderRadius: '4px', border: '1px solid #e2e8f0', marginTop: '4px' }}>
-                        {b.notes}
-                      </div>
-                    )}
+                    {/* Expandable Form Details & Note Toggler exactly like Enquiry page */}
+                    <div style={{ marginTop: '6px', paddingTop: '6px', borderTop: '1px solid #e2e8f0' }}>
+                      <details style={{ cursor: 'pointer' }}>
+                        <summary style={{ outline: 'none', fontSize: '12px', color: '#2563eb', fontWeight: '600' }}>
+                          View Form Details & Notes 📝
+                        </summary>
+                        <div style={{ position: 'relative', padding: '12px', background: '#fff', border: '1px solid #cbd5e1', borderRadius: '6px', marginTop: '6px', fontSize: '12px' }}>
+                          <div style={{ position: 'absolute', top: '8px', right: '8px', display: 'flex', gap: '4px' }}>
+                            <button onClick={(ev) => { ev.preventDefault(); setEditingNoteId(b._id); setTempNote(b.notes || ''); }} style={{ background: 'transparent', border: 'none', cursor: 'pointer', fontSize: '14px' }} title="Edit Note">📝</button>
+                            {b.notes && <button onClick={(ev) => { ev.preventDefault(); deleteNote(b._id); }} style={{ background: 'transparent', border: 'none', cursor: 'pointer', fontSize: '14px' }} title="Delete Note">🗑️</button>}
+                          </div>
+
+                          <div style={{ whiteSpace: 'pre-wrap', color: '#334155', paddingRight: '45px', fontWeight: '500' }}>
+                            {b.notes || 'No notes added yet.'}
+                          </div>
+
+                          {editingNoteId === b._id && (
+                            <div style={{ marginTop: '10px', paddingTop: '10px', borderTop: '1px dashed #cbd5e1' }}>
+                              <span style={{ fontSize: '10px', textTransform: 'uppercase', color: '#64748b', display: 'block', marginBottom: '6px', fontWeight: '600' }}>Edit Booking Note</span>
+                              <textarea
+                                value={tempNote}
+                                onChange={(ev) => setTempNote(ev.target.value)}
+                                style={{ width: '100%', padding: '8px', border: '1px solid #cbd5e1', borderRadius: '4px', fontSize: '12px', boxSizing: 'border-box', minHeight: '60px', resize: 'vertical' }}
+                                placeholder="Type booking note or family members here..."
+                                autoFocus
+                              />
+                              <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '8px', marginTop: '8px' }}>
+                                <button onClick={(ev) => { ev.preventDefault(); setEditingNoteId(null); }} style={{ padding: '6px 12px', fontSize: '11px', background: '#f1f5f9', color: '#475569', border: 'none', borderRadius: '4px', cursor: 'pointer', fontWeight: '500' }}>Cancel</button>
+                                <button onClick={(ev) => { ev.preventDefault(); saveNote(b._id, tempNote); }} style={{ padding: '6px 12px', fontSize: '11px', background: '#f97316', color: '#fff', border: 'none', borderRadius: '4px', cursor: 'pointer', fontWeight: '500' }}>Save</button>
+                              </div>
+                            </div>
+                          )}
+                        </div>
+                      </details>
+                    </div>
 
                     <div style={{ borderTop: '1px solid #e2e8f0', margin: '6px 0' }} />
 
