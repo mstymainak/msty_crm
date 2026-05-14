@@ -26,6 +26,11 @@ export default function BookingsPage() {
   const [editingNoteId, setEditingNoteId] = useState<string | null>(null);
   const [tempNote, setTempNote] = useState('');
   const [activeHistoryId, setActiveHistoryId] = useState<string | null>(null);
+  const [expandedNoteId, setExpandedNoteId] = useState<string | null>(null);
+
+  // Pagination states
+  const [currentPage, setCurrentPage] = useState(1);
+  const [pageSize, setPageSize] = useState(10);
 
   // Add / Edit Form State
   const [form, setForm] = useState({
@@ -123,7 +128,7 @@ export default function BookingsPage() {
   };
 
   const handleDelete = async (id: string) => {
-    if (!confirm('Are you absolutely sure you want to cancel and delete this booking?')) return;
+    if (!confirm('Are you absolutely sure you want to delete this booking?')) return;
     try {
       const res = await fetch(`/api/bookings/${id}`, { method: 'DELETE' });
       if (res.ok) {
@@ -264,6 +269,11 @@ export default function BookingsPage() {
     }
   };
 
+  // Reset pagination on filter change
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchQuery, statusFilter, showCompletedOnly]);
+
   // Filter Bookings by Tab (Completed vs Active)
   const filteredBookings = bookings.filter(b => {
     if (showCompletedOnly) {
@@ -282,6 +292,14 @@ export default function BookingsPage() {
     }
     return true;
   });
+
+  // Pagination Calculations
+  const totalItems = filteredBookings.length;
+  const totalPages = Math.ceil(totalItems / pageSize);
+  const activePage = Math.max(1, Math.min(currentPage, totalPages || 1));
+  const startIndex = (activePage - 1) * pageSize;
+  const endIndex = Math.min(startIndex + pageSize, totalItems);
+  const paginatedBookings = filteredBookings.slice(startIndex, endIndex);
 
   // Filter Enquiries for Quick Fill Dropdown
   const filteredEnquiries = enquiries.filter(eq => eq.status !== 'lost').filter(eq => {
@@ -761,13 +779,13 @@ export default function BookingsPage() {
 
       {loading ? (
         <div style={{ padding: '48px', textAlign: 'center', color: '#64748b', fontSize: '15px' }}>Loading bookings...</div>
-      ) : filteredBookings.length === 0 ? (
+      ) : paginatedBookings.length === 0 ? (
         <div style={{ padding: '48px', textAlign: 'center', background: '#fff', borderRadius: '16px', border: '1px solid #e2e8f0', color: '#64748b' }}>
           No {showCompletedOnly ? 'completed' : 'active'} bookings found.
         </div>
       ) : (
         <>
-          {/* Desktop Table View */}
+          {/* Desktop Table View (Stays exactly as it is per user request) */}
           <div className="desktop-table">
             <table className="booking-table">
               <thead>
@@ -782,7 +800,7 @@ export default function BookingsPage() {
                 </tr>
               </thead>
               <tbody>
-                {filteredBookings.map(b => {
+                {paginatedBookings.map(b => {
                   const badge = getStatusBadgeColor(b.status);
                   let batchName = '';
                   if (b.package?.groups?.length > 0 && b.packageGroup) {
@@ -939,8 +957,8 @@ export default function BookingsPage() {
                           <button onClick={() => handleUpdatePayment(b)} className="btn-pay" title="Record Payment">
                             ₹ Pay
                           </button>
-                          <button onClick={() => handleDelete(b._id)} className="btn-cancel" title="Cancel Booking">
-                            ✕ Cancel
+                          <button onClick={() => handleDelete(b._id)} className="btn-cancel" title="Delete Booking">
+                            ✕ Delete
                           </button>
                         </div>
                       </td>
@@ -951,9 +969,9 @@ export default function BookingsPage() {
             </table>
           </div>
 
-          {/* Mobile Card View */}
+          {/* Mobile Card View (Exactly matching attached image structure!) */}
           <div className="mobile-cards">
-            {filteredBookings.map(b => {
+            {paginatedBookings.map(b => {
               const badge = getStatusBadgeColor(b.status);
               let batchName = '';
               if (b.package?.groups?.length > 0 && b.packageGroup) {
@@ -965,170 +983,281 @@ export default function BookingsPage() {
               const endD = b.endTravelDate ? new Date(b.endTravelDate).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' }) : '';
 
               return (
-                <div key={b._id} style={{ background: '#fff', borderRadius: '16px', border: '1px solid #e2e8f0', padding: '20px', boxShadow: '0 4px 6px -1px rgba(0,0,0,0.05)' }}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '16px' }}>
+                <div key={b._id} style={{ background: '#fff', borderRadius: '16px', border: '1px solid #e2e8f0', padding: '16px', boxShadow: '0 4px 6px -1px rgba(0,0,0,0.05)' }}>
+                  {/* Top Section: Grid 2 Columns */}
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1.2fr', gap: '12px', alignItems: 'flex-start', marginBottom: '14px' }}>
+                    {/* Left Column: Customer & Status */}
                     <div>
-                      <div style={{ fontSize: '18px', fontWeight: '700', color: '#0f172a' }}>{b.customer?.name || 'Unknown'}</div>
-                      <div style={{ fontSize: '13px', color: '#64748b' }}>{b.customer?.phone || b.customer?.email}</div>
-                      <div style={{ fontSize: '11px', color: '#94a3b8', marginTop: '4px' }}>
-                        Booked: {new Date(b.createdAt).toLocaleString('en-IN', { day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' })}
+                      <div style={{ fontSize: '16px', fontWeight: '700', color: '#0f172a' }}>{b.customer?.name || 'Unknown'}</div>
+                      <div style={{ fontSize: '13px', color: '#64748b', marginTop: '2px' }}>{b.customer?.phone || b.customer?.email}</div>
+                      <div style={{ fontSize: '11px', color: '#94a3b8', marginTop: '4px', marginBottom: '12px' }}>
+                        Booked: {new Date(b.createdAt).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })} {new Date(b.createdAt).toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' })}
+                      </div>
+
+                      <select
+                        value={b.status}
+                        onChange={(e) => handleStatusChange(b, e.target.value)}
+                        style={{
+                          background: badge.bg,
+                          color: badge.text,
+                          border: `1px solid ${badge.border}`,
+                          padding: '4px 8px',
+                          borderRadius: '6px',
+                          fontSize: '11px',
+                          fontWeight: '700',
+                          outline: 'none',
+                          cursor: 'pointer',
+                          width: '100%',
+                          maxWidth: '130px'
+                        }}
+                      >
+                        <option value="confirmed">Confirmed</option>
+                        <option value="payment_pending">Payment Pending</option>
+                        <option value="paid">Paid</option>
+                        <option value="in_progress">In Progress</option>
+                        <option value="completed">Completed</option>
+                        <option value="cancelled">Cancelled</option>
+                      </select>
+                    </div>
+
+                    {/* Right Column: Package Details Block */}
+                    <div style={{ position: 'relative', background: '#f8fafc', padding: '10px 12px', borderRadius: '10px', border: '1px solid #f1f5f9' }}>
+                      {/* Three Dots Button for details/notes */}
+                      <div 
+                        onClick={() => setExpandedNoteId(expandedNoteId === b._id ? null : b._id)}
+                        style={{ position: 'absolute', top: '6px', right: '6px', cursor: 'pointer', padding: '2px 6px', fontSize: '16px', fontWeight: 'bold', color: '#64748b', lineHeight: 0.8 }}
+                        title="View Notes & Details"
+                      >
+                        ⋮
+                      </div>
+
+                      <div style={{ fontSize: '11px', color: '#64748b' }}>Package:</div>
+                      <div style={{ fontSize: '13px', fontWeight: '700', color: '#0f172a', marginBottom: '8px', paddingRight: '16px' }}>{b.package?.name || 'Custom Package'}</div>
+
+                      <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '11px', marginBottom: '4px' }}>
+                        <span style={{ color: '#64748b' }}>Rate:</span>
+                        <strong style={{ color: '#2563eb' }}>₹{b.package?.price || 0}</strong>
+                      </div>
+
+                      {b.package?.duration && (
+                        <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '11px', marginBottom: '4px' }}>
+                          <span style={{ color: '#64748b' }}>Duration:</span>
+                          <strong style={{ color: '#475569' }}>{b.package.duration}</strong>
+                        </div>
+                      )}
+
+                      {batchName && (
+                        <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '11px', marginBottom: '4px' }}>
+                          <span style={{ color: '#64748b' }}>Batch:</span>
+                          <strong style={{ color: '#2563eb' }}>{batchName}</strong>
+                        </div>
+                      )}
+
+                      <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '11px', marginBottom: '4px' }}>
+                        <span style={{ color: '#64748b' }}>Travel Date:</span>
+                        <strong style={{ color: '#0f172a' }}>{startD || 'Unassigned'}</strong>
+                      </div>
+
+                      <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '11px' }}>
+                        <span style={{ color: '#64748b' }}>Travelers:</span>
+                        <strong style={{ color: '#ea580c' }}>{b.numberOfTravelers} Pax</strong>
                       </div>
                     </div>
-                    <select
-                      value={b.status}
-                      onChange={(e) => handleStatusChange(b, e.target.value)}
-                      style={{
-                        background: badge.bg,
-                        color: badge.text,
-                        border: `1px solid ${badge.border}`,
-                        padding: '6px 12px',
-                        borderRadius: '8px',
-                        fontSize: '12px',
-                        fontWeight: '700',
-                        outline: 'none',
-                        cursor: 'pointer'
-                      }}
-                    >
-                      <option value="confirmed">Confirmed</option>
-                      <option value="payment_pending">Payment Pending</option>
-                      <option value="paid">Paid</option>
-                      <option value="in_progress">In Progress</option>
-                      <option value="completed">Completed</option>
-                      <option value="cancelled">Cancelled</option>
-                    </select>
                   </div>
 
-                  <div style={{ background: '#f8fafc', padding: '16px', borderRadius: '12px', marginBottom: '20px', fontSize: '13px', display: 'flex', flexDirection: 'column', gap: '8px', border: '1px solid #f1f5f9' }}>
-                    <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                      <span style={{ color: '#64748b' }}>Package:</span>
-                      <strong style={{ color: '#0f172a' }}>{b.package?.name || 'Custom Package'}</strong>
-                    </div>
-
-                    <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                      <span style={{ color: '#64748b' }}>Rate:</span>
-                      <strong style={{ color: '#64748b' }}>₹{b.package?.price || 0}</strong>
-                    </div>
-
-                    {b.package?.duration && (
-                      <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                        <span style={{ color: '#64748b' }}>Duration:</span>
-                        <strong style={{ color: '#475569' }}>{b.package.duration}</strong>
-                      </div>
-                    )}
-
-                    {batchName && (
-                      <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                        <span style={{ color: '#64748b' }}>Batch:</span>
-                        <strong style={{ color: '#2563eb' }}>{batchName}</strong>
-                      </div>
-                    )}
-
-                    <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                      <span style={{ color: '#64748b' }}>Travel Dates:</span>
-                      <strong style={{ color: '#1e293b' }}>
-                        {startD || 'Unassigned'} {endD ? ` to ${endD}` : ''}
-                      </strong>
-                    </div>
-
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                      <span style={{ color: '#64748b' }}>Travelers:</span>
-                      <span style={{ background: '#fff7ed', color: '#ea580c', border: '1px solid #fdba74', padding: '2px 8px', borderRadius: '6px', fontWeight: '700', fontSize: '12px' }}>
-                        {b.numberOfTravelers} Pax
-                      </span>
-                    </div>
-
-                    {/* Expandable Form Details & Note Toggler */}
-                    <div style={{ marginTop: '8px', paddingTop: '8px', borderTop: '1px solid #e2e8f0' }}>
-                      <details style={{ cursor: 'pointer' }}>
-                        <summary style={{ outline: 'none', fontSize: '12px', color: '#2563eb', fontWeight: '600' }}>
-                          View Details
-                        </summary>
-                        <div style={{ position: 'relative', padding: '12px', background: '#fff', border: '1px solid #cbd5e1', borderRadius: '8px', marginTop: '6px', fontSize: '12px' }}>
-                          <div style={{ position: 'absolute', top: '8px', right: '8px', display: 'flex', gap: '4px' }}>
-                            <button onClick={(ev) => { ev.preventDefault(); setEditingNoteId(b._id); setTempNote(b.notes || ''); }} style={{ background: 'transparent', border: 'none', cursor: 'pointer', fontSize: '14px' }} title="Edit Note">📝</button>
-                            {b.notes && <button onClick={(ev) => { ev.preventDefault(); deleteNote(b._id); }} style={{ background: 'transparent', border: 'none', cursor: 'pointer', fontSize: '14px' }} title="Delete Note">🗑️</button>}
-                          </div>
-
-                          <div style={{ whiteSpace: 'pre-wrap', color: '#334155', paddingRight: '45px', fontWeight: '500' }}>
-                            {b.notes || 'No notes added yet.'}
-                          </div>
-
-                          {editingNoteId === b._id && (
-                            <div style={{ marginTop: '10px', paddingTop: '10px', borderTop: '1px dashed #cbd5e1' }}>
-                              <span style={{ fontSize: '10px', textTransform: 'uppercase', color: '#64748b', display: 'block', marginBottom: '6px', fontWeight: '700' }}>Edit Booking Note</span>
-                              <textarea
-                                value={tempNote}
-                                onChange={(ev) => setTempNote(ev.target.value)}
-                                style={{ width: '100%', padding: '8px', border: '1px solid #cbd5e1', borderRadius: '6px', fontSize: '12px', boxSizing: 'border-box', minHeight: '60px', resize: 'vertical' }}
-                                placeholder="Type booking note or family members here..."
-                                autoFocus
-                              />
-                              <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '8px', marginTop: '8px' }}>
-                                <button onClick={(ev) => { ev.preventDefault(); setEditingNoteId(null); }} style={{ padding: '6px 12px', fontSize: '11px', background: '#f1f5f9', color: '#475569', border: 'none', borderRadius: '6px', cursor: 'pointer', fontWeight: '600' }}>Cancel</button>
-                                <button onClick={(ev) => { ev.preventDefault(); saveNote(b._id, tempNote); }} style={{ padding: '6px 12px', fontSize: '11px', background: '#f97316', color: '#fff', border: 'none', borderRadius: '6px', cursor: 'pointer', fontWeight: '600' }}>Save</button>
-                              </div>
-                            </div>
-                          )}
+                  {/* Notes & Details Block (When Three Dots Clicked) */}
+                  {expandedNoteId === b._id && (
+                    <div style={{ background: '#fff7ed', border: '1px solid #fdba74', borderRadius: '8px', padding: '12px', marginBottom: '14px', fontSize: '12px' }}>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px', borderBottom: '1px solid #fed7aa', paddingBottom: '4px' }}>
+                        <strong style={{ color: '#ea580c' }}>📝 Booking Details & Notes</strong>
+                        <div style={{ display: 'flex', gap: '8px' }}>
+                          <button onClick={() => { setEditingNoteId(b._id); setTempNote(b.notes || ''); }} style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: '13px' }}>✏️</button>
+                          {b.notes && <button onClick={() => deleteNote(b._id)} style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: '13px' }}>🗑️</button>}
                         </div>
-                      </details>
-                    </div>
-
-                    <div style={{ borderTop: '1px solid #e2e8f0', margin: '8px 0' }} />
-
-                    {/* Financial Breakdown (Clickable for History) */}
-                    <div 
-                      onClick={() => setActiveHistoryId(activeHistoryId === b._id ? null : b._id)}
-                      style={{ cursor: 'pointer', padding: '8px 12px', borderRadius: '8px', background: activeHistoryId === b._id ? '#fff' : '#f8fafc', border: '1px solid #cbd5e1' }}
-                    >
-                      <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                        <span style={{ color: '#64748b' }}>Total Cost:</span>
-                        <strong style={{ color: '#0f172a' }}>₹{b.totalAmount || 0}</strong>
-                      </div>
-                      <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                        <span style={{ color: '#64748b' }}>Advance Paid:</span>
-                        <strong style={{ color: '#16a34a' }}>₹{b.advancePaid || 0}</strong>
-                      </div>
-                      <div style={{ display: 'flex', justifyContent: 'space-between', fontWeight: '700', borderTop: '1px solid #e2e8f0', paddingTop: '4px', marginTop: '2px', color: (b.balancePending || 0) > 0 ? '#b91c1c' : '#16a34a' }}>
-                        <span>Balance Due:</span>
-                        <span>₹{b.balancePending || 0}</span>
                       </div>
 
-                      {activeHistoryId === b._id && (
-                        <div style={{ marginTop: '10px', padding: '10px', background: '#fff', border: '1px solid #cbd5e1', borderRadius: '8px', fontSize: '11px', boxShadow: '0 10px 15px -3px rgba(0,0,0,0.1)' }}>
-                          <div style={{ fontWeight: '700', color: '#0f172a', marginBottom: '6px', borderBottom: '1px solid #e2e8f0', paddingBottom: '4px' }}>📜 Payment Log History</div>
-                          {b.paymentHistory?.length > 0 ? b.paymentHistory.map((ph: any, i: number) => (
-                            <div key={i} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', color: '#334155', margin: '4px 0', borderBottom: '1px solid #f1f5f9', paddingBottom: '4px' }}>
-                              <div>
-                                <div style={{ fontWeight: '600' }}>{ph.method?.toUpperCase() || 'CASH'}</div>
-                                <div style={{ fontSize: '10px', color: '#94a3b8' }}>
-                                  {new Date(ph.date).toLocaleString('en-IN', { day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' })}
-                                </div>
-                              </div>
-                              <strong style={{ color: '#16a34a', fontSize: '12px' }}>+₹{ph.amount}</strong>
-                            </div>
-                          )) : (
-                            <div style={{ color: '#64748b' }}>No separate payment logs recorded.</div>
-                          )}
+                      <div style={{ whiteSpace: 'pre-wrap', color: '#334155', lineHeight: 1.4 }}>
+                        {b.notes || 'No notes added yet.'}
+                      </div>
+
+                      {editingNoteId === b._id && (
+                        <div style={{ marginTop: '10px', paddingTop: '10px', borderTop: '1px dashed #fdba74' }}>
+                          <textarea
+                            value={tempNote}
+                            onChange={(ev) => setTempNote(ev.target.value)}
+                            style={{ width: '100%', padding: '8px', border: '1px solid #cbd5e1', borderRadius: '6px', fontSize: '12px', minHeight: '60px', boxSizing: 'border-box' }}
+                            placeholder="Type booking note or family members..."
+                          />
+                          <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '8px', marginTop: '6px' }}>
+                            <button onClick={() => setEditingNoteId(null)} style={{ padding: '4px 8px', fontSize: '11px', background: '#f1f5f9', border: 'none', borderRadius: '4px', cursor: 'pointer' }}>Cancel</button>
+                            <button onClick={() => saveNote(b._id, tempNote)} style={{ padding: '4px 8px', fontSize: '11px', background: '#f97316', color: '#fff', border: 'none', borderRadius: '4px', cursor: 'pointer' }}>Save</button>
+                          </div>
                         </div>
                       )}
                     </div>
+                  )}
+
+                  <div style={{ borderTop: '1px dashed #cbd5e1', margin: '14px 0' }} />
+
+                  {/* Financial Breakdown Block (Clickable for History) */}
+                  <div 
+                    onClick={() => setActiveHistoryId(activeHistoryId === b._id ? null : b._id)}
+                    style={{ cursor: 'pointer', padding: '4px 0', marginBottom: '14px' }}
+                  >
+                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '8px', textAlign: 'center', fontSize: '11px' }}>
+                      <div>
+                        <div style={{ color: '#64748b', marginBottom: '2px' }}>Total Cost</div>
+                        <strong style={{ color: '#0f172a', fontSize: '12px' }}>₹{b.totalAmount || 0}</strong>
+                      </div>
+                      <div>
+                        <div style={{ color: '#64748b', marginBottom: '2px' }}>Advance Paid</div>
+                        <strong style={{ color: '#16a34a', fontSize: '12px' }}>₹{b.advancePaid || 0}</strong>
+                      </div>
+                      <div>
+                        <div style={{ color: (b.balancePending || 0) > 0 ? '#b91c1c' : '#16a34a', marginBottom: '2px', fontWeight: '700' }}>Balance Due:</div>
+                        <strong style={{ color: (b.balancePending || 0) > 0 ? '#b91c1c' : '#16a34a', fontSize: '12px' }}>₹{b.balancePending || 0}</strong>
+                      </div>
+                    </div>
+
+                    {activeHistoryId === b._id && (
+                      <div style={{ marginTop: '12px', padding: '10px', background: '#fff', border: '1px solid #cbd5e1', borderRadius: '8px', fontSize: '11px', boxShadow: '0 10px 15px -3px rgba(0,0,0,0.1)' }}>
+                        <div style={{ fontWeight: '700', color: '#0f172a', marginBottom: '6px', borderBottom: '1px solid #e2e8f0', paddingBottom: '4px' }}>📜 Payment Log History</div>
+                        {b.paymentHistory?.length > 0 ? b.paymentHistory.map((ph: any, i: number) => (
+                          <div key={i} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', color: '#334155', margin: '4px 0', borderBottom: '1px solid #f1f5f9', paddingBottom: '4px' }}>
+                            <div>
+                              <div style={{ fontWeight: '600' }}>{ph.method?.toUpperCase() || 'CASH'}</div>
+                              <div style={{ fontSize: '10px', color: '#94a3b8' }}>
+                                {new Date(ph.date).toLocaleString('en-IN', { day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' })}
+                              </div>
+                            </div>
+                            <strong style={{ color: '#16a34a', fontSize: '12px' }}>+₹{ph.amount}</strong>
+                          </div>
+                        )) : (
+                          <div style={{ color: '#64748b' }}>No separate payment logs recorded.</div>
+                        )}
+                      </div>
+                    )}
                   </div>
 
-                  <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
-                    <button onClick={() => handleEdit(b)} className="btn-edit" style={{ flex: 1, justifyContent: 'center' }}>
+                  {/* Bottom Action Button Row */}
+                  <div style={{ display: 'flex', gap: '8px' }}>
+                    <button onClick={() => handleEdit(b)} className="btn-edit" style={{ flex: 1, justifyContent: 'center', padding: '10px', fontSize: '13px' }}>
                       ✏️ Edit
                     </button>
-                    <button onClick={() => handleUpdatePayment(b)} className="btn-pay" style={{ flex: 1, justifyContent: 'center' }}>
+                    <button onClick={() => handleUpdatePayment(b)} className="btn-pay" style={{ flex: 1, justifyContent: 'center', padding: '10px', fontSize: '13px' }}>
                       ₹ Pay
                     </button>
-                    <button onClick={() => handleDelete(b._id)} className="btn-cancel" style={{ flex: 1, justifyContent: 'center' }}>
-                      ✕ Cancel
+                    <button onClick={() => handleDelete(b._id)} className="btn-cancel" style={{ flex: 1, justifyContent: 'center', padding: '10px', fontSize: '13px' }}>
+                      ✕ Delete
                     </button>
                   </div>
                 </div>
               );
             })}
           </div>
+
+          {/* Pagination Controls */}
+          {totalPages > 1 && (
+            <div style={{
+              display: 'flex',
+              justifyContent: 'space-between',
+              alignItems: 'center',
+              marginTop: '24px',
+              background: '#fff',
+              borderRadius: '12px',
+              padding: '14px 20px',
+              boxShadow: '0 1px 3px rgba(0,0,0,0.05)',
+              border: '1px solid #e2e8f0',
+              flexWrap: 'wrap',
+              gap: '12px'
+            }}>
+              <div style={{ fontSize: '13px', color: '#64748b' }}>
+                Showing <strong style={{ color: '#0f172a' }}>{startIndex + 1}</strong> to <strong style={{ color: '#0f172a' }}>{endIndex}</strong> of <strong style={{ color: '#0f172a' }}>{totalItems}</strong> bookings
+              </div>
+
+              <div style={{ display: 'flex', gap: '4px', alignItems: 'center' }}>
+                <button 
+                  disabled={activePage === 1}
+                  onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
+                  style={{
+                    padding: '6px 10px',
+                    borderRadius: '6px',
+                    border: '1px solid #e2e8f0',
+                    background: '#fff',
+                    cursor: activePage === 1 ? 'not-allowed' : 'pointer',
+                    opacity: activePage === 1 ? 0.5 : 1,
+                    fontSize: '13px',
+                    fontWeight: '500'
+                  }}
+                >
+                  ‹
+                </button>
+                {Array.from({ length: totalPages }).map((_, index) => {
+                  const p = index + 1;
+                  const isActive = p === activePage;
+                  return (
+                    <button
+                      key={p}
+                      onClick={() => setCurrentPage(p)}
+                      style={{
+                        padding: '6px 12px',
+                        borderRadius: '6px',
+                        border: isActive ? '1px solid #f97316' : '1px solid #e2e8f0',
+                        background: isActive ? '#f97316' : '#fff',
+                        color: isActive ? '#fff' : '#0f172a',
+                        cursor: 'pointer',
+                        fontSize: '13px',
+                        fontWeight: isActive ? '700' : '500',
+                        minWidth: '32px'
+                      }}
+                    >
+                      {p}
+                    </button>
+                  );
+                })}
+                <button 
+                  disabled={activePage === totalPages}
+                  onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
+                  style={{
+                    padding: '6px 10px',
+                    borderRadius: '6px',
+                    border: '1px solid #e2e8f0',
+                    background: '#fff',
+                    cursor: activePage === totalPages ? 'not-allowed' : 'pointer',
+                    opacity: activePage === totalPages ? 0.5 : 1,
+                    fontSize: '13px',
+                    fontWeight: '500'
+                  }}
+                >
+                  ›
+                </button>
+              </div>
+
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <select
+                  value={pageSize}
+                  onChange={(e) => {
+                    setPageSize(Number(e.target.value));
+                    setCurrentPage(1);
+                  }}
+                  style={{
+                    padding: '6px 12px',
+                    border: '1px solid #e2e8f0',
+                    borderRadius: '6px',
+                    fontSize: '13px',
+                    background: '#fff',
+                    cursor: 'pointer',
+                    outline: 'none',
+                    color: '#475569'
+                  }}
+                >
+                  <option value={10}>10 per page</option>
+                  <option value={25}>25 per page</option>
+                  <option value={50}>50 per page</option>
+                </select>
+              </div>
+            </div>
+          )}
         </>
       )}
     </div>
