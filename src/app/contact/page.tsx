@@ -11,6 +11,7 @@ export default function ContactForm() {
   });
   const [loading, setLoading] = useState(false);
   const [submitted, setSubmitted] = useState(false);
+  const [alreadyExisted, setAlreadyExisted] = useState(false);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
@@ -21,7 +22,7 @@ export default function ContactForm() {
     setLoading(true);
 
     try {
-      // Create customer first
+      // Create customer first (or find existing by phone)
       const customerResponse = await fetch('/api/customers', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -49,6 +50,7 @@ export default function ContactForm() {
 
       if (!enquiryResponse.ok) throw new Error('Failed to create enquiry');
 
+      setAlreadyExisted(customer.alreadyExisted || false);
       setSubmitted(true);
     } catch (error) {
       console.error('Error submitting form:', error);
@@ -60,12 +62,17 @@ export default function ContactForm() {
 
   if (submitted) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-50">
-        <div className="max-w-md w-full bg-white rounded-lg shadow-md p-8 text-center">
+      <div className="min-h-screen flex items-center justify-center bg-gray-50 px-4">
+        <div className="max-w-md w-full bg-white rounded-xl shadow-md p-8 text-center border border-gray-100">
           <h2 className="text-2xl font-bold text-green-600 mb-4">Thank You!</h2>
-          <p className="text-gray-600">
+          <p className="text-gray-600 mb-6">
             Your enquiry has been submitted successfully. We will get back to you soon.
           </p>
+          {alreadyExisted && (
+            <div className="p-4 bg-orange-50 border border-orange-200 rounded-lg text-sm text-orange-800 font-medium text-left">
+              ✨ <strong className="font-bold">Welcome back!</strong> We noticed your contact details are already in our database. Your new enquiry has been successfully linked to your existing customer profile!
+            </div>
+          )}
         </div>
       </div>
     );

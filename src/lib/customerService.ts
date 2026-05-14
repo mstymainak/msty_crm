@@ -3,8 +3,17 @@ import Customer from '@/models/Customer';
 
 export async function createCustomer(data: any) {
   await dbConnect();
+  if (data.phone) {
+    const existing = await Customer.findOne({ phone: data.phone, isDeleted: { $ne: true } });
+    if (existing) {
+      const obj = typeof existing.toObject === 'function' ? existing.toObject() : existing;
+      return { ...obj, alreadyExisted: true };
+    }
+  }
   const customer = new Customer(data);
-  return await customer.save();
+  const saved = await customer.save();
+  const obj = typeof saved.toObject === 'function' ? saved.toObject() : saved;
+  return { ...obj, alreadyExisted: false };
 }
 
 export async function getCustomers() {
