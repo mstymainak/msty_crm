@@ -30,6 +30,7 @@ export default function BookingsPage() {
   const [editingNoteId, setEditingNoteId] = useState<string | null>(null);
   const [tempNote, setTempNote] = useState('');
   const [activeHistoryId, setActiveHistoryId] = useState<string | null>(null);
+  const [expandedDetailsId, setExpandedDetailsId] = useState<string | null>(null);
 
   // Add / Edit Form State
   const [form, setForm] = useState({
@@ -338,19 +339,19 @@ export default function BookingsPage() {
         .booking-table tr:hover { background: #f8fafc; }
         
         /* Premium Action Button Cluster Styles */
-        .btn-edit { background: #eff6ff; color: #2563eb; border: 1px solid #bfdbfe; border-radius: 8px; padding: 6px 12px; font-size: 12px; font-weight: 600; cursor: pointer; transition: all 0.15s; display: inline-flex; alignItems: center; gap: 4px; }
+        .btn-edit { background: #eff6ff; color: #2563eb; border: 1px solid #bfdbfe; border-radius: 8px; padding: 10px 16px; font-size: 13px; font-weight: 600; cursor: pointer; transition: all 0.15s; display: inline-flex; align-items: center; justify-content: center; gap: 6px; flex: 1; }
         .btn-edit:hover { background: #dbeafe; transform: translateY(-1px); }
         
-        .btn-pay { background: #ecfdf5; color: #059669; border: 1px solid #a7f3d0; border-radius: 8px; padding: 6px 12px; font-size: 12px; font-weight: 600; cursor: pointer; transition: all 0.15s; display: inline-flex; alignItems: center; gap: 4px; }
+        .btn-pay { background: #ecfdf5; color: #059669; border: 1px solid #a7f3d0; border-radius: 8px; padding: 10px 16px; font-size: 13px; font-weight: 600; cursor: pointer; transition: all 0.15s; display: inline-flex; align-items: center; justify-content: center; gap: 6px; flex: 1; }
         .btn-pay:hover { background: #d1fae5; transform: translateY(-1px); }
         
-        .btn-delete { background: #fff1f2; color: #e11d48; border: 1px solid #fecdd3; border-radius: 8px; padding: 6px 12px; font-size: 12px; font-weight: 600; cursor: pointer; transition: all 0.15s; display: inline-flex; alignItems: center; gap: 4px; }
+        .btn-delete { background: #fff1f2; color: #e11d48; border: 1px solid #fecdd3; border-radius: 8px; padding: 10px 16px; font-size: 13px; font-weight: 600; cursor: pointer; transition: all 0.15s; display: inline-flex; align-items: center; justify-content: center; gap: 6px; flex: 1; }
         .btn-delete:hover { background: #ffe4e6; transform: translateY(-1px); }
 
-        /* Responsive Breakpoints maintaining exact Web Layout on Desktop and Full-Width Optimized Cards on Mobile */
+        /* Responsive Breakpoints maintaining exact Web Layout on Desktop and Full-Width Mockup Ratio on Mobile */
         @media (max-width: 768px) {
           .desktop-table { display: none; }
-          .mobile-cards { display: flex; flexDirection: column; gap: 16px; width: 100%; }
+          .mobile-cards { display: flex; flex-direction: column; gap: 16px; width: 100%; }
         }
         @media (min-width: 769px) {
           .desktop-table { display: block; }
@@ -412,7 +413,7 @@ export default function BookingsPage() {
               transition: 'all 0.15s'
             }}
           >
-            {showCompletedOnly ? '📂 View Active Bookings' : '✅ View Completed Bookings'}
+            {showCompletedOnly ? '📂 View Active Bookings' : '👁️ View Completed Bookings'}
           </button>
 
           <button 
@@ -965,7 +966,7 @@ export default function BookingsPage() {
             </table>
           </div>
 
-          {/* Full-Width Mobile Card View with Flawless Functionality */}
+          {/* Full-Width Mobile Mockup Card View matching exact attached photo ratio */}
           <div className="mobile-cards">
             {currentBookings.map(b => {
               const badge = getStatusBadgeColor(b.status);
@@ -979,146 +980,164 @@ export default function BookingsPage() {
               const endD = b.endTravelDate ? new Date(b.endTravelDate).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' }) : '';
 
               return (
-                <div key={b._id} style={{ background: '#fff', borderRadius: '16px', border: '1px solid #e2e8f0', padding: '20px', width: '100%', boxSizing: 'border-box', boxShadow: '0 4px 6px -1px rgba(0,0,0,0.05)' }}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '16px', flexWrap: 'wrap', gap: '8px' }}>
+                <div key={b._id} style={{ background: '#fff', borderRadius: '16px', border: '1px solid #f1f5f9', padding: '20px', width: '100%', boxSizing: 'border-box', boxShadow: '0 2px 8px rgba(0,0,0,0.04)' }}>
+                  
+                  {/* Top Row: Customer info, Status badge, 3-dot Menu */}
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '16px' }}>
                     <div>
                       <div style={{ fontSize: '18px', fontWeight: '700', color: '#0f172a' }}>{b.customer?.name || 'Unknown'}</div>
-                      <div style={{ fontSize: '13px', color: '#64748b' }}>{b.customer?.phone || b.customer?.email}</div>
+                      <div style={{ fontSize: '13px', color: '#64748b', marginTop: '2px' }}>{b.customer?.phone || b.customer?.email}</div>
                       <div style={{ fontSize: '11px', color: '#94a3b8', marginTop: '4px' }}>
-                        Booked: {new Date(b.createdAt).toLocaleString('en-IN', { day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' })}
+                        Booked: {new Date(b.createdAt).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })}, {new Date(b.createdAt).toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' })}
                       </div>
                     </div>
-                    <select
-                      value={b.status}
-                      onChange={(e) => handleStatusChange(b, e.target.value)}
-                      style={{
-                        background: badge.bg,
-                        color: badge.text,
-                        border: `1px solid ${badge.border}`,
-                        padding: '6px 12px',
-                        borderRadius: '8px',
-                        fontSize: '12px',
-                        fontWeight: '700',
-                        outline: 'none',
-                        cursor: 'pointer'
-                      }}
-                    >
-                      <option value="confirmed">Confirmed</option>
-                      <option value="payment_pending">Payment Pending</option>
-                      <option value="paid">Paid</option>
-                      <option value="in_progress">In Progress</option>
-                      <option value="completed">Completed</option>
-                      <option value="cancelled">Cancelled</option>
-                    </select>
+                    
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                      <select
+                        value={b.status}
+                        onChange={(e) => handleStatusChange(b, e.target.value)}
+                        style={{
+                          background: badge.bg,
+                          color: badge.text,
+                          border: `1px solid ${badge.border}`,
+                          padding: '6px 12px',
+                          borderRadius: '8px',
+                          fontSize: '12px',
+                          fontWeight: '700',
+                          outline: 'none',
+                          cursor: 'pointer'
+                        }}
+                      >
+                        <option value="confirmed">Confirmed</option>
+                        <option value="payment_pending">Payment Pending</option>
+                        <option value="paid">Paid</option>
+                        <option value="in_progress">In Progress</option>
+                        <option value="completed">Completed</option>
+                        <option value="cancelled">Cancelled</option>
+                      </select>
+
+                      {/* 3-Dot Toggler for View Details & Notes */}
+                      <button 
+                        onClick={() => setExpandedDetailsId(expandedDetailsId === b._id ? null : b._id)}
+                        style={{ background: 'transparent', border: 'none', cursor: 'pointer', padding: '4px 8px', fontSize: '18px', color: '#64748b', lineHeight: 1 }}
+                        title="View Details & Notes"
+                      >
+                        ⋮
+                      </button>
+                    </div>
                   </div>
 
-                  <div style={{ background: '#f8fafc', padding: '16px', borderRadius: '12px', marginBottom: '20px', fontSize: '13px', display: 'flex', flexDirection: 'column', gap: '8px', border: '1px solid #f1f5f9' }}>
-                    <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                      <span style={{ color: '#64748b' }}>Package:</span>
-                      <strong style={{ color: '#0f172a' }}>{b.package?.name || 'Custom Package'}</strong>
-                    </div>
-
-                    <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                      <span style={{ color: '#64748b' }}>Rate:</span>
-                      <strong style={{ color: '#64748b' }}>₹{b.package?.price || 0}</strong>
-                    </div>
-
-                    {b.package?.duration && (
-                      <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                        <span style={{ color: '#64748b' }}>Duration:</span>
-                        <strong style={{ color: '#475569' }}>{b.package.duration}</strong>
-                      </div>
-                    )}
-
-                    {batchName && (
-                      <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                        <span style={{ color: '#64748b' }}>Batch:</span>
-                        <strong style={{ color: '#2563eb' }}>{batchName}</strong>
-                      </div>
-                    )}
-
-                    <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                      <span style={{ color: '#64748b' }}>Travel Dates:</span>
-                      <strong style={{ color: '#1e293b' }}>
-                        {startD || 'Unassigned'} {endD ? ` to ${endD}` : ''}
-                      </strong>
-                    </div>
-
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                      <span style={{ color: '#64748b' }}>Travelers:</span>
-                      <span style={{ background: '#fff7ed', color: '#ea580c', border: '1px solid #fdba74', padding: '2px 8px', borderRadius: '6px', fontWeight: '700', fontSize: '12px' }}>
-                        {b.numberOfTravelers} Pax
-                      </span>
-                    </div>
-
-                    {/* Expandable Form Details & Note Toggler */}
-                    <div style={{ marginTop: '8px', paddingTop: '8px', borderTop: '1px solid #e2e8f0' }}>
-                      <details style={{ cursor: 'pointer' }}>
-                        <summary style={{ outline: 'none', fontSize: '12px', color: '#2563eb', fontWeight: '600' }}>
-                          View Details
-                        </summary>
-                        <div style={{ position: 'relative', padding: '12px', background: '#fff', border: '1px solid #cbd5e1', borderRadius: '8px', marginTop: '6px', fontSize: '12px' }}>
-                          <div style={{ position: 'absolute', top: '8px', right: '8px', display: 'flex', gap: '4px' }}>
-                            <button onClick={(ev) => { ev.preventDefault(); setEditingNoteId(b._id); setTempNote(b.notes || ''); }} style={{ background: 'transparent', border: 'none', cursor: 'pointer', fontSize: '14px' }} title="Edit Note">📝</button>
-                            {b.notes && <button onClick={(ev) => { ev.preventDefault(); deleteNote(b._id); }} style={{ background: 'transparent', border: 'none', cursor: 'pointer', fontSize: '14px' }} title="Delete Note">🗑️</button>}
-                          </div>
-
-                          <div style={{ whiteSpace: 'pre-wrap', color: '#334155', paddingRight: '45px', fontWeight: '500' }}>
-                            {b.notes || 'No notes added yet.'}
-                          </div>
-
-                          {editingNoteId === b._id && (
-                            <div style={{ marginTop: '10px', paddingTop: '10px', borderTop: '1px dashed #cbd5e1' }}>
-                              <span style={{ fontSize: '10px', textTransform: 'uppercase', color: '#64748b', display: 'block', marginBottom: '6px', fontWeight: '700' }}>Edit Booking Note</span>
-                              <textarea
-                                value={tempNote}
-                                onChange={(ev) => setTempNote(ev.target.value)}
-                                style={{ width: '100%', padding: '8px', border: '1px solid #cbd5e1', borderRadius: '6px', fontSize: '12px', boxSizing: 'border-box', minHeight: '60px', resize: 'vertical' }}
-                                placeholder="Type booking note or family members here..."
-                                autoFocus
-                              />
-                              <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '8px', marginTop: '8px' }}>
-                                <button onClick={(ev) => { ev.preventDefault(); setEditingNoteId(null); }} style={{ padding: '6px 12px', fontSize: '11px', background: '#f1f5f9', color: '#475569', border: 'none', borderRadius: '6px', cursor: 'pointer', fontWeight: '600' }}>Cancel</button>
-                                <button onClick={(ev) => { ev.preventDefault(); saveNote(b._id, tempNote); }} style={{ padding: '6px 12px', fontSize: '11px', background: '#f97316', color: '#fff', border: 'none', borderRadius: '6px', cursor: 'pointer', fontWeight: '600' }}>Save</button>
-                              </div>
-                            </div>
-                          )}
+                  {/* Optional View Details & Notes Drawer / Box */}
+                  {expandedDetailsId === b._id && (
+                    <div style={{ background: '#f8fafc', border: '1px solid #cbd5e1', borderRadius: '12px', padding: '16px', marginBottom: '16px', fontSize: '13px' }}>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px', borderBottom: '1px solid #e2e8f0', paddingBottom: '6px' }}>
+                        <span style={{ fontWeight: '700', color: '#0f172a' }}>📝 Booking Form Details & Notes</span>
+                        <div style={{ display: 'flex', gap: '8px' }}>
+                          <button onClick={() => { setEditingNoteId(b._id); setTempNote(b.notes || ''); }} style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: '13px' }}>✏️ Edit</button>
+                          {b.notes && <button onClick={() => deleteNote(b._id)} style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: '13px' }}>🗑️ Delete</button>}
                         </div>
-                      </details>
+                      </div>
+
+                      <div style={{ whiteSpace: 'pre-wrap', color: '#334155', lineHeight: 1.4, fontWeight: '500' }}>
+                        {b.notes || 'No notes added yet.'}
+                      </div>
+
+                      {editingNoteId === b._id && (
+                        <div style={{ marginTop: '12px', paddingTop: '12px', borderTop: '1px dashed #cbd5e1' }}>
+                          <textarea
+                            value={tempNote}
+                            onChange={(ev) => setTempNote(ev.target.value)}
+                            style={{ width: '100%', padding: '10px', border: '1px solid #cbd5e1', borderRadius: '6px', fontSize: '12px', boxSizing: 'border-box', minHeight: '60px', resize: 'vertical' }}
+                            placeholder="Type booking note or family members here..."
+                            autoFocus
+                          />
+                          <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '8px', marginTop: '8px' }}>
+                            <button onClick={() => setEditingNoteId(null)} style={{ padding: '6px 12px', fontSize: '11px', background: '#f1f5f9', color: '#475569', border: 'none', borderRadius: '6px', cursor: 'pointer', fontWeight: '600' }}>Cancel</button>
+                            <button onClick={() => saveNote(b._id, tempNote)} style={{ padding: '6px 12px', fontSize: '11px', background: '#f97316', color: '#fff', border: 'none', borderRadius: '6px', cursor: 'pointer', fontWeight: '600' }}>Save</button>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  )}
+
+                  {/* Middle Section: Side-by-Side Grid Layout matching the Mockup */}
+                  <div style={{ display: 'grid', gridTemplateColumns: '1.2fr 1fr', gap: '12px', alignItems: 'center', marginBottom: '20px' }}>
+                    
+                    {/* Left Column: Package Info List */}
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', fontSize: '13px' }}>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', gap: '8px' }}>
+                        <span style={{ color: '#64748b' }}>Package:</span>
+                        <strong style={{ color: '#0f172a', textAlign: 'right' }}>{b.package?.name || 'Custom Package'}</strong>
+                      </div>
+
+                      <div style={{ display: 'flex', justifyContent: 'space-between', gap: '8px' }}>
+                        <span style={{ color: '#64748b' }}>Rate:</span>
+                        <strong style={{ color: '#2563eb' }}>₹{b.package?.price || 0}</strong>
+                      </div>
+
+                      {b.package?.duration && (
+                        <div style={{ display: 'flex', justifyContent: 'space-between', gap: '8px' }}>
+                          <span style={{ color: '#64748b' }}>Duration:</span>
+                          <strong style={{ color: '#475569' }}>{b.package.duration}</strong>
+                        </div>
+                      )}
+
+                      {batchName && (
+                        <div style={{ display: 'flex', justifyContent: 'space-between', gap: '8px' }}>
+                          <span style={{ color: '#64748b' }}>Batch/Month:</span>
+                          <strong style={{ color: '#0f172a' }}>{batchName}</strong>
+                        </div>
+                      )}
+
+                      <div style={{ display: 'flex', justifyContent: 'space-between', gap: '8px' }}>
+                        <span style={{ color: '#64748b' }}>Travel:</span>
+                        <strong style={{ color: '#1e293b' }}>{startD || 'Unassigned'}</strong>
+                      </div>
+
+                      <div style={{ display: 'flex', justifyContent: 'space-between', gap: '8px' }}>
+                        <span style={{ color: '#64748b' }}>Travelers:</span>
+                        <strong style={{ color: '#ea580c' }}>{b.numberOfTravelers} Pax</strong>
+                      </div>
                     </div>
 
-                    <div style={{ borderTop: '1px solid #e2e8f0', margin: '8px 0' }} />
-
-                    {/* Financial Breakdown (Clickable for History) */}
+                    {/* Right Column: Gray Financial Breakdown Box */}
                     <div 
                       onClick={() => setActiveHistoryId(activeHistoryId === b._id ? null : b._id)}
-                      style={{ cursor: 'pointer', padding: '8px 12px', borderRadius: '8px', background: activeHistoryId === b._id ? '#fff' : '#f8fafc', border: '1px solid #cbd5e1' }}
+                      style={{ background: '#f8fafc', border: '1px solid #f1f5f9', borderRadius: '12px', padding: '14px', width: '100%', boxSizing: 'border-box', cursor: 'pointer' }}
+                      title="Click to view payment history"
                     >
-                      <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                        <span style={{ color: '#64748b' }}>Total Cost:</span>
-                        <strong style={{ color: '#0f172a' }}>₹{b.totalAmount || 0}</strong>
-                      </div>
-                      <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                        <span style={{ color: '#64748b' }}>Advance Paid:</span>
-                        <strong style={{ color: '#16a34a' }}>₹{b.advancePaid || 0}</strong>
-                      </div>
-                      <div style={{ display: 'flex', justifyContent: 'space-between', fontWeight: '700', borderTop: '1px solid #e2e8f0', paddingTop: '4px', marginTop: '2px', color: (b.balancePending || 0) > 0 ? '#b91c1c' : '#16a34a' }}>
-                        <span>Balance Due:</span>
-                        <span>₹{b.balancePending || 0}</span>
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', fontSize: '13px' }}>
+                        <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                          <span style={{ color: '#64748b' }}>Total Cost</span>
+                          <strong style={{ color: '#0f172a' }}>₹{b.totalAmount || 0}</strong>
+                        </div>
+                        
+                        <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                          <span style={{ color: '#64748b' }}>Advance Paid</span>
+                          <strong style={{ color: b.advancePaid > 0 ? '#16a34a' : '#0f172a' }}>₹{b.advancePaid || 0}</strong>
+                        </div>
+
+                        <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                          <span style={{ color: '#64748b' }}>Paid</span>
+                          <span style={{ color: '#64748b' }}>—</span>
+                        </div>
+
+                        <div style={{ borderTop: '1px dashed #cbd5e1', margin: '6px 0' }} />
+
+                        <div style={{ display: 'flex', justifyContent: 'space-between', color: (b.balancePending || 0) > 0 ? '#ef4444' : '#16a34a', fontWeight: '700' }}>
+                          <span>Balance Due:</span>
+                          <span>₹{b.balancePending || 0}</span>
+                        </div>
                       </div>
 
+                      {/* Clickable Payment Log History inside Financial Box */}
                       {activeHistoryId === b._id && (
-                        <div style={{ marginTop: '10px', padding: '10px', background: '#fff', border: '1px solid #cbd5e1', borderRadius: '8px', fontSize: '11px', boxShadow: '0 10px 15px -3px rgba(0,0,0,0.1)' }}>
-                          <div style={{ fontWeight: '700', color: '#0f172a', marginBottom: '6px', borderBottom: '1px solid #e2e8f0', paddingBottom: '4px' }}>📜 Payment Log History</div>
+                        <div style={{ marginTop: '10px', paddingTop: '8px', borderTop: '1px solid #cbd5e1', fontSize: '11px' }}>
+                          <div style={{ fontWeight: '700', color: '#0f172a', marginBottom: '4px' }}>📜 Payment Logs</div>
                           {b.paymentHistory?.length > 0 ? b.paymentHistory.map((ph: any, i: number) => (
-                            <div key={i} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', color: '#334155', margin: '4px 0', borderBottom: '1px solid #f1f5f9', paddingBottom: '4px' }}>
-                              <div>
-                                <div style={{ fontWeight: '600' }}>{ph.method?.toUpperCase() || 'CASH'}</div>
-                                <div style={{ fontSize: '10px', color: '#94a3b8' }}>
-                                  {new Date(ph.date).toLocaleString('en-IN', { day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' })}
-                                </div>
-                              </div>
-                              <strong style={{ color: '#16a34a', fontSize: '12px' }}>+₹{ph.amount}</strong>
+                            <div key={i} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', color: '#334155', margin: '2px 0' }}>
+                              <span>{ph.method?.toUpperCase()} ({new Date(ph.date).toLocaleDateString()})</span>
+                              <strong style={{ color: '#16a34a' }}>+₹{ph.amount}</strong>
                             </div>
                           )) : (
                             <div style={{ color: '#64748b' }}>No separate payment logs recorded.</div>
@@ -1128,14 +1147,15 @@ export default function BookingsPage() {
                     </div>
                   </div>
 
-                  <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
-                    <button onClick={() => handleEdit(b)} className="btn-edit" style={{ flex: 1, justifyContent: 'center', minWidth: '70px' }}>
+                  {/* Bottom Row: 3 Equal-Width Action Buttons Cluster */}
+                  <div style={{ display: 'flex', gap: '8px', width: '100%' }}>
+                    <button onClick={() => handleEdit(b)} className="btn-edit">
                       ✏️ Edit
                     </button>
-                    <button onClick={() => handleUpdatePayment(b)} className="btn-pay" style={{ flex: 1, justifyContent: 'center', minWidth: '70px' }}>
+                    <button onClick={() => handleUpdatePayment(b)} className="btn-pay">
                       ₹ Pay
                     </button>
-                    <button onClick={() => handleDelete(b._id)} className="btn-delete" style={{ flex: 1, justifyContent: 'center', minWidth: '70px' }}>
+                    <button onClick={() => handleDelete(b._id)} className="btn-delete">
                       🗑️ Delete
                     </button>
                   </div>
