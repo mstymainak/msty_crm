@@ -63,9 +63,14 @@ export default function BookingsPage() {
     fetch('/api/enquiries').then(r => r.json()).then(d => setEnquiries(Array.isArray(d) ? d : []));
   }, []);
 
-  const handleStatusChange = async (id: string, newStatus: string) => {
+  const handleStatusChange = async (booking: any, newStatus: string) => {
+    if (newStatus === 'completed' && (booking.balancePending || 0) > 0) {
+      alert(`⚠️ Cannot mark booking as "Completed" because there is an outstanding balance due of ₹${booking.balancePending}.\nPlease record the pending payment first!`);
+      return;
+    }
+
     try {
-      const res = await fetch(`/api/bookings/${id}`, {
+      const res = await fetch(`/api/bookings/${booking._id}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ status: newStatus }),
@@ -314,10 +319,21 @@ export default function BookingsPage() {
     <div>
       <style>{`
         @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
-        .booking-table { width: 100%; border-collapse: collapse; background: #fff; border-radius: 12px; overflow: hidden; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05); }
-        .booking-table th { background: #f8fafc; padding: 14px 16px; font-size: 13px; font-weight: 600; color: #475569; text-align: left; border-bottom: 1px solid #e2e8f0; }
-        .booking-table td { padding: 14px 16px; font-size: 14px; color: #1e293b; border-bottom: 1px solid #f1f5f9; vertical-align: middle; }
+        .booking-table { width: 100%; border-collapse: collapse; background: #fff; border-radius: 12px; overflow: hidden; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05), 0 2px 4px -2px rgba(0,0,0,0.05); }
+        .booking-table th { background: #f8fafc; padding: 16px; font-size: 13px; font-weight: 600; color: #475569; text-align: left; border-bottom: 1px solid #e2e8f0; }
+        .booking-table td { padding: 16px; font-size: 14px; color: #1e293b; border-bottom: 1px solid #f1f5f9; vertical-align: middle; }
         .booking-table tr:hover { background: #f8fafc; }
+        
+        /* Premium Action Button Cluster Styles */
+        .btn-edit { background: #eff6ff; color: #2563eb; border: 1px solid #bfdbfe; border-radius: 8px; padding: 6px 12px; font-size: 12px; font-weight: 600; cursor: pointer; transition: all 0.15s; display: inline-flex; alignItems: center; gap: 4px; }
+        .btn-edit:hover { background: #dbeafe; transform: translateY(-1px); }
+        
+        .btn-pay { background: #ecfdf5; color: #059669; border: 1px solid #a7f3d0; border-radius: 8px; padding: 6px 12px; font-size: 12px; font-weight: 600; cursor: pointer; transition: all 0.15s; display: inline-flex; alignItems: center; gap: 4px; }
+        .btn-pay:hover { background: #d1fae5; transform: translateY(-1px); }
+        
+        .btn-cancel { background: #fff1f2; color: #e11d48; border: 1px solid #fecdd3; border-radius: 8px; padding: 6px 12px; font-size: 12px; font-weight: 600; cursor: pointer; transition: all 0.15s; display: inline-flex; alignItems: center; gap: 4px; }
+        .btn-cancel:hover { background: #ffe4e6; transform: translateY(-1px); }
+
         @media (max-width: 768px) {
           .desktop-table { display: none; }
           .mobile-cards { display: flex; flexDirection: column; gap: 16px; }
@@ -335,7 +351,7 @@ export default function BookingsPage() {
             {showCompletedOnly ? 'Completed Yatra Bookings' : 'Active Yatra Bookings'}
           </h1>
           <p style={{ color: '#64748b', margin: '4px 0 0', fontSize: '14px' }}>
-            {filteredBookings.length} {showCompletedOnly ? 'completed' : 'active'} reservations
+            {filteredBookings.length} {showCompletedOnly ? 'completed' : 'active'} reservations tracked
           </p>
         </div>
 
@@ -354,7 +370,8 @@ export default function BookingsPage() {
               fontWeight: '600',
               display: 'inline-flex',
               alignItems: 'center',
-              gap: '6px'
+              gap: '6px',
+              transition: 'all 0.15s'
             }}
           >
             <span style={{ display: 'inline-block', animation: refreshing ? 'spin 1s linear infinite' : 'none' }}>↻</span> Refresh
@@ -377,7 +394,8 @@ export default function BookingsPage() {
               fontSize: '14px',
               display: 'inline-flex',
               alignItems: 'center',
-              gap: '6px'
+              gap: '6px',
+              transition: 'all 0.15s'
             }}
           >
             {showCompletedOnly ? '📂 View Active Bookings' : '✅ View Completed Bookings'}
@@ -402,7 +420,9 @@ export default function BookingsPage() {
               borderRadius: '8px', 
               fontWeight: '600', 
               cursor: 'pointer', 
-              fontSize: '14px' 
+              fontSize: '14px',
+              transition: 'all 0.15s',
+              boxShadow: '0 4px 6px -1px rgba(249, 115, 22, 0.2)'
             }}
           >
             {showAddForm ? '✕ Close Form' : '+ New Booking'}
@@ -412,43 +432,43 @@ export default function BookingsPage() {
 
       {/* Add / Edit Booking Form Modal / Box */}
       {showAddForm && (
-        <div style={{ background: '#fff', padding: '24px', borderRadius: '12px', boxShadow: '0 10px 25px -5px rgba(0,0,0,0.1)', border: '1px solid #e2e8f0', marginBottom: '24px' }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px', borderBottom: '1px solid #f1f5f9', paddingBottom: '12px' }}>
-            <h2 style={{ fontSize: '18px', fontWeight: '700', color: '#0f172a', margin: 0 }}>
-              {form.id ? '✏️ Edit Yatra Booking' : 'Create New Yatra Booking'}
+        <div style={{ background: '#fff', padding: '28px', borderRadius: '16px', boxShadow: '0 10px 25px -5px rgba(0,0,0,0.1), 0 8px 10px -6px rgba(0,0,0,0.05)', border: '1px solid #e2e8f0', marginBottom: '28px' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px', borderBottom: '1px solid #f1f5f9', paddingBottom: '16px' }}>
+            <h2 style={{ fontSize: '20px', fontWeight: '700', color: '#0f172a', margin: 0, display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <span style={{ color: '#f97316' }}>{form.id ? '✏️' : '✨'}</span> {form.id ? 'Edit Yatra Booking' : 'Create New Yatra Booking'}
             </h2>
           </div>
 
           {/* Quick Fill from Enquiry */}
           {!form.id && (
-            <div style={{ background: '#fff7ed', border: '1px solid #fed7aa', padding: '16px', borderRadius: '8px', marginBottom: '20px' }}>
-              <label style={{ display: 'block', fontSize: '13px', fontWeight: '700', color: '#ea580c', marginBottom: '8px' }}>
-                ⚡ Quick Fill: Search & Select Enquiry to Confirm (Auto-Fetches Family Members & Calculates Cost)
+            <div style={{ background: '#fff7ed', border: '1px solid #fed7aa', padding: '20px', borderRadius: '12px', marginBottom: '24px' }}>
+              <label style={{ display: 'block', fontSize: '13px', fontWeight: '700', color: '#ea580c', marginBottom: '10px' }}>
+                ⚡ Quick Fill: Search & Choose Enquiry to Confirm (Auto-Fetches Family Members & Calculates Cost)
               </label>
 
               {/* Custom Combined Dropdown with Search */}
               <div style={{ position: 'relative' }}>
                 <div 
                   onClick={() => setOpenEnquiryDropdown(!openEnquiryDropdown)} 
-                  style={{ width: '100%', padding: '10px 14px', border: '1px solid #fdba74', borderRadius: '8px', background: '#fff', fontSize: '14px', color: '#0f172a', fontWeight: '600', cursor: 'pointer', display: 'flex', justifyContent: 'space-between', alignItems: 'center', boxShadow: '0 1px 2px rgba(0,0,0,0.05)' }}
+                  style={{ width: '100%', padding: '12px 16px', border: '1px solid #fdba74', borderRadius: '8px', background: '#fff', fontSize: '14px', color: '#0f172a', fontWeight: '600', cursor: 'pointer', display: 'flex', justifyContent: 'space-between', alignItems: 'center', boxShadow: '0 1px 2px rgba(0,0,0,0.05)' }}
                 >
                   <span>{selectedEnqObj ? `✓ ${selectedEnqObj.submittedName || selectedEnqObj.customer?.name || 'Enquiry'} - ${selectedEnqObj.source} (${selectedEnqObj.members?.length || 0} family added)` : '-- Click to Search & Select Enquiry --'}</span>
-                  <span>{openEnquiryDropdown ? '▲' : '▼'}</span>
+                  <span style={{ color: '#ea580c' }}>{openEnquiryDropdown ? '▲' : '▼'}</span>
                 </div>
 
                 {openEnquiryDropdown && (
-                  <div style={{ position: 'absolute', top: '100%', left: 0, right: 0, marginTop: '6px', background: '#fff', border: '1px solid #fdba74', borderRadius: '8px', padding: '12px', boxShadow: '0 10px 25px -5px rgba(0,0,0,0.2)', zIndex: 50 }}>
+                  <div style={{ position: 'absolute', top: '100%', left: 0, right: 0, marginTop: '8px', background: '#fff', border: '1px solid #fdba74', borderRadius: '12px', padding: '16px', boxShadow: '0 20px 25px -5px rgba(0,0,0,0.2)', zIndex: 50 }}>
                     <input 
                       type="text" 
                       placeholder="🔍 Search enquiry by name, phone, or message details..." 
                       value={enquirySearch} 
                       onChange={(e) => setEnquirySearch(e.target.value)} 
-                      style={{ width: '100%', padding: '10px 12px', border: '1px solid #fdba74', borderRadius: '6px', outline: 'none', fontSize: '13px', marginBottom: '10px', background: '#fff7ed' }}
+                      style={{ width: '100%', padding: '10px 14px', border: '1px solid #fdba74', borderRadius: '8px', outline: 'none', fontSize: '13px', marginBottom: '12px', background: '#fff7ed', color: '#0f172a' }}
                       autoFocus 
                     />
-                    <div style={{ maxHeight: '220px', overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                    <div style={{ maxHeight: '240px', overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: '6px' }}>
                       {filteredEnquiries.length === 0 ? (
-                        <div style={{ padding: '8px', color: '#64748b', fontSize: '13px', textAlign: 'center' }}>No enquiries match search criteria.</div>
+                        <div style={{ padding: '12px', color: '#64748b', fontSize: '13px', textAlign: 'center' }}>No enquiries match search criteria.</div>
                       ) : (
                         filteredEnquiries.map(eq => (
                           <div 
@@ -478,9 +498,9 @@ export default function BookingsPage() {
                               });
                               setOpenEnquiryDropdown(false);
                             }}
-                            style={{ padding: '10px 12px', borderRadius: '6px', cursor: 'pointer', background: form.enquiry === eq._id ? '#ffedd5' : '#fff', fontWeight: '500', fontSize: '13px', color: '#1e293b', borderBottom: '1px solid #f8fafc', transition: 'background 0.15s' }}
+                            style={{ padding: '12px 14px', borderRadius: '8px', cursor: 'pointer', background: form.enquiry === eq._id ? '#ffedd5' : '#fff', fontWeight: '500', fontSize: '13px', color: '#1e293b', borderBottom: '1px solid #f8fafc', transition: 'background 0.15s' }}
                           >
-                            <div style={{ fontWeight: '600', color: '#ea580c', marginBottom: '2px' }}>{eq.submittedName || eq.customer?.name || 'Enquiry'}</div>
+                            <div style={{ fontWeight: '700', color: '#ea580c', marginBottom: '4px', fontSize: '14px' }}>{eq.submittedName || eq.customer?.name || 'Enquiry'}</div>
                             <div style={{ fontSize: '12px', color: '#64748b' }}>Source: {eq.source} | Family members: {eq.members?.length || 0}</div>
                           </div>
                         ))
@@ -492,9 +512,9 @@ export default function BookingsPage() {
             </div>
           )}
 
-          <form onSubmit={handleCreateOrUpdateBooking} style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))', gap: '16px' }}>
+          <form onSubmit={handleCreateOrUpdateBooking} style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))', gap: '20px' }}>
             {/* Custom Combined Search & Choose Customer */}
-            <div style={{ background: '#f8fafc', padding: '12px', borderRadius: '8px', border: '1px solid #e2e8f0', gridColumn: '1 / -1' }}>
+            <div style={{ background: '#f8fafc', padding: '16px', borderRadius: '12px', border: '1px solid #e2e8f0', gridColumn: '1 / -1' }}>
               <label style={{ display: 'block', fontSize: '13px', fontWeight: '600', color: '#475569', marginBottom: '8px' }}>
                 Search & Choose Customer * {form.enquiry && <span style={{ color: '#dc2626' }}>(Locked by Quick Fill)</span>}
               </label>
@@ -502,25 +522,25 @@ export default function BookingsPage() {
               <div style={{ position: 'relative' }}>
                 <div 
                   onClick={() => { if (!form.enquiry) setOpenCustomerDropdown(!openCustomerDropdown); }} 
-                  style={{ width: '100%', padding: '10px 14px', border: '1px solid #cbd5e1', borderRadius: '8px', background: form.enquiry ? '#f1f5f9' : '#fff', fontSize: '14px', color: '#0f172a', fontWeight: '600', cursor: form.enquiry ? 'not-allowed' : 'pointer', display: 'flex', justifyContent: 'space-between', alignItems: 'center', boxShadow: '0 1px 2px rgba(0,0,0,0.05)' }}
+                  style={{ width: '100%', padding: '12px 16px', border: '1px solid #cbd5e1', borderRadius: '8px', background: form.enquiry ? '#f1f5f9' : '#fff', fontSize: '14px', color: '#0f172a', fontWeight: '600', cursor: form.enquiry ? 'not-allowed' : 'pointer', display: 'flex', justifyContent: 'space-between', alignItems: 'center', boxShadow: '0 1px 2px rgba(0,0,0,0.05)' }}
                 >
                   <span>{selectedCustObj ? `👤 ${selectedCustObj.name} (${selectedCustObj.phone || selectedCustObj.email})` : '-- Click to Search & Select Customer --'}</span>
-                  <span>{openCustomerDropdown ? '▲' : '▼'}</span>
+                  <span style={{ color: '#64748b' }}>{openCustomerDropdown ? '▲' : '▼'}</span>
                 </div>
 
                 {openCustomerDropdown && !form.enquiry && (
-                  <div style={{ position: 'absolute', top: '100%', left: 0, right: 0, marginTop: '6px', background: '#fff', border: '1px solid #cbd5e1', borderRadius: '8px', padding: '12px', boxShadow: '0 10px 25px -5px rgba(0,0,0,0.2)', zIndex: 40 }}>
+                  <div style={{ position: 'absolute', top: '100%', left: 0, right: 0, marginTop: '8px', background: '#fff', border: '1px solid #cbd5e1', borderRadius: '12px', padding: '16px', boxShadow: '0 20px 25px -5px rgba(0,0,0,0.2)', zIndex: 40 }}>
                     <input 
                       type="text" 
                       placeholder="🔍 Search customer name, phone, or email..." 
                       value={customerSearch} 
                       onChange={(e) => setCustomerSearch(e.target.value)} 
-                      style={{ width: '100%', padding: '10px 12px', border: '1px solid #cbd5e1', borderRadius: '6px', outline: 'none', fontSize: '13px', marginBottom: '10px', background: '#f8fafc' }}
+                      style={{ width: '100%', padding: '10px 14px', border: '1px solid #cbd5e1', borderRadius: '8px', outline: 'none', fontSize: '13px', marginBottom: '12px', background: '#f8fafc', color: '#0f172a' }}
                       autoFocus 
                     />
-                    <div style={{ maxHeight: '220px', overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                    <div style={{ maxHeight: '240px', overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: '6px' }}>
                       {filteredCustomers.length === 0 ? (
-                        <div style={{ padding: '8px', color: '#64748b', fontSize: '13px', textAlign: 'center' }}>No customers match search criteria.</div>
+                        <div style={{ padding: '12px', color: '#64748b', fontSize: '13px', textAlign: 'center' }}>No customers match search criteria.</div>
                       ) : (
                         filteredCustomers.map(c => (
                           <div 
@@ -529,9 +549,9 @@ export default function BookingsPage() {
                               setForm({...form, customer: c._id});
                               setOpenCustomerDropdown(false);
                             }}
-                            style={{ padding: '10px 12px', borderRadius: '6px', cursor: 'pointer', background: form.customer === c._id ? '#e2e8f0' : '#fff', fontWeight: '500', fontSize: '13px', color: '#1e293b', borderBottom: '1px solid #f8fafc', transition: 'background 0.15s' }}
+                            style={{ padding: '12px 14px', borderRadius: '8px', cursor: 'pointer', background: form.customer === c._id ? '#e2e8f0' : '#fff', fontWeight: '500', fontSize: '13px', color: '#1e293b', borderBottom: '1px solid #f8fafc', transition: 'background 0.15s' }}
                           >
-                            <div style={{ fontWeight: '600', color: '#0f172a' }}>{c.name}</div>
+                            <div style={{ fontWeight: '700', color: '#0f172a', marginBottom: '2px', fontSize: '14px' }}>{c.name}</div>
                             <div style={{ fontSize: '12px', color: '#64748b' }}>Phone: {c.phone} | Email: {c.email}</div>
                           </div>
                         ))
@@ -543,7 +563,7 @@ export default function BookingsPage() {
             </div>
 
             {/* Package & Batch Select */}
-            <div style={{ background: '#f8fafc', padding: '12px', borderRadius: '8px', border: '1px solid #e2e8f0', display: 'flex', flexDirection: 'column', gap: '8px' }}>
+            <div style={{ background: '#f8fafc', padding: '16px', borderRadius: '12px', border: '1px solid #e2e8f0', display: 'flex', flexDirection: 'column', gap: '12px' }}>
               <div>
                 <label style={{ display: 'block', fontSize: '13px', fontWeight: '600', color: '#475569', marginBottom: '6px' }}>
                   Select Package * {!!form.enquiry && !!form.package && <span style={{ color: '#dc2626' }}>(Locked by Quick Fill)</span>}
@@ -558,7 +578,7 @@ export default function BookingsPage() {
                     const calc = selPkg ? selPkg.price * Number(form.numberOfTravelers || 1) : form.totalAmount;
                     setForm({...form, package: val, packageGroup: '', totalAmount: String(calc)});
                   }} 
-                  style={{ width: '100%', padding: '10px 12px', border: '1px solid #cbd5e1', borderRadius: '6px', outline: 'none', background: (!!form.enquiry && !!form.package) ? '#f1f5f9' : '#fff', fontSize: '14px', fontWeight: '600' }}
+                  style={{ width: '100%', padding: '12px 14px', border: '1px solid #cbd5e1', borderRadius: '8px', outline: 'none', background: (!!form.enquiry && !!form.package) ? '#f1f5f9' : '#fff', fontSize: '14px', fontWeight: '600' }}
                 >
                   <option value="">-- Choose Package --</option>
                   {packages.map(p => (
@@ -569,7 +589,7 @@ export default function BookingsPage() {
 
               {form.package && packages.find(p => p._id === form.package)?.groups?.length > 0 && (
                 <div>
-                  <label style={{ display: 'block', fontSize: '12px', fontWeight: '700', color: '#2563eb', marginBottom: '4px' }}>Select Batch / Group (Auto-Fetches Travel Date)</label>
+                  <label style={{ display: 'block', fontSize: '13px', fontWeight: '700', color: '#2563eb', marginBottom: '6px' }}>Select Batch / Group (Auto-Fetches Travel Date)</label>
                   <select
                     value={form.packageGroup}
                     onChange={(e) => {
@@ -582,7 +602,7 @@ export default function BookingsPage() {
                       }
                       setForm({...form, packageGroup: val, travelDate: tDate});
                     }}
-                    style={{ width: '100%', padding: '8px 10px', border: '1px solid #bfdbfe', borderRadius: '6px', outline: 'none', background: '#eff6ff', fontSize: '13px', color: '#1d4ed8', fontWeight: '600' }}
+                    style={{ width: '100%', padding: '10px 14px', border: '1px solid #bfdbfe', borderRadius: '8px', outline: 'none', background: '#eff6ff', fontSize: '13px', color: '#1d4ed8', fontWeight: '600' }}
                   >
                     <option value="">-- No Specific Batch --</option>
                     {packages.find(p => p._id === form.package)?.groups.map((g: any) => (
@@ -600,7 +620,7 @@ export default function BookingsPage() {
                 required 
                 value={form.travelDate} 
                 onChange={(e) => setForm({...form, travelDate: e.target.value})} 
-                style={{ width: '100%', padding: '10px 12px', border: '1px solid #cbd5e1', borderRadius: '8px', outline: 'none', background: '#fff', fontSize: '14px' }} 
+                style={{ width: '100%', padding: '12px 14px', border: '1px solid #cbd5e1', borderRadius: '8px', outline: 'none', background: '#fff', fontSize: '14px' }} 
               />
             </div>
 
@@ -610,7 +630,7 @@ export default function BookingsPage() {
                 type="date" 
                 value={form.endTravelDate} 
                 onChange={(e) => setForm({...form, endTravelDate: e.target.value})} 
-                style={{ width: '100%', padding: '10px 12px', border: '1px solid #cbd5e1', borderRadius: '8px', outline: 'none', background: '#fff', fontSize: '14px' }} 
+                style={{ width: '100%', padding: '12px 14px', border: '1px solid #cbd5e1', borderRadius: '8px', outline: 'none', background: '#fff', fontSize: '14px' }} 
               />
             </div>
 
@@ -627,7 +647,7 @@ export default function BookingsPage() {
                   const calc = selPkg ? selPkg.price * Number(val || 1) : form.totalAmount;
                   setForm({...form, numberOfTravelers: val, totalAmount: String(calc)});
                 }} 
-                style={{ width: '100%', padding: '10px 12px', border: '1px solid #cbd5e1', borderRadius: '8px', outline: 'none', background: '#fff', fontSize: '14px', fontWeight: '700', color: '#ea580c' }} 
+                style={{ width: '100%', padding: '12px 14px', border: '1px solid #cbd5e1', borderRadius: '8px', outline: 'none', background: '#fff', fontSize: '14px', fontWeight: '700', color: '#ea580c' }} 
               />
             </div>
 
@@ -639,7 +659,7 @@ export default function BookingsPage() {
                 placeholder="Total cost" 
                 value={form.totalAmount} 
                 onChange={(e) => setForm({...form, totalAmount: e.target.value})} 
-                style={{ width: '100%', padding: '10px 12px', border: '1px solid #cbd5e1', borderRadius: '8px', outline: 'none', background: '#fff', fontSize: '14px', fontWeight: '700' }} 
+                style={{ width: '100%', padding: '12px 14px', border: '1px solid #cbd5e1', borderRadius: '8px', outline: 'none', background: '#fff', fontSize: '14px', fontWeight: '700' }} 
               />
             </div>
 
@@ -650,7 +670,7 @@ export default function BookingsPage() {
                 placeholder="Advance payment" 
                 value={form.advancePaid} 
                 onChange={(e) => setForm({...form, advancePaid: e.target.value})} 
-                style={{ width: '100%', padding: '10px 12px', border: '1px solid #cbd5e1', borderRadius: '8px', outline: 'none', background: '#fff', fontSize: '14px' }} 
+                style={{ width: '100%', padding: '12px 14px', border: '1px solid #cbd5e1', borderRadius: '8px', outline: 'none', background: '#fff', fontSize: '14px' }} 
               />
             </div>
 
@@ -659,7 +679,7 @@ export default function BookingsPage() {
               <select 
                 value={form.paymentMethod} 
                 onChange={(e) => setForm({...form, paymentMethod: e.target.value})} 
-                style={{ width: '100%', padding: '10px 12px', border: '1px solid #cbd5e1', borderRadius: '8px', outline: 'none', background: '#fff', fontSize: '14px' }}
+                style={{ width: '100%', padding: '12px 14px', border: '1px solid #cbd5e1', borderRadius: '8px', outline: 'none', background: '#fff', fontSize: '14px' }}
               >
                 <option value="cash">Cash</option>
                 <option value="upi">UPI / PhonePe / GPay</option>
@@ -676,7 +696,7 @@ export default function BookingsPage() {
                 placeholder="e.g. Ground floor room, wheelchair support..." 
                 value={form.specialRequirements} 
                 onChange={(e) => setForm({...form, specialRequirements: e.target.value})} 
-                style={{ width: '100%', padding: '10px 12px', border: '1px solid #cbd5e1', borderRadius: '8px', outline: 'none', background: '#fff', fontSize: '14px' }} 
+                style={{ width: '100%', padding: '12px 14px', border: '1px solid #cbd5e1', borderRadius: '8px', outline: 'none', background: '#fff', fontSize: '14px' }} 
               />
             </div>
 
@@ -687,21 +707,21 @@ export default function BookingsPage() {
                 placeholder="Family members list or travel details..." 
                 value={form.notes} 
                 onChange={(e) => setForm({...form, notes: e.target.value})} 
-                style={{ width: '100%', padding: '10px 12px', border: '1px solid #cbd5e1', borderRadius: '8px', outline: 'none', background: '#fff', fontSize: '14px' }} 
+                style={{ width: '100%', padding: '12px 14px', border: '1px solid #cbd5e1', borderRadius: '8px', outline: 'none', background: '#fff', fontSize: '14px' }} 
               />
             </div>
 
-            <div style={{ gridColumn: '1 / -1', display: 'flex', justifyContent: 'flex-end', gap: '12px', marginTop: '8px' }}>
+            <div style={{ gridColumn: '1 / -1', display: 'flex', justifyContent: 'flex-end', gap: '12px', marginTop: '12px' }}>
               <button 
                 type="button" 
                 onClick={() => setShowAddForm(false)} 
-                style={{ padding: '10px 18px', background: '#f1f5f9', color: '#475569', border: 'none', borderRadius: '8px', fontWeight: '600', cursor: 'pointer' }}
+                style={{ padding: '12px 20px', background: '#f1f5f9', color: '#475569', border: 'none', borderRadius: '8px', fontWeight: '600', cursor: 'pointer', transition: 'all 0.15s' }}
               >
                 Cancel
               </button>
               <button 
                 type="submit" 
-                style={{ padding: '10px 24px', background: '#f97316', color: '#fff', border: 'none', borderRadius: '8px', fontWeight: '600', cursor: 'pointer' }}
+                style={{ padding: '12px 28px', background: '#f97316', color: '#fff', border: 'none', borderRadius: '8px', fontWeight: '600', cursor: 'pointer', boxShadow: '0 4px 6px -1px rgba(249, 115, 22, 0.2)', transition: 'all 0.15s' }}
               >
                 {form.id ? 'Save Updates' : 'Confirm Booking'}
               </button>
@@ -714,17 +734,17 @@ export default function BookingsPage() {
       <div style={{ display: 'flex', gap: '12px', marginBottom: '24px', flexWrap: 'wrap', alignItems: 'center' }}>
         <input 
           type="text" 
-          placeholder="Search customer name, phone, package..." 
+          placeholder="🔍 Search customer name, phone, package..." 
           value={searchQuery} 
           onChange={(e) => setSearchQuery(e.target.value)} 
-          style={{ padding: '10px 14px', border: '1px solid #cbd5e1', borderRadius: '8px', outline: 'none', minWidth: '260px', flex: 1, fontSize: '14px' }} 
+          style={{ padding: '12px 16px', border: '1px solid #cbd5e1', borderRadius: '8px', outline: 'none', minWidth: '280px', flex: 1, fontSize: '14px' }} 
         />
 
         {!showCompletedOnly && (
           <select 
             value={statusFilter} 
             onChange={(e) => setStatusFilter(e.target.value)} 
-            style={{ padding: '10px 14px', border: '1px solid #cbd5e1', borderRadius: '8px', background: '#fff', fontSize: '14px', outline: 'none', color: '#475569', fontWeight: '500' }}
+            style={{ padding: '12px 16px', border: '1px solid #cbd5e1', borderRadius: '8px', background: '#fff', fontSize: '14px', outline: 'none', color: '#475569', fontWeight: '600' }}
           >
             <option value="all">All Active Statuses</option>
             <option value="confirmed">Confirmed</option>
@@ -738,7 +758,7 @@ export default function BookingsPage() {
       {loading ? (
         <div style={{ padding: '48px', textAlign: 'center', color: '#64748b', fontSize: '15px' }}>Loading bookings...</div>
       ) : filteredBookings.length === 0 ? (
-        <div style={{ padding: '48px', textAlign: 'center', background: '#fff', borderRadius: '12px', border: '1px solid #e2e8f0', color: '#64748b' }}>
+        <div style={{ padding: '48px', textAlign: 'center', background: '#fff', borderRadius: '16px', border: '1px solid #e2e8f0', color: '#64748b' }}>
           No {showCompletedOnly ? 'completed' : 'active'} bookings found.
         </div>
       ) : (
@@ -752,7 +772,7 @@ export default function BookingsPage() {
                   <th>Yatra Package, Rate & Batch</th>
                   <th>Travel Dates</th>
                   <th>Travelers & Form Details</th>
-                  <th>Financial Breakdown (Click for History)</th>
+                  <th>Financial Breakdown (Click for Logs)</th>
                   <th>Status</th>
                   <th>Actions</th>
                 </tr>
@@ -772,20 +792,20 @@ export default function BookingsPage() {
                   return (
                     <tr key={b._id}>
                       <td>
-                        <div style={{ fontWeight: '600', color: '#0f172a' }}>{b.customer?.name || 'Unknown'}</div>
-                        <div style={{ fontSize: '12px', color: '#64748b' }}>{b.customer?.phone || b.customer?.email}</div>
-                        <div style={{ fontSize: '11px', color: '#94a3b8', marginTop: '4px' }}>
+                        <div style={{ fontWeight: '700', color: '#0f172a', fontSize: '15px' }}>{b.customer?.name || 'Unknown'}</div>
+                        <div style={{ fontSize: '12px', color: '#64748b', marginTop: '2px' }}>{b.customer?.phone || b.customer?.email}</div>
+                        <div style={{ fontSize: '11px', color: '#94a3b8', marginTop: '6px' }}>
                           Booked: {new Date(b.createdAt).toLocaleString('en-IN', { day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' })}
                         </div>
                       </td>
 
                       <td>
-                        <div style={{ fontWeight: '600', color: '#1e293b' }}>{b.package?.name || 'Custom Package'}</div>
-                        <div style={{ fontSize: '11px', color: '#64748b', fontWeight: '600' }}>Rate: ₹{b.package?.price || 0}</div>
+                        <div style={{ fontWeight: '700', color: '#1e293b', fontSize: '14px' }}>{b.package?.name || 'Custom Package'}</div>
+                        <div style={{ fontSize: '11px', color: '#64748b', fontWeight: '600', marginTop: '2px' }}>Rate: ₹{b.package?.price || 0}</div>
                         {batchName ? (
-                          <div style={{ fontSize: '12px', color: '#2563eb', fontWeight: '600', marginTop: '2px' }}>Batch: {batchName}</div>
+                          <div style={{ fontSize: '12px', color: '#2563eb', fontWeight: '700', marginTop: '4px' }}>Batch: {batchName}</div>
                         ) : (
-                          <div style={{ fontSize: '12px', color: '#64748b' }}>{b.package?.duration || ''}</div>
+                          <div style={{ fontSize: '12px', color: '#64748b', marginTop: '4px' }}>{b.package?.duration || ''}</div>
                         )}
                       </td>
 
@@ -794,14 +814,14 @@ export default function BookingsPage() {
                           {startD || 'Unassigned'}
                         </div>
                         {endD && (
-                          <div style={{ fontSize: '12px', color: '#64748b' }}>to {endD}</div>
+                          <div style={{ fontSize: '12px', color: '#64748b', marginTop: '2px' }}>to {endD}</div>
                         )}
                       </td>
 
                       <td style={{ maxWidth: '280px' }}>
-                        <div style={{ marginBottom: '6px' }}>
-                          <span style={{ display: 'inline-block', padding: '2px 8px', background: '#fff3eb', color: '#ea580c', border: '1px solid #ffd8bf', borderRadius: '6px', fontWeight: '700', fontSize: '12px' }}>
-                            {b.numberOfTravelers} Pax
+                        <div style={{ marginBottom: '8px' }}>
+                          <span style={{ display: 'inline-block', padding: '3px 10px', background: '#fff7ed', color: '#ea580c', border: '1px solid #fdba74', borderRadius: '8px', fontWeight: '700', fontSize: '12px' }}>
+                            {b.numberOfTravelers} Travelers
                           </span>
                         </div>
 
@@ -810,29 +830,29 @@ export default function BookingsPage() {
                           <summary style={{ outline: 'none', fontSize: '12px', color: '#2563eb', fontWeight: '600' }}>
                             View Details
                           </summary>
-                          <div style={{ position: 'relative', padding: '12px', background: '#fff', border: '1px solid #cbd5e1', borderRadius: '6px', marginTop: '6px', fontSize: '12px', maxHeight: '250px', overflowY: 'auto' }}>
+                          <div style={{ position: 'relative', padding: '14px', background: '#fff', border: '1px solid #cbd5e1', borderRadius: '8px', marginTop: '6px', fontSize: '12px', maxHeight: '250px', overflowY: 'auto', boxShadow: '0 4px 6px -1px rgba(0,0,0,0.05)' }}>
                             <div style={{ position: 'absolute', top: '8px', right: '8px', display: 'flex', gap: '4px' }}>
                               <button onClick={(ev) => { ev.preventDefault(); setEditingNoteId(b._id); setTempNote(b.notes || ''); }} style={{ background: 'transparent', border: 'none', cursor: 'pointer', fontSize: '14px' }} title="Edit Note">📝</button>
                               {b.notes && <button onClick={(ev) => { ev.preventDefault(); deleteNote(b._id); }} style={{ background: 'transparent', border: 'none', cursor: 'pointer', fontSize: '14px' }} title="Delete Note">🗑️</button>}
                             </div>
 
-                            <div style={{ whiteSpace: 'pre-wrap', color: '#334155', paddingRight: '45px', fontWeight: '500' }}>
+                            <div style={{ whiteSpace: 'pre-wrap', color: '#334155', paddingRight: '45px', fontWeight: '500', lineHeight: 1.4 }}>
                               {b.notes || 'No notes added yet.'}
                             </div>
 
                             {editingNoteId === b._id && (
-                              <div style={{ marginTop: '10px', paddingTop: '10px', borderTop: '1px dashed #cbd5e1' }}>
-                                <span style={{ fontSize: '10px', textTransform: 'uppercase', color: '#64748b', display: 'block', marginBottom: '6px', fontWeight: '600' }}>Edit Booking Note</span>
+                              <div style={{ marginTop: '12px', paddingTop: '12px', borderTop: '1px dashed #cbd5e1' }}>
+                                <span style={{ fontSize: '10px', textTransform: 'uppercase', color: '#64748b', display: 'block', marginBottom: '6px', fontWeight: '700' }}>Edit Booking Note</span>
                                 <textarea
                                   value={tempNote}
                                   onChange={(ev) => setTempNote(ev.target.value)}
-                                  style={{ width: '100%', padding: '8px', border: '1px solid #cbd5e1', borderRadius: '4px', fontSize: '12px', boxSizing: 'border-box', minHeight: '60px', resize: 'vertical' }}
+                                  style={{ width: '100%', padding: '10px', border: '1px solid #cbd5e1', borderRadius: '6px', fontSize: '12px', boxSizing: 'border-box', minHeight: '60px', resize: 'vertical' }}
                                   placeholder="Type booking note or family members here..."
                                   autoFocus
                                 />
                                 <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '8px', marginTop: '8px' }}>
-                                  <button onClick={(ev) => { ev.preventDefault(); setEditingNoteId(null); }} style={{ padding: '6px 12px', fontSize: '11px', background: '#f1f5f9', color: '#475569', border: 'none', borderRadius: '4px', cursor: 'pointer', fontWeight: '500' }}>Cancel</button>
-                                  <button onClick={(ev) => { ev.preventDefault(); saveNote(b._id, tempNote); }} style={{ padding: '6px 12px', fontSize: '11px', background: '#f97316', color: '#fff', border: 'none', borderRadius: '4px', cursor: 'pointer', fontWeight: '500' }}>Save</button>
+                                  <button onClick={(ev) => { ev.preventDefault(); setEditingNoteId(null); }} style={{ padding: '6px 12px', fontSize: '11px', background: '#f1f5f9', color: '#475569', border: 'none', borderRadius: '6px', cursor: 'pointer', fontWeight: '600' }}>Cancel</button>
+                                  <button onClick={(ev) => { ev.preventDefault(); saveNote(b._id, tempNote); }} style={{ padding: '6px 12px', fontSize: '11px', background: '#f97316', color: '#fff', border: 'none', borderRadius: '6px', cursor: 'pointer', fontWeight: '600' }}>Save</button>
                                 </div>
                               </div>
                             )}
@@ -844,25 +864,34 @@ export default function BookingsPage() {
                       <td>
                         <div 
                           onClick={() => setActiveHistoryId(activeHistoryId === b._id ? null : b._id)}
-                          style={{ cursor: 'pointer', padding: '6px', borderRadius: '6px', background: activeHistoryId === b._id ? '#f8fafc' : 'transparent', transition: 'background 0.15s' }}
+                          style={{ cursor: 'pointer', padding: '8px 12px', borderRadius: '8px', background: activeHistoryId === b._id ? '#f8fafc' : '#f8fafc80', border: '1px solid #e2e8f0', transition: 'all 0.15s' }}
                           title="Click to view payment history"
                         >
-                          <div style={{ fontSize: '13px', display: 'flex', flexDirection: 'column', gap: '2px' }}>
-                            <div>Total: <strong style={{ color: '#0f172a' }}>₹{b.totalAmount || 0}</strong></div>
-                            <div>Adv: <strong style={{ color: '#16a34a' }}>₹{b.advancePaid || 0}</strong></div>
-                            <div style={{ color: (b.balancePending || 0) > 0 ? '#b91c1c' : '#16a34a', fontWeight: '600' }}>
-                              Due: ₹{b.balancePending || 0}
+                          <div style={{ fontSize: '13px', display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                            <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                              <span style={{ color: '#64748b' }}>Total:</span> <strong style={{ color: '#0f172a' }}>₹{b.totalAmount || 0}</strong>
+                            </div>
+                            <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                              <span style={{ color: '#64748b' }}>Adv:</span> <strong style={{ color: '#16a34a' }}>₹{b.advancePaid || 0}</strong>
+                            </div>
+                            <div style={{ display: 'flex', justifyContent: 'space-between', borderTop: '1px solid #e2e8f0', paddingTop: '4px', marginTop: '2px', color: (b.balancePending || 0) > 0 ? '#b91c1c' : '#16a34a', fontWeight: '700' }}>
+                              <span>Due:</span> <span>₹{b.balancePending || 0}</span>
                             </div>
                           </div>
 
-                          {/* Payment Log Popover Box */}
+                          {/* Payment Log Popover Box with Small Font Timestamp */}
                           {activeHistoryId === b._id && (
-                            <div style={{ marginTop: '8px', padding: '8px', background: '#fff', border: '1px solid #cbd5e1', borderRadius: '6px', fontSize: '11px', boxShadow: '0 4px 6px -1px rgba(0,0,0,0.1)' }}>
-                              <div style={{ fontWeight: '700', color: '#0f172a', marginBottom: '4px', borderBottom: '1px solid #e2e8f0', paddingBottom: '2px' }}>📜 Payment History</div>
+                            <div style={{ marginTop: '10px', padding: '10px', background: '#fff', border: '1px solid #cbd5e1', borderRadius: '8px', fontSize: '11px', boxShadow: '0 10px 15px -3px rgba(0,0,0,0.1)' }}>
+                              <div style={{ fontWeight: '700', color: '#0f172a', marginBottom: '6px', borderBottom: '1px solid #e2e8f0', paddingBottom: '4px' }}>📜 Payment Log History</div>
                               {b.paymentHistory?.length > 0 ? b.paymentHistory.map((ph: any, i: number) => (
-                                <div key={i} style={{ display: 'flex', justifyContent: 'space-between', color: '#334155', margin: '3px 0' }}>
-                                  <span>{new Date(ph.date).toLocaleDateString('en-IN', { day: 'numeric', month: 'short' })} ({ph.method || 'cash'})</span>
-                                  <strong style={{ color: '#16a34a' }}>+₹{ph.amount}</strong>
+                                <div key={i} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', color: '#334155', margin: '4px 0', borderBottom: '1px solid #f1f5f9', paddingBottom: '4px' }}>
+                                  <div>
+                                    <div style={{ fontWeight: '600' }}>{ph.method?.toUpperCase() || 'CASH'}</div>
+                                    <div style={{ fontSize: '10px', color: '#94a3b8' }}>
+                                      {new Date(ph.date).toLocaleString('en-IN', { day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' })}
+                                    </div>
+                                  </div>
+                                  <strong style={{ color: '#16a34a', fontSize: '12px' }}>+₹{ph.amount}</strong>
                                 </div>
                               )) : (
                                 <div style={{ color: '#64748b' }}>No separate payment logs recorded.</div>
@@ -875,15 +904,15 @@ export default function BookingsPage() {
                       <td>
                         <select
                           value={b.status}
-                          onChange={(e) => handleStatusChange(b._id, e.target.value)}
+                          onChange={(e) => handleStatusChange(b, e.target.value)}
                           style={{
                             background: badge.bg,
                             color: badge.text,
                             border: `1px solid ${badge.border}`,
-                            padding: '4px 10px',
-                            borderRadius: '6px',
+                            padding: '6px 12px',
+                            borderRadius: '8px',
                             fontSize: '12px',
-                            fontWeight: '600',
+                            fontWeight: '700',
                             outline: 'none',
                             cursor: 'pointer'
                           }}
@@ -898,24 +927,15 @@ export default function BookingsPage() {
                       </td>
 
                       <td>
-                        <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap' }}>
-                          <button 
-                            onClick={() => handleEdit(b)}
-                            style={{ padding: '6px 10px', background: '#e0f2fe', color: '#0369a1', border: '1px solid #bae6fd', borderRadius: '6px', fontSize: '12px', fontWeight: '600', cursor: 'pointer' }}
-                          >
+                        <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', alignItems: 'center' }}>
+                          <button onClick={() => handleEdit(b)} className="btn-edit" title="Edit Booking">
                             ✏️ Edit
                           </button>
-                          <button 
-                            onClick={() => handleUpdatePayment(b)}
-                            style={{ padding: '6px 10px', background: '#f1f5f9', color: '#0f172a', border: '1px solid #cbd5e1', borderRadius: '6px', fontSize: '12px', fontWeight: '600', cursor: 'pointer' }}
-                          >
+                          <button onClick={() => handleUpdatePayment(b)} className="btn-pay" title="Record Payment">
                             ₹ Pay
                           </button>
-                          <button 
-                            onClick={() => handleDelete(b._id)}
-                            style={{ padding: '6px 10px', background: '#fef2f2', color: '#dc2626', border: '1px solid #fecaca', borderRadius: '6px', fontSize: '12px', fontWeight: '600', cursor: 'pointer' }}
-                          >
-                            Cancel
+                          <button onClick={() => handleDelete(b._id)} className="btn-cancel" title="Cancel Booking">
+                            ✕ Cancel
                           </button>
                         </div>
                       </td>
@@ -940,26 +960,26 @@ export default function BookingsPage() {
               const endD = b.endTravelDate ? new Date(b.endTravelDate).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' }) : '';
 
               return (
-                <div key={b._id} style={{ background: '#fff', borderRadius: '12px', border: '1px solid #e2e8f0', padding: '16px', boxShadow: '0 2px 4px rgba(0,0,0,0.02)' }}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '12px' }}>
+                <div key={b._id} style={{ background: '#fff', borderRadius: '16px', border: '1px solid #e2e8f0', padding: '20px', boxShadow: '0 4px 6px -1px rgba(0,0,0,0.05)' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '16px' }}>
                     <div>
-                      <div style={{ fontSize: '16px', fontWeight: '700', color: '#0f172a' }}>{b.customer?.name || 'Unknown'}</div>
+                      <div style={{ fontSize: '18px', fontWeight: '700', color: '#0f172a' }}>{b.customer?.name || 'Unknown'}</div>
                       <div style={{ fontSize: '13px', color: '#64748b' }}>{b.customer?.phone || b.customer?.email}</div>
-                      <div style={{ fontSize: '11px', color: '#94a3b8', marginTop: '2px' }}>
+                      <div style={{ fontSize: '11px', color: '#94a3b8', marginTop: '4px' }}>
                         Booked: {new Date(b.createdAt).toLocaleString('en-IN', { day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' })}
                       </div>
                     </div>
                     <select
                       value={b.status}
-                      onChange={(e) => handleStatusChange(b._id, e.target.value)}
+                      onChange={(e) => handleStatusChange(b, e.target.value)}
                       style={{
                         background: badge.bg,
                         color: badge.text,
                         border: `1px solid ${badge.border}`,
-                        padding: '4px 10px',
-                        borderRadius: '6px',
+                        padding: '6px 12px',
+                        borderRadius: '8px',
                         fontSize: '12px',
-                        fontWeight: '600',
+                        fontWeight: '700',
                         outline: 'none',
                         cursor: 'pointer'
                       }}
@@ -973,7 +993,7 @@ export default function BookingsPage() {
                     </select>
                   </div>
 
-                  <div style={{ background: '#f8fafc', padding: '12px', borderRadius: '8px', marginBottom: '16px', fontSize: '13px', display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                  <div style={{ background: '#f8fafc', padding: '16px', borderRadius: '12px', marginBottom: '20px', fontSize: '13px', display: 'flex', flexDirection: 'column', gap: '8px', border: '1px solid #f1f5f9' }}>
                     <div style={{ display: 'flex', justifyContent: 'space-between' }}>
                       <span style={{ color: '#64748b' }}>Package:</span>
                       <strong style={{ color: '#0f172a' }}>{b.package?.name || 'Custom Package'}</strong>
@@ -1000,18 +1020,18 @@ export default function BookingsPage() {
 
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                       <span style={{ color: '#64748b' }}>Travelers:</span>
-                      <span style={{ background: '#fff3eb', color: '#ea580c', border: '1px solid #ffd8bf', padding: '1px 6px', borderRadius: '4px', fontWeight: '700', fontSize: '11px' }}>
+                      <span style={{ background: '#fff7ed', color: '#ea580c', border: '1px solid #fdba74', padding: '2px 8px', borderRadius: '6px', fontWeight: '700', fontSize: '12px' }}>
                         {b.numberOfTravelers} Pax
                       </span>
                     </div>
 
                     {/* Expandable Form Details & Note Toggler */}
-                    <div style={{ marginTop: '6px', paddingTop: '6px', borderTop: '1px solid #e2e8f0' }}>
+                    <div style={{ marginTop: '8px', paddingTop: '8px', borderTop: '1px solid #e2e8f0' }}>
                       <details style={{ cursor: 'pointer' }}>
                         <summary style={{ outline: 'none', fontSize: '12px', color: '#2563eb', fontWeight: '600' }}>
                           View Details
                         </summary>
-                        <div style={{ position: 'relative', padding: '12px', background: '#fff', border: '1px solid #cbd5e1', borderRadius: '6px', marginTop: '6px', fontSize: '12px' }}>
+                        <div style={{ position: 'relative', padding: '12px', background: '#fff', border: '1px solid #cbd5e1', borderRadius: '8px', marginTop: '6px', fontSize: '12px' }}>
                           <div style={{ position: 'absolute', top: '8px', right: '8px', display: 'flex', gap: '4px' }}>
                             <button onClick={(ev) => { ev.preventDefault(); setEditingNoteId(b._id); setTempNote(b.notes || ''); }} style={{ background: 'transparent', border: 'none', cursor: 'pointer', fontSize: '14px' }} title="Edit Note">📝</button>
                             {b.notes && <button onClick={(ev) => { ev.preventDefault(); deleteNote(b._id); }} style={{ background: 'transparent', border: 'none', cursor: 'pointer', fontSize: '14px' }} title="Delete Note">🗑️</button>}
@@ -1023,17 +1043,17 @@ export default function BookingsPage() {
 
                           {editingNoteId === b._id && (
                             <div style={{ marginTop: '10px', paddingTop: '10px', borderTop: '1px dashed #cbd5e1' }}>
-                              <span style={{ fontSize: '10px', textTransform: 'uppercase', color: '#64748b', display: 'block', marginBottom: '6px', fontWeight: '600' }}>Edit Booking Note</span>
+                              <span style={{ fontSize: '10px', textTransform: 'uppercase', color: '#64748b', display: 'block', marginBottom: '6px', fontWeight: '700' }}>Edit Booking Note</span>
                               <textarea
                                 value={tempNote}
                                 onChange={(ev) => setTempNote(ev.target.value)}
-                                style={{ width: '100%', padding: '8px', border: '1px solid #cbd5e1', borderRadius: '4px', fontSize: '12px', boxSizing: 'border-box', minHeight: '60px', resize: 'vertical' }}
+                                style={{ width: '100%', padding: '8px', border: '1px solid #cbd5e1', borderRadius: '6px', fontSize: '12px', boxSizing: 'border-box', minHeight: '60px', resize: 'vertical' }}
                                 placeholder="Type booking note or family members here..."
                                 autoFocus
                               />
                               <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '8px', marginTop: '8px' }}>
-                                <button onClick={(ev) => { ev.preventDefault(); setEditingNoteId(null); }} style={{ padding: '6px 12px', fontSize: '11px', background: '#f1f5f9', color: '#475569', border: 'none', borderRadius: '4px', cursor: 'pointer', fontWeight: '500' }}>Cancel</button>
-                                <button onClick={(ev) => { ev.preventDefault(); saveNote(b._id, tempNote); }} style={{ padding: '6px 12px', fontSize: '11px', background: '#f97316', color: '#fff', border: 'none', borderRadius: '4px', cursor: 'pointer', fontWeight: '500' }}>Save</button>
+                                <button onClick={(ev) => { ev.preventDefault(); setEditingNoteId(null); }} style={{ padding: '6px 12px', fontSize: '11px', background: '#f1f5f9', color: '#475569', border: 'none', borderRadius: '6px', cursor: 'pointer', fontWeight: '600' }}>Cancel</button>
+                                <button onClick={(ev) => { ev.preventDefault(); saveNote(b._id, tempNote); }} style={{ padding: '6px 12px', fontSize: '11px', background: '#f97316', color: '#fff', border: 'none', borderRadius: '6px', cursor: 'pointer', fontWeight: '600' }}>Save</button>
                               </div>
                             </div>
                           )}
@@ -1041,12 +1061,12 @@ export default function BookingsPage() {
                       </details>
                     </div>
 
-                    <div style={{ borderTop: '1px solid #e2e8f0', margin: '6px 0' }} />
+                    <div style={{ borderTop: '1px solid #e2e8f0', margin: '8px 0' }} />
 
                     {/* Financial Breakdown (Clickable for History) */}
                     <div 
                       onClick={() => setActiveHistoryId(activeHistoryId === b._id ? null : b._id)}
-                      style={{ cursor: 'pointer', padding: '4px', borderRadius: '6px', background: activeHistoryId === b._id ? '#f1f5f9' : 'transparent' }}
+                      style={{ cursor: 'pointer', padding: '8px 12px', borderRadius: '8px', background: activeHistoryId === b._id ? '#fff' : '#f8fafc', border: '1px solid #cbd5e1' }}
                     >
                       <div style={{ display: 'flex', justifyContent: 'space-between' }}>
                         <span style={{ color: '#64748b' }}>Total Cost:</span>
@@ -1056,18 +1076,23 @@ export default function BookingsPage() {
                         <span style={{ color: '#64748b' }}>Advance Paid:</span>
                         <strong style={{ color: '#16a34a' }}>₹{b.advancePaid || 0}</strong>
                       </div>
-                      <div style={{ display: 'flex', justifyContent: 'space-between', fontWeight: '700' }}>
-                        <span style={{ color: '#64748b' }}>Balance Due:</span>
-                        <span style={{ color: (b.balancePending || 0) > 0 ? '#b91c1c' : '#16a34a' }}>₹{b.balancePending || 0}</span>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', fontWeight: '700', borderTop: '1px solid #e2e8f0', paddingTop: '4px', marginTop: '2px', color: (b.balancePending || 0) > 0 ? '#b91c1c' : '#16a34a' }}>
+                        <span>Balance Due:</span>
+                        <span>₹{b.balancePending || 0}</span>
                       </div>
 
                       {activeHistoryId === b._id && (
-                        <div style={{ marginTop: '8px', padding: '8px', background: '#fff', border: '1px solid #cbd5e1', borderRadius: '6px', fontSize: '11px', boxShadow: '0 4px 6px -1px rgba(0,0,0,0.1)' }}>
-                          <div style={{ fontWeight: '700', color: '#0f172a', marginBottom: '4px', borderBottom: '1px solid #e2e8f0', paddingBottom: '2px' }}>📜 Payment History</div>
+                        <div style={{ marginTop: '10px', padding: '10px', background: '#fff', border: '1px solid #cbd5e1', borderRadius: '8px', fontSize: '11px', boxShadow: '0 10px 15px -3px rgba(0,0,0,0.1)' }}>
+                          <div style={{ fontWeight: '700', color: '#0f172a', marginBottom: '6px', borderBottom: '1px solid #e2e8f0', paddingBottom: '4px' }}>📜 Payment Log History</div>
                           {b.paymentHistory?.length > 0 ? b.paymentHistory.map((ph: any, i: number) => (
-                            <div key={i} style={{ display: 'flex', justifyContent: 'space-between', color: '#334155', margin: '3px 0' }}>
-                              <span>{new Date(ph.date).toLocaleDateString('en-IN', { day: 'numeric', month: 'short' })} ({ph.method || 'cash'})</span>
-                              <strong style={{ color: '#16a34a' }}>+₹{ph.amount}</strong>
+                            <div key={i} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', color: '#334155', margin: '4px 0', borderBottom: '1px solid #f1f5f9', paddingBottom: '4px' }}>
+                              <div>
+                                <div style={{ fontWeight: '600' }}>{ph.method?.toUpperCase() || 'CASH'}</div>
+                                <div style={{ fontSize: '10px', color: '#94a3b8' }}>
+                                  {new Date(ph.date).toLocaleString('en-IN', { day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' })}
+                                </div>
+                              </div>
+                              <strong style={{ color: '#16a34a', fontSize: '12px' }}>+₹{ph.amount}</strong>
                             </div>
                           )) : (
                             <div style={{ color: '#64748b' }}>No separate payment logs recorded.</div>
@@ -1078,23 +1103,14 @@ export default function BookingsPage() {
                   </div>
 
                   <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
-                    <button 
-                      onClick={() => handleEdit(b)}
-                      style={{ flex: 1, padding: '10px', background: '#e0f2fe', color: '#0369a1', border: '1px solid #bae6fd', borderRadius: '8px', fontSize: '13px', fontWeight: '600', cursor: 'pointer', textAlign: 'center' }}
-                    >
+                    <button onClick={() => handleEdit(b)} className="btn-edit" style={{ flex: 1, justifyContent: 'center' }}>
                       ✏️ Edit
                     </button>
-                    <button 
-                      onClick={() => handleUpdatePayment(b)}
-                      style={{ flex: 1, padding: '10px', background: '#f1f5f9', color: '#0f172a', border: '1px solid #cbd5e1', borderRadius: '8px', fontSize: '13px', fontWeight: '600', cursor: 'pointer', textAlign: 'center' }}
-                    >
+                    <button onClick={() => handleUpdatePayment(b)} className="btn-pay" style={{ flex: 1, justifyContent: 'center' }}>
                       ₹ Pay
                     </button>
-                    <button 
-                      onClick={() => handleDelete(b._id)}
-                      style={{ padding: '10px 16px', background: '#fef2f2', color: '#dc2626', border: '1px solid #fecaca', borderRadius: '8px', fontSize: '13px', fontWeight: '600', cursor: 'pointer' }}
-                    >
-                      Cancel
+                    <button onClick={() => handleDelete(b._id)} className="btn-cancel" style={{ flex: 1, justifyContent: 'center' }}>
+                      ✕ Cancel
                     </button>
                   </div>
                 </div>
