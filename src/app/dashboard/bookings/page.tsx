@@ -6,6 +6,7 @@ export default function BookingsPage() {
   const [bookings, setBookings] = useState<any[]>([]);
   const [customers, setCustomers] = useState<any[]>([]);
   const [packages, setPackages] = useState<any[]>([]);
+  const [enquiries, setEnquiries] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [showAddForm, setShowAddForm] = useState(false);
@@ -13,11 +14,14 @@ export default function BookingsPage() {
   // Filters
   const [statusFilter, setStatusFilter] = useState('all');
   const [searchQuery, setSearchQuery] = useState('');
+  const [customerSearch, setCustomerSearch] = useState('');
 
   // Add / Edit Form State
   const [form, setForm] = useState({
+    enquiry: '',
     customer: '',
     package: '',
+    packageGroup: '',
     numberOfTravelers: '1',
     travelDate: '',
     totalAmount: '',
@@ -43,6 +47,7 @@ export default function BookingsPage() {
     fetchBookings();
     fetch('/api/customers').then(r => r.json()).then(d => setCustomers(Array.isArray(d) ? d : []));
     fetch('/api/packages').then(r => r.json()).then(d => setPackages(Array.isArray(d) ? d : []));
+    fetch('/api/enquiries').then(r => r.json()).then(d => setEnquiries(Array.isArray(d) ? d : []));
   }, []);
 
   const handleStatusChange = async (id: string, newStatus: string) => {
@@ -88,8 +93,10 @@ export default function BookingsPage() {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
+          enquiry: form.enquiry || undefined,
           customer: form.customer,
           package: form.package,
+          packageGroup: form.packageGroup || undefined,
           numberOfTravelers: Number(form.numberOfTravelers || 1),
           travelDate: new Date(form.travelDate),
           totalAmount: Number(form.totalAmount),
@@ -101,10 +108,23 @@ export default function BookingsPage() {
       });
 
       if (res.ok) {
+        // If confirmed from an enquiry, mark enquiry as booked
+        if (form.enquiry) {
+          try {
+            await fetch(`/api/enquiries/${form.enquiry}`, {
+              method: 'PUT',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ status: 'booked' })
+            });
+          } catch(e) {}
+        }
+
         setShowAddForm(false);
         setForm({
+          enquiry: '',
           customer: '',
           package: '',
+          packageGroup: '',
           numberOfTravelers: '1',
           travelDate: '',
           totalAmount: '',
@@ -113,6 +133,7 @@ export default function BookingsPage() {
           specialRequirements: '',
           notes: '',
         });
+        setCustomerSearch('');
         fetchBookings();
       } else {
         alert('Failed to create booking.');
@@ -158,6 +179,13 @@ export default function BookingsPage() {
       if (!custName.includes(q) && !custPhone.includes(q) && !pkgName.includes(q)) return false;
     }
     return true;
+  });
+
+  // Filter Customers for Form Dropdown
+  const filteredCustomers = customers.filter(c => {
+    if (!customerSearch) return true;
+    const q = customerSearch.toLowerCase();
+    return c.name?.toLowerCase().includes(q) || c.phone?.toLowerCase().includes(q) || c.email?.toLowerCase().includes(q);
   });
 
   const getStatusBadgeColor = (status: string) => {
@@ -239,39 +267,110 @@ export default function BookingsPage() {
       {/* Add Booking Form Modal / Box */}
       {showAddForm && (
         <div style={{ background: '#fff', padding: '24px', borderRadius: '12px', boxShadow: '0 10px 25px -5px rgba(0,0,0,0.1)', border: '1px solid #e2e8f0', marginBottom: '24px' }}>
-          <h2 style={{ fontSize: '18px', fontWeight: '700', color: '#0f172a', marginTop: 0, marginBottom: '16px' }}>Create New Yatra Booking</h2>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px', borderBottom: '1px solid #f1f5f9', paddingBottom: '12px' }}>
+            <h2 style={{ fontSize: '18px', fontWeight: '700', color: '#0f172a', margin: 0 }}>Create New Yatra Booking</h2>
+          </div>
+
+          {/* Optional: Quick Fill from Enquiry */}
+          <div style={{ background: '#fff7ed', border: '1px solid #fed7aa', padding: '16px', borderRadius: '8px', marginBottom: '20px' }}>
+            <label style={{ display: 'block', fontSize: '13px', fontWeight: '700', color: '#ea580c', marginBottom: '6px' }}>⚡ Quick Fill: Confirm Booking from Enquiry (Auto-Fetches Family Members & Calculates Cost)</label>
+            <select
+              value={form.enquiry}
+              onChange={(e) => {
+                const val = e.target.value;
+                const selEnq = enquiries.find(eq => eq._id === val);
+                if (selEnq) {
+                  const pax = 1 + (selEnq.members?.length || 0);
+                  const selPkg = packages.find(p => p._id === selEnq.package);
+                  const calcAmount = selPkg ? selPkg.price * pax : 0;
+                  const memberNames = selEnq.members?.length > 0 ? '\nFamily members included: ' + selEnq.members.map((m: any) => `${m.name} (${m.relation || 'Relative'})`).join(', ') : '';
+
+                  setForm({
+                    ...form,
+                    enquiry: selEnq._id,
+                    customer: selEnq.customer?._id || selEnq.customer || '',
+                    package: selEnq.package || '',
+                    packageGroup: selEnq.packageGroup || '',
+                    numberOfTravelers: String(pax),
+                    totalAmount: String(calcAmount),
+                    notes: selEnq.message ? selEnq.message + memberNames : memberNames
+                  });
+                } else {
+                  setForm({ ...form, enquiry: '' });
+                }
+              }}
+              style={{ width: '100%', padding: '10px 12px', border: '1px solid #fdba74', borderRadius: '8px', outline: 'none', background: '#fff', fontSize: '14px', color: '#0f172a', fontWeight: '600' }}
+            >
+              <option value="">-- Choose Enquiry to Confirm --</option>
+              {enquiries.filter(eq => eq.status !== 'lost').map(eq => (
+                <option key={eq._id} value={eq._id}>
+                  {eq.submittedName || eq.customer?.name || 'Enquiry'} - {eq.source} ({eq.members?.length || 0} family members added)
+                </option>
+              ))}
+            </select>
+          </div>
+
           <form onSubmit={handleCreateBooking} style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))', gap: '16px' }}>
-            <div>
-              <label style={{ display: 'block', fontSize: '13px', fontWeight: '600', color: '#475569', marginBottom: '6px' }}>Select Customer *</label>
+            {/* Customer Select with Search */}
+            <div style={{ background: '#f8fafc', padding: '12px', borderRadius: '8px', border: '1px solid #e2e8f0' }}>
+              <label style={{ display: 'block', fontSize: '13px', fontWeight: '600', color: '#475569', marginBottom: '6px' }}>Search & Select Customer *</label>
+              <input 
+                type="text" 
+                placeholder="🔍 Type name/phone to filter list below..." 
+                value={customerSearch} 
+                onChange={(e) => setCustomerSearch(e.target.value)} 
+                style={{ width: '100%', padding: '8px 12px', border: '1px solid #cbd5e1', borderRadius: '6px', outline: 'none', background: '#fff', fontSize: '13px', marginBottom: '8px' }} 
+              />
               <select 
                 required 
                 value={form.customer} 
                 onChange={(e) => setForm({...form, customer: e.target.value})} 
-                style={{ width: '100%', padding: '10px 12px', border: '1px solid #cbd5e1', borderRadius: '8px', outline: 'none', background: '#fff', fontSize: '14px' }}
+                style={{ width: '100%', padding: '10px 12px', border: '1px solid #cbd5e1', borderRadius: '6px', outline: 'none', background: '#fff', fontSize: '14px', fontWeight: '600' }}
               >
-                <option value="">-- Choose Existing Customer --</option>
-                {customers.map(c => (
+                <option value="">-- Choose Customer --</option>
+                {filteredCustomers.map(c => (
                   <option key={c._id} value={c._id}>{c.name} ({c.phone || c.email})</option>
                 ))}
               </select>
             </div>
 
-            <div>
-              <label style={{ display: 'block', fontSize: '13px', fontWeight: '600', color: '#475569', marginBottom: '6px' }}>Select Package *</label>
-              <select 
-                required 
-                value={form.package} 
-                onChange={(e) => {
-                  const selPkg = packages.find(p => p._id === e.target.value);
-                  setForm({...form, package: e.target.value, totalAmount: selPkg ? String(selPkg.price || '') : form.totalAmount});
-                }} 
-                style={{ width: '100%', padding: '10px 12px', border: '1px solid #cbd5e1', borderRadius: '8px', outline: 'none', background: '#fff', fontSize: '14px' }}
-              >
-                <option value="">-- Choose Package --</option>
-                {packages.map(p => (
-                  <option key={p._id} value={p._id}>{p.name} (₹{p.price || 0})</option>
-                ))}
-              </select>
+            {/* Package & Batch Select */}
+            <div style={{ background: '#f8fafc', padding: '12px', borderRadius: '8px', border: '1px solid #e2e8f0', display: 'flex', flexDirection: 'column', gap: '8px' }}>
+              <div>
+                <label style={{ display: 'block', fontSize: '13px', fontWeight: '600', color: '#475569', marginBottom: '6px' }}>Select Package *</label>
+                <select 
+                  required 
+                  value={form.package} 
+                  onChange={(e) => {
+                    const val = e.target.value;
+                    const selPkg = packages.find(p => p._id === val);
+                    const calc = selPkg ? selPkg.price * Number(form.numberOfTravelers || 1) : form.totalAmount;
+                    setForm({...form, package: val, packageGroup: '', totalAmount: String(calc)});
+                  }} 
+                  style={{ width: '100%', padding: '10px 12px', border: '1px solid #cbd5e1', borderRadius: '6px', outline: 'none', background: '#fff', fontSize: '14px', fontWeight: '600' }}
+                >
+                  <option value="">-- Choose Package --</option>
+                  {packages.map(p => (
+                    <option key={p._id} value={p._id}>{p.name} (₹{p.price || 0})</option>
+                  ))}
+                </select>
+              </div>
+
+              {form.package && packages.find(p => p._id === form.package)?.groups?.length > 0 && (
+                <div>
+                  <label style={{ display: 'block', fontSize: '12px', fontWeight: '700', color: '#2563eb', marginBottom: '4px' }}>Select Batch / Group</label>
+                  <select
+                    value={form.packageGroup}
+                    onChange={(e) => setForm({...form, packageGroup: e.target.value})}
+                    style={{ width: '100%', padding: '8px 10px', border: '1px solid #bfdbfe', borderRadius: '6px', outline: 'none', background: '#eff6ff', fontSize: '13px', color: '#1d4ed8', fontWeight: '600' }}
+                  >
+                    <option value="">-- No Specific Batch --</option>
+                    {packages.find(p => p._id === form.package)?.groups.map((g: any) => (
+                      <option key={g._id} value={g._id}>{g.name} ({g.date})</option>
+                    ))}
+                  </select>
+                </div>
+              )}
             </div>
 
             <div>
@@ -292,8 +391,13 @@ export default function BookingsPage() {
                 min="1" 
                 required 
                 value={form.numberOfTravelers} 
-                onChange={(e) => setForm({...form, numberOfTravelers: e.target.value})} 
-                style={{ width: '100%', padding: '10px 12px', border: '1px solid #cbd5e1', borderRadius: '8px', outline: 'none', background: '#fff', fontSize: '14px' }} 
+                onChange={(e) => {
+                  const val = e.target.value;
+                  const selPkg = packages.find(p => p._id === form.package);
+                  const calc = selPkg ? selPkg.price * Number(val || 1) : form.totalAmount;
+                  setForm({...form, numberOfTravelers: val, totalAmount: String(calc)});
+                }} 
+                style={{ width: '100%', padding: '10px 12px', border: '1px solid #cbd5e1', borderRadius: '8px', outline: 'none', background: '#fff', fontSize: '14px', fontWeight: '700', color: '#ea580c' }} 
               />
             </div>
 
@@ -305,7 +409,7 @@ export default function BookingsPage() {
                 placeholder="Total cost" 
                 value={form.totalAmount} 
                 onChange={(e) => setForm({...form, totalAmount: e.target.value})} 
-                style={{ width: '100%', padding: '10px 12px', border: '1px solid #cbd5e1', borderRadius: '8px', outline: 'none', background: '#fff', fontSize: '14px' }} 
+                style={{ width: '100%', padding: '10px 12px', border: '1px solid #cbd5e1', borderRadius: '8px', outline: 'none', background: '#fff', fontSize: '14px', fontWeight: '700' }} 
               />
             </div>
 
@@ -347,10 +451,10 @@ export default function BookingsPage() {
             </div>
 
             <div style={{ gridColumn: '1 / -1' }}>
-              <label style={{ display: 'block', fontSize: '13px', fontWeight: '600', color: '#475569', marginBottom: '6px' }}>Booking Notes</label>
+              <label style={{ display: 'block', fontSize: '13px', fontWeight: '600', color: '#475569', marginBottom: '6px' }}>Booking Notes & Included Family Members</label>
               <textarea 
-                rows={2} 
-                placeholder="Any additional travel details..." 
+                rows={3} 
+                placeholder="Family members list or travel details..." 
                 value={form.notes} 
                 onChange={(e) => setForm({...form, notes: e.target.value})} 
                 style={{ width: '100%', padding: '10px 12px', border: '1px solid #cbd5e1', borderRadius: '8px', outline: 'none', background: '#fff', fontSize: '14px' }} 
@@ -415,7 +519,7 @@ export default function BookingsPage() {
               <thead>
                 <tr>
                   <th>Customer</th>
-                  <th>Yatra Package</th>
+                  <th>Yatra Package & Batch</th>
                   <th>Travel Date</th>
                   <th>Travelers</th>
                   <th>Financial Breakdown</th>
@@ -426,6 +530,13 @@ export default function BookingsPage() {
               <tbody>
                 {filteredBookings.map(b => {
                   const badge = getStatusBadgeColor(b.status);
+                  // Find batch name if available
+                  let batchName = '';
+                  if (b.package?.groups?.length > 0 && b.packageGroup) {
+                    const matchedGrp = b.package.groups.find((g: any) => g._id === b.packageGroup || g._id?.toString() === b.packageGroup);
+                    if (matchedGrp) batchName = `${matchedGrp.name} (${matchedGrp.date})`;
+                  }
+
                   return (
                     <tr key={b._id}>
                       <td>
@@ -435,7 +546,11 @@ export default function BookingsPage() {
 
                       <td>
                         <div style={{ fontWeight: '600', color: '#1e293b' }}>{b.package?.name || 'Custom Package'}</div>
-                        <div style={{ fontSize: '12px', color: '#64748b' }}>{b.package?.duration || ''}</div>
+                        {batchName ? (
+                          <div style={{ fontSize: '12px', color: '#2563eb', fontWeight: '600' }}>Batch: {batchName}</div>
+                        ) : (
+                          <div style={{ fontSize: '12px', color: '#64748b' }}>{b.package?.duration || ''}</div>
+                        )}
                       </td>
 
                       <td>
@@ -448,6 +563,11 @@ export default function BookingsPage() {
                         <span style={{ display: 'inline-block', padding: '2px 8px', background: '#fff3eb', color: '#ea580c', border: '1px solid #ffd8bf', borderRadius: '6px', fontWeight: '700', fontSize: '12px' }}>
                           {b.numberOfTravelers} Pax
                         </span>
+                        {b.notes && b.notes.includes('Family') && (
+                          <div style={{ fontSize: '11px', color: '#64748b', marginTop: '4px', maxWidth: '180px' }}>
+                            {b.notes}
+                          </div>
+                        )}
                       </td>
 
                       <td>
@@ -512,6 +632,12 @@ export default function BookingsPage() {
           <div className="mobile-cards">
             {filteredBookings.map(b => {
               const badge = getStatusBadgeColor(b.status);
+              let batchName = '';
+              if (b.package?.groups?.length > 0 && b.packageGroup) {
+                const matchedGrp = b.package.groups.find((g: any) => g._id === b.packageGroup || g._id?.toString() === b.packageGroup);
+                if (matchedGrp) batchName = `${matchedGrp.name} (${matchedGrp.date})`;
+              }
+
               return (
                 <div key={b._id} style={{ background: '#fff', borderRadius: '12px', border: '1px solid #e2e8f0', padding: '16px', boxShadow: '0 2px 4px rgba(0,0,0,0.02)' }}>
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '12px' }}>
@@ -549,6 +675,13 @@ export default function BookingsPage() {
                       <strong style={{ color: '#0f172a' }}>{b.package?.name || 'Custom Package'}</strong>
                     </div>
 
+                    {batchName && (
+                      <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                        <span style={{ color: '#64748b' }}>Batch:</span>
+                        <strong style={{ color: '#2563eb' }}>{batchName}</strong>
+                      </div>
+                    )}
+
                     <div style={{ display: 'flex', justifyContent: 'space-between' }}>
                       <span style={{ color: '#64748b' }}>Travel Date:</span>
                       <strong style={{ color: '#1e293b' }}>
@@ -562,6 +695,12 @@ export default function BookingsPage() {
                         {b.numberOfTravelers} Pax
                       </span>
                     </div>
+
+                    {b.notes && (
+                      <div style={{ fontSize: '12px', color: '#64748b', background: '#fff', padding: '6px 8px', borderRadius: '4px', border: '1px solid #e2e8f0', marginTop: '4px' }}>
+                        {b.notes}
+                      </div>
+                    )}
 
                     <div style={{ borderTop: '1px solid #e2e8f0', margin: '6px 0' }} />
 
