@@ -983,8 +983,8 @@ export default function BookingsPage() {
                 <div key={b._id} style={{ background: '#fff', borderRadius: '16px', border: '1px solid #f1f5f9', padding: '20px', width: '100%', boxSizing: 'border-box', boxShadow: '0 2px 8px rgba(0,0,0,0.04)' }}>
                   
                   {/* Top Row: Customer info, Status badge, 3-dot Menu */}
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '16px' }}>
-                    <div>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '16px', gap: '8px', flexWrap: 'wrap' }}>
+                    <div style={{ flex: '1 1 140px', minWidth: '140px' }}>
                       <div style={{ fontSize: '18px', fontWeight: '700', color: '#0f172a' }}>{b.customer?.name || 'Unknown'}</div>
                       <div style={{ fontSize: '13px', color: '#64748b', marginTop: '2px' }}>{b.customer?.phone || b.customer?.email}</div>
                       <div style={{ fontSize: '11px', color: '#94a3b8', marginTop: '4px' }}>
@@ -992,7 +992,7 @@ export default function BookingsPage() {
                       </div>
                     </div>
                     
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '6px', flex: '0 0 auto' }}>
                       <select
                         value={b.status}
                         onChange={(e) => handleStatusChange(b, e.target.value)}
@@ -1000,12 +1000,14 @@ export default function BookingsPage() {
                           background: badge.bg,
                           color: badge.text,
                           border: `1px solid ${badge.border}`,
-                          padding: '6px 12px',
-                          borderRadius: '8px',
-                          fontSize: '12px',
+                          padding: '4px 8px',
+                          borderRadius: '6px',
+                          fontSize: '11px',
                           fontWeight: '700',
                           outline: 'none',
-                          cursor: 'pointer'
+                          cursor: 'pointer',
+                          maxWidth: '130px',
+                          textOverflow: 'ellipsis'
                         }}
                       >
                         <option value="confirmed">Confirmed</option>
@@ -1084,7 +1086,7 @@ export default function BookingsPage() {
 
                       {batchName && (
                         <div style={{ display: 'flex', justifyContent: 'space-between', gap: '8px' }}>
-                          <span style={{ color: '#64748b' }}>Batch/Month:</span>
+                          <span style={{ color: '#64748b' }}>Batch:</span>
                           <strong style={{ color: '#0f172a' }}>{batchName}</strong>
                         </div>
                       )}
