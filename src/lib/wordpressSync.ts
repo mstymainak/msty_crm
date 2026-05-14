@@ -190,13 +190,13 @@ class WordPressSyncService {
             continue;
           }
 
-          // Check if already exists (by email or phone)
-          const existing = await Customer.findOne({
-            $or: [
-              { email: contact.email },
-              { phone: contact.phone },
-            ],
-          });
+          // Check if already exists primarily by phone
+          let existing = null;
+          if (contact.phone) {
+            existing = await Customer.findOne({ phone: contact.phone, isDeleted: { $ne: true } });
+          } else if (contact.email) {
+            existing = await Customer.findOne({ email: contact.email, isDeleted: { $ne: true } });
+          }
 
           if (existing) {
             console.log(`⏭️  Contact already exists: ${contact.name}`);

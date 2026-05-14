@@ -116,13 +116,13 @@ export async function POST(request: NextRequest) {
 
     await dbConnect();
 
-    // Find existing customer by email or phone
+    // Find existing customer primarily by phone
     let customer = null;
-    if (email) {
-      customer = await Customer.findOne({ email });
+    if (phone) {
+      customer = await Customer.findOne({ phone, isDeleted: { $ne: true } });
     }
-    if (!customer && phone) {
-      customer = await Customer.findOne({ phone });
+    if (!customer && email) {
+      customer = await Customer.findOne({ email, isDeleted: { $ne: true } });
     }
 
     // Create new customer if not found
