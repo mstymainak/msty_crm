@@ -618,6 +618,8 @@ export default function BookingsPage() {
               <input 
                 type="date" 
                 required 
+                min="2020-01-01"
+                max="2099-12-31"
                 value={form.travelDate} 
                 onChange={(e) => setForm({...form, travelDate: e.target.value})} 
                 style={{ width: '100%', padding: '12px 14px', border: '1px solid #cbd5e1', borderRadius: '8px', outline: 'none', background: '#fff', fontSize: '14px' }} 
@@ -628,6 +630,8 @@ export default function BookingsPage() {
               <label style={{ display: 'block', fontSize: '13px', fontWeight: '600', color: '#475569', marginBottom: '6px' }}>End Travel Date</label>
               <input 
                 type="date" 
+                min="2020-01-01"
+                max="2099-12-31"
                 value={form.endTravelDate} 
                 onChange={(e) => setForm({...form, endTravelDate: e.target.value})} 
                 style={{ width: '100%', padding: '12px 14px', border: '1px solid #cbd5e1', borderRadius: '8px', outline: 'none', background: '#fff', fontSize: '14px' }} 
@@ -802,10 +806,11 @@ export default function BookingsPage() {
                       <td>
                         <div style={{ fontWeight: '700', color: '#1e293b', fontSize: '14px' }}>{b.package?.name || 'Custom Package'}</div>
                         <div style={{ fontSize: '11px', color: '#64748b', fontWeight: '600', marginTop: '2px' }}>Rate: ₹{b.package?.price || 0}</div>
-                        {batchName ? (
+                        {b.package?.duration && (
+                          <div style={{ fontSize: '11px', color: '#475569', fontWeight: '600', marginTop: '2px' }}>⏱️ {b.package.duration}</div>
+                        )}
+                        {batchName && (
                           <div style={{ fontSize: '12px', color: '#2563eb', fontWeight: '700', marginTop: '4px' }}>Batch: {batchName}</div>
-                        ) : (
-                          <div style={{ fontSize: '12px', color: '#64748b', marginTop: '4px' }}>{b.package?.duration || ''}</div>
                         )}
                       </td>
 
@@ -1003,6 +1008,13 @@ export default function BookingsPage() {
                       <span style={{ color: '#64748b' }}>Rate:</span>
                       <strong style={{ color: '#64748b' }}>₹{b.package?.price || 0}</strong>
                     </div>
+
+                    {b.package?.duration && (
+                      <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                        <span style={{ color: '#64748b' }}>Duration:</span>
+                        <strong style={{ color: '#475569' }}>{b.package.duration}</strong>
+                      </div>
+                    )}
 
                     {batchName && (
                       <div style={{ display: 'flex', justifyContent: 'space-between' }}>
