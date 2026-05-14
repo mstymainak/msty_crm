@@ -10,6 +10,7 @@ export default function BookingsPage() {
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [showAddForm, setShowAddForm] = useState(false);
+  const [showCompletedOnly, setShowCompletedOnly] = useState(false);
 
   // Filters
   const [statusFilter, setStatusFilter] = useState('all');
@@ -23,12 +24,14 @@ export default function BookingsPage() {
 
   // Add / Edit Form State
   const [form, setForm] = useState({
+    id: '',
     enquiry: '',
     customer: '',
     package: '',
     packageGroup: '',
     numberOfTravelers: '1',
     travelDate: '',
+    endTravelDate: '',
     totalAmount: '',
     advancePaid: '0',
     paymentMethod: 'cash',
@@ -123,34 +126,66 @@ export default function BookingsPage() {
     }
   };
 
-  const handleCreateBooking = async (e: React.FormEvent) => {
+  const handleEdit = (b: any) => {
+    setForm({
+      id: b._id,
+      enquiry: b.enquiry?._id || b.enquiry || '',
+      customer: b.customer?._id || b.customer || '',
+      package: b.package?._id || b.package || '',
+      packageGroup: b.packageGroup || '',
+      numberOfTravelers: String(b.numberOfTravelers || 1),
+      travelDate: b.travelDate ? new Date(b.travelDate).toISOString().split('T')[0] : '',
+      endTravelDate: b.endTravelDate ? new Date(b.endTravelDate).toISOString().split('T')[0] : '',
+      totalAmount: String(b.totalAmount || ''),
+      advancePaid: String(b.advancePaid || 0),
+      paymentMethod: b.paymentMethod || 'cash',
+      specialRequirements: b.specialRequirements || '',
+      notes: b.notes || '',
+    });
+    setShowAddForm(true);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
+  const handleCreateOrUpdateBooking = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!form.customer || !form.package || !form.travelDate || !form.totalAmount) {
       alert('Please fill out all required fields (Customer, Package, Travel Date, Total Amount).');
       return;
     }
 
+    const payload = {
+      enquiry: form.enquiry || undefined,
+      customer: form.customer,
+      package: form.package,
+      packageGroup: form.packageGroup || undefined,
+      numberOfTravelers: Number(form.numberOfTravelers || 1),
+      travelDate: new Date(form.travelDate),
+      endTravelDate: form.endTravelDate ? new Date(form.endTravelDate) : undefined,
+      totalAmount: Number(form.totalAmount),
+      advancePaid: Number(form.advancePaid || 0),
+      paymentMethod: form.paymentMethod,
+      specialRequirements: form.specialRequirements,
+      notes: form.notes,
+    };
+
     try {
-      const res = await fetch('/api/bookings', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          enquiry: form.enquiry || undefined,
-          customer: form.customer,
-          package: form.package,
-          packageGroup: form.packageGroup || undefined,
-          numberOfTravelers: Number(form.numberOfTravelers || 1),
-          travelDate: new Date(form.travelDate),
-          totalAmount: Number(form.totalAmount),
-          advancePaid: Number(form.advancePaid || 0),
-          paymentMethod: form.paymentMethod,
-          specialRequirements: form.specialRequirements,
-          notes: form.notes,
-        }),
-      });
+      let res;
+      if (form.id) {
+        res = await fetch(`/api/bookings/${form.id}`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload),
+        });
+      } else {
+        res = await fetch('/api/bookings', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload),
+        });
+      }
 
       if (res.ok) {
-        if (form.enquiry) {
+        if (form.enquiry && !form.id) {
           try {
             await fetch(`/api/enquiries/${form.enquiry}`, {
               method: 'PUT',
@@ -162,12 +197,14 @@ export default function BookingsPage() {
 
         setShowAddForm(false);
         setForm({
+          id: '',
           enquiry: '',
           customer: '',
           package: '',
           packageGroup: '',
           numberOfTravelers: '1',
           travelDate: '',
+          endTravelDate: '',
           totalAmount: '',
           advancePaid: '0',
           paymentMethod: 'cash',
@@ -178,10 +215,10 @@ export default function BookingsPage() {
         setEnquirySearch('');
         fetchBookings();
       } else {
-        alert('Failed to create booking.');
+        alert('Failed to save booking.');
       }
     } catch (err) {
-      alert('Error creating booking.');
+      alert('Error saving booking.');
     }
   };
 
@@ -210,8 +247,14 @@ export default function BookingsPage() {
     }
   };
 
-  // Filter Bookings
+  // Filter Bookings by Tab (Completed vs Active)
   const filteredBookings = bookings.filter(b => {
+    if (showCompletedOnly) {
+      return b.status === 'completed';
+    } else {
+      return b.status !== 'completed' && b.status !== 'cancelled';
+    }
+  }).filter(b => {
     if (statusFilter !== 'all' && b.status !== statusFilter) return false;
     if (searchQuery) {
       const q = searchQuery.toLowerCase();
@@ -233,7 +276,7 @@ export default function BookingsPage() {
     return name.includes(q) || phone.includes(q) || msg.includes(q);
   });
 
-  // Filter Customers for Form Search Box
+  // Filter Customers for Form Dropdown
   const filteredCustomers = customers.filter(c => {
     if (!customerSearch) return true;
     const q = customerSearch.toLowerCase();
@@ -273,8 +316,12 @@ export default function BookingsPage() {
       {/* Header */}
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px', flexWrap: 'wrap', gap: '12px' }}>
         <div>
-          <h1 style={{ fontSize: '24px', fontWeight: '700', color: '#0f172a', margin: 0 }}>Yatra Bookings</h1>
-          <p style={{ color: '#64748b', margin: '4px 0 0', fontSize: '14px' }}>{bookings.length} reservations tracked</p>
+          <h1 style={{ fontSize: '24px', fontWeight: '700', color: '#0f172a', margin: 0 }}>
+            {showCompletedOnly ? 'Completed Yatra Bookings' : 'Active Yatra Bookings'}
+          </h1>
+          <p style={{ color: '#64748b', margin: '4px 0 0', fontSize: '14px' }}>
+            {filteredBookings.length} {showCompletedOnly ? 'completed' : 'active'} reservations
+          </p>
         </div>
 
         <div style={{ display: 'flex', gap: '8px', alignItems: 'center', flexWrap: 'wrap' }}>
@@ -298,8 +345,40 @@ export default function BookingsPage() {
             <span style={{ display: 'inline-block', animation: refreshing ? 'spin 1s linear infinite' : 'none' }}>↻</span> Refresh
           </button>
 
+          {/* Toggle Active vs Completed Bookings */}
           <button 
-            onClick={() => setShowAddForm(!showAddForm)} 
+            onClick={() => {
+              setShowCompletedOnly(!showCompletedOnly);
+              setStatusFilter('all');
+            }} 
+            style={{ 
+              padding: '10px 18px', 
+              background: showCompletedOnly ? '#1e293b' : '#10b981', 
+              color: '#fff', 
+              border: 'none', 
+              borderRadius: '8px', 
+              fontWeight: '600', 
+              cursor: 'pointer', 
+              fontSize: '14px',
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: '6px'
+            }}
+          >
+            {showCompletedOnly ? '📂 View Active Bookings' : '✅ View Completed Bookings'}
+          </button>
+
+          <button 
+            onClick={() => {
+              if (!showAddForm) {
+                setForm({
+                  id: '', enquiry: '', customer: '', package: '', packageGroup: '',
+                  numberOfTravelers: '1', travelDate: '', endTravelDate: '', totalAmount: '',
+                  advancePaid: '0', paymentMethod: 'cash', specialRequirements: '', notes: '',
+                });
+              }
+              setShowAddForm(!showAddForm);
+            }} 
             style={{ 
               padding: '10px 20px', 
               background: '#f97316', 
@@ -316,113 +395,101 @@ export default function BookingsPage() {
         </div>
       </div>
 
-      {/* Add Booking Form Modal / Box */}
+      {/* Add / Edit Booking Form Modal / Box */}
       {showAddForm && (
         <div style={{ background: '#fff', padding: '24px', borderRadius: '12px', boxShadow: '0 10px 25px -5px rgba(0,0,0,0.1)', border: '1px solid #e2e8f0', marginBottom: '24px' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px', borderBottom: '1px solid #f1f5f9', paddingBottom: '12px' }}>
-            <h2 style={{ fontSize: '18px', fontWeight: '700', color: '#0f172a', margin: 0 }}>Create New Yatra Booking</h2>
+            <h2 style={{ fontSize: '18px', fontWeight: '700', color: '#0f172a', margin: 0 }}>
+              {form.id ? '✏️ Edit Yatra Booking' : 'Create New Yatra Booking'}
+            </h2>
           </div>
 
           {/* Quick Fill from Enquiry */}
-          <div style={{ background: '#fff7ed', border: '1px solid #fed7aa', padding: '16px', borderRadius: '8px', marginBottom: '20px' }}>
-            <label style={{ display: 'block', fontSize: '13px', fontWeight: '700', color: '#ea580c', marginBottom: '6px' }}>⚡ Quick Fill: Confirm Booking from Enquiry (Auto-Fetches Family Members & Calculates Cost)</label>
-            <input 
-              type="text" 
-              placeholder="🔍 Type enquiry name, phone, or message details to search..." 
-              value={enquirySearch} 
-              onChange={(e) => setEnquirySearch(e.target.value)} 
-              style={{ width: '100%', padding: '8px 12px', border: '1px solid #fdba74', borderRadius: '6px', outline: 'none', background: '#fff', fontSize: '13px', marginBottom: '8px' }} 
-            />
-            <select
-              value={form.enquiry}
-              onChange={(e) => {
-                const val = e.target.value;
-                const selEnq = enquiries.find(eq => eq._id === val);
-                if (selEnq) {
-                  const pax = 1 + (selEnq.members?.length || 0);
-                  const selPkg = packages.find(p => p._id === selEnq.package);
-                  const calcAmount = selPkg ? selPkg.price * pax : 0;
-                  const memberNames = selEnq.members?.length > 0 ? '\nFamily members included: ' + selEnq.members.map((m: any) => `${m.name} (${m.relation || 'Relative'})`).join(', ') : '';
+          {!form.id && (
+            <div style={{ background: '#fff7ed', border: '1px solid #fed7aa', padding: '16px', borderRadius: '8px', marginBottom: '20px' }}>
+              <label style={{ display: 'block', fontSize: '13px', fontWeight: '700', color: '#ea580c', marginBottom: '6px' }}>
+                ⚡ Quick Fill: Search & Select Enquiry to Confirm (Auto-Fetches Family Members & Calculates Cost)
+              </label>
+              <div style={{ display: 'flex', gap: '8px', flexDirection: 'column' }}>
+                <input 
+                  type="text" 
+                  placeholder="🔍 Type enquiry name, phone, or message details to search..." 
+                  value={enquirySearch} 
+                  onChange={(e) => setEnquirySearch(e.target.value)} 
+                  style={{ width: '100%', padding: '8px 12px', border: '1px solid #fdba74', borderRadius: '6px', outline: 'none', background: '#fff', fontSize: '13px' }} 
+                />
+                <select
+                  value={form.enquiry}
+                  onChange={(e) => {
+                    const val = e.target.value;
+                    const selEnq = enquiries.find(eq => eq._id === val);
+                    if (selEnq) {
+                      const pax = 1 + (selEnq.members?.length || 0);
+                      const selPkg = packages.find(p => p._id === selEnq.package);
+                      const calcAmount = selPkg ? selPkg.price * pax : 0;
+                      const memberNames = selEnq.members?.length > 0 ? '\nFamily members included: ' + selEnq.members.map((m: any) => `${m.name} (${m.relation || 'Relative'})`).join(', ') : '';
 
-                  let tDate = '';
-                  if (selPkg && selPkg.groups?.length > 0 && selEnq.packageGroup) {
-                    const grp = selPkg.groups.find((g: any) => g._id === selEnq.packageGroup || g._id?.toString() === selEnq.packageGroup);
-                    if (grp && grp.date) tDate = grp.date;
-                  }
+                      let tDate = '';
+                      if (selPkg && selPkg.groups?.length > 0 && selEnq.packageGroup) {
+                        const grp = selPkg.groups.find((g: any) => g._id === selEnq.packageGroup || g._id?.toString() === selEnq.packageGroup);
+                        if (grp && grp.date) tDate = grp.date;
+                      }
 
-                  setForm({
-                    ...form,
-                    enquiry: selEnq._id,
-                    customer: selEnq.customer?._id || selEnq.customer || '',
-                    package: selEnq.package || '',
-                    packageGroup: selEnq.packageGroup || '',
-                    numberOfTravelers: String(pax),
-                    travelDate: tDate || form.travelDate,
-                    totalAmount: String(calcAmount),
-                    notes: selEnq.message ? selEnq.message + memberNames : memberNames
-                  });
-                } else {
-                  setForm({ ...form, enquiry: '' });
-                }
-              }}
-              style={{ width: '100%', padding: '10px 12px', border: '1px solid #fdba74', borderRadius: '8px', outline: 'none', background: '#fff', fontSize: '14px', color: '#0f172a', fontWeight: '600' }}
-            >
-              <option value="">-- Choose Enquiry to Confirm --</option>
-              {filteredEnquiries.map(eq => (
-                <option key={eq._id} value={eq._id}>
-                  {eq.submittedName || eq.customer?.name || 'Enquiry'} - {eq.source} ({eq.members?.length || 0} family members added)
-                </option>
-              ))}
-            </select>
-          </div>
+                      setForm({
+                        ...form,
+                        enquiry: selEnq._id,
+                        customer: selEnq.customer?._id || selEnq.customer || '',
+                        package: selEnq.package || '',
+                        packageGroup: selEnq.packageGroup || '',
+                        numberOfTravelers: String(pax),
+                        travelDate: tDate || form.travelDate,
+                        totalAmount: String(calcAmount),
+                        notes: selEnq.message ? selEnq.message + memberNames : memberNames
+                      });
+                    } else {
+                      setForm({ ...form, enquiry: '' });
+                    }
+                  }}
+                  style={{ width: '100%', padding: '10px 12px', border: '1px solid #fdba74', borderRadius: '8px', outline: 'none', background: '#fff', fontSize: '14px', color: '#0f172a', fontWeight: '600' }}
+                >
+                  <option value="">-- Choose Enquiry to Confirm --</option>
+                  {filteredEnquiries.map(eq => (
+                    <option key={eq._id} value={eq._id}>
+                      {eq.submittedName || eq.customer?.name || 'Enquiry'} - {eq.source} ({eq.members?.length || 0} family members added)
+                    </option>
+                  ))}
+                </select>
+              </div>
+            </div>
+          )}
 
-          <form onSubmit={handleCreateBooking} style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))', gap: '16px' }}>
-            {/* Choose Customer with Results List */}
+          <form onSubmit={handleCreateOrUpdateBooking} style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))', gap: '16px' }}>
+            {/* Search & Select Customer */}
             <div style={{ background: '#f8fafc', padding: '12px', borderRadius: '8px', border: '1px solid #e2e8f0', gridColumn: '1 / -1' }}>
               <label style={{ display: 'block', fontSize: '13px', fontWeight: '600', color: '#475569', marginBottom: '6px' }}>
                 Search & Choose Customer * {form.enquiry && <span style={{ color: '#dc2626' }}>(Locked by Quick Fill)</span>}
               </label>
-              
-              <input 
-                type="text" 
-                placeholder="🔍 Type customer name, phone, or email to search..." 
-                value={customerSearch} 
-                disabled={!!form.enquiry}
-                onChange={(e) => setCustomerSearch(e.target.value)} 
-                style={{ width: '100%', padding: '10px 12px', border: '1px solid #cbd5e1', borderRadius: '6px', outline: 'none', background: form.enquiry ? '#f1f5f9' : '#fff', fontSize: '14px', marginBottom: '12px' }} 
-              />
-
-              {/* Clickable Customer Search Results Below Search Box */}
-              <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', maxHeight: '140px', overflowY: 'auto' }}>
-                {filteredCustomers.slice(0, 15).map(c => {
-                  const isSelected = form.customer === c._id;
-                  return (
-                    <button
-                      key={c._id}
-                      type="button"
-                      disabled={!!form.enquiry}
-                      onClick={() => setForm({...form, customer: c._id})}
-                      style={{
-                        padding: '8px 12px',
-                        background: isSelected ? '#2563eb' : '#fff',
-                        color: isSelected ? '#fff' : '#0f172a',
-                        border: isSelected ? '1px solid #1d4ed8' : '1px solid #cbd5e1',
-                        borderRadius: '8px',
-                        fontSize: '13px',
-                        fontWeight: '600',
-                        cursor: form.enquiry ? 'not-allowed' : 'pointer',
-                        display: 'flex',
-                        alignItems: 'center',
-                        gap: '6px',
-                        boxShadow: '0 1px 2px rgba(0,0,0,0.05)',
-                        transition: 'all 0.15s'
-                      }}
-                    >
-                      <span>{isSelected ? '✓' : '👤'}</span>
-                      <span>{c.name} ({c.phone || c.email})</span>
-                    </button>
-                  );
-                })}
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 2fr', gap: '12px', alignItems: 'center' }}>
+                <input 
+                  type="text" 
+                  placeholder="🔍 Search customer name/phone..." 
+                  value={customerSearch} 
+                  disabled={!!form.enquiry}
+                  onChange={(e) => setCustomerSearch(e.target.value)} 
+                  style={{ width: '100%', padding: '10px 12px', border: '1px solid #cbd5e1', borderRadius: '6px', outline: 'none', background: form.enquiry ? '#f1f5f9' : '#fff', fontSize: '13px' }} 
+                />
+                <select 
+                  required 
+                  disabled={!!form.enquiry}
+                  value={form.customer} 
+                  onChange={(e) => setForm({...form, customer: e.target.value})} 
+                  style={{ width: '100%', padding: '10px 12px', border: '1px solid #cbd5e1', borderRadius: '6px', outline: 'none', background: form.enquiry ? '#f1f5f9' : '#fff', fontSize: '14px', fontWeight: '600' }}
+                >
+                  <option value="">-- Choose Customer --</option>
+                  {filteredCustomers.map(c => (
+                    <option key={c._id} value={c._id}>{c.name} ({c.phone || c.email})</option>
+                  ))}
+                </select>
               </div>
             </div>
 
@@ -478,12 +545,22 @@ export default function BookingsPage() {
             </div>
 
             <div>
-              <label style={{ display: 'block', fontSize: '13px', fontWeight: '600', color: '#475569', marginBottom: '6px' }}>Travel Date *</label>
+              <label style={{ display: 'block', fontSize: '13px', fontWeight: '600', color: '#475569', marginBottom: '6px' }}>Start Travel Date *</label>
               <input 
                 type="date" 
                 required 
                 value={form.travelDate} 
                 onChange={(e) => setForm({...form, travelDate: e.target.value})} 
+                style={{ width: '100%', padding: '10px 12px', border: '1px solid #cbd5e1', borderRadius: '8px', outline: 'none', background: '#fff', fontSize: '14px' }} 
+              />
+            </div>
+
+            <div>
+              <label style={{ display: 'block', fontSize: '13px', fontWeight: '600', color: '#475569', marginBottom: '6px' }}>End Travel Date</label>
+              <input 
+                type="date" 
+                value={form.endTravelDate} 
+                onChange={(e) => setForm({...form, endTravelDate: e.target.value})} 
                 style={{ width: '100%', padding: '10px 12px', border: '1px solid #cbd5e1', borderRadius: '8px', outline: 'none', background: '#fff', fontSize: '14px' }} 
               />
             </div>
@@ -577,7 +654,7 @@ export default function BookingsPage() {
                 type="submit" 
                 style={{ padding: '10px 24px', background: '#f97316', color: '#fff', border: 'none', borderRadius: '8px', fontWeight: '600', cursor: 'pointer' }}
               >
-                Confirm Booking
+                {form.id ? 'Save Updates' : 'Confirm Booking'}
               </button>
             </div>
           </form>
@@ -594,26 +671,26 @@ export default function BookingsPage() {
           style={{ padding: '10px 14px', border: '1px solid #cbd5e1', borderRadius: '8px', outline: 'none', minWidth: '260px', flex: 1, fontSize: '14px' }} 
         />
 
-        <select 
-          value={statusFilter} 
-          onChange={(e) => setStatusFilter(e.target.value)} 
-          style={{ padding: '10px 14px', border: '1px solid #cbd5e1', borderRadius: '8px', background: '#fff', fontSize: '14px', outline: 'none', color: '#475569', fontWeight: '500' }}
-        >
-          <option value="all">All Statuses</option>
-          <option value="confirmed">Confirmed</option>
-          <option value="payment_pending">Payment Pending</option>
-          <option value="paid">Paid</option>
-          <option value="in_progress">In Progress</option>
-          <option value="completed">Completed</option>
-          <option value="cancelled">Cancelled</option>
-        </select>
+        {!showCompletedOnly && (
+          <select 
+            value={statusFilter} 
+            onChange={(e) => setStatusFilter(e.target.value)} 
+            style={{ padding: '10px 14px', border: '1px solid #cbd5e1', borderRadius: '8px', background: '#fff', fontSize: '14px', outline: 'none', color: '#475569', fontWeight: '500' }}
+          >
+            <option value="all">All Active Statuses</option>
+            <option value="confirmed">Confirmed</option>
+            <option value="payment_pending">Payment Pending</option>
+            <option value="paid">Paid</option>
+            <option value="in_progress">In Progress</option>
+          </select>
+        )}
       </div>
 
       {loading ? (
         <div style={{ padding: '48px', textAlign: 'center', color: '#64748b', fontSize: '15px' }}>Loading bookings...</div>
       ) : filteredBookings.length === 0 ? (
         <div style={{ padding: '48px', textAlign: 'center', background: '#fff', borderRadius: '12px', border: '1px solid #e2e8f0', color: '#64748b' }}>
-          No bookings match your filter criteria.
+          No {showCompletedOnly ? 'completed' : 'active'} bookings found.
         </div>
       ) : (
         <>
@@ -624,7 +701,7 @@ export default function BookingsPage() {
                 <tr>
                   <th>Customer</th>
                   <th>Yatra Package & Batch</th>
-                  <th>Travel Date</th>
+                  <th>Travel Dates</th>
                   <th>Travelers & Form Details</th>
                   <th>Financial Breakdown</th>
                   <th>Status</th>
@@ -635,14 +712,13 @@ export default function BookingsPage() {
                 {filteredBookings.map(b => {
                   const badge = getStatusBadgeColor(b.status);
                   let batchName = '';
-                  let batchDate = '';
                   if (b.package?.groups?.length > 0 && b.packageGroup) {
                     const matchedGrp = b.package.groups.find((g: any) => g._id === b.packageGroup || g._id?.toString() === b.packageGroup);
-                    if (matchedGrp) {
-                      batchName = matchedGrp.name;
-                      batchDate = matchedGrp.date;
-                    }
+                    if (matchedGrp) batchName = matchedGrp.name;
                   }
+
+                  const startD = b.travelDate ? new Date(b.travelDate).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' }) : '';
+                  const endD = b.endTravelDate ? new Date(b.endTravelDate).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' }) : '';
 
                   return (
                     <tr key={b._id}>
@@ -661,9 +737,12 @@ export default function BookingsPage() {
                       </td>
 
                       <td>
-                        <div style={{ fontWeight: '600', color: '#0f172a' }}>
-                          {batchDate ? batchDate : b.travelDate ? new Date(b.travelDate).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' }) : 'Unassigned'}
+                        <div style={{ fontWeight: '600', color: '#0f172a', fontSize: '13px' }}>
+                          {startD || 'Unassigned'}
                         </div>
+                        {endD && (
+                          <div style={{ fontSize: '12px', color: '#64748b' }}>to {endD}</div>
+                        )}
                       </td>
 
                       <td style={{ maxWidth: '280px' }}>
@@ -673,7 +752,7 @@ export default function BookingsPage() {
                           </span>
                         </div>
 
-                        {/* Expandable Form Details & Note Toggler exactly like Enquiry page */}
+                        {/* Expandable Form Details & Note Toggler */}
                         <details style={{ cursor: 'pointer' }}>
                           <summary style={{ outline: 'none', fontSize: '12px', color: '#2563eb', fontWeight: '600' }}>
                             View Form Details & Notes 📝
@@ -744,16 +823,22 @@ export default function BookingsPage() {
                       </td>
 
                       <td>
-                        <div style={{ display: 'flex', gap: '6px' }}>
+                        <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap' }}>
+                          <button 
+                            onClick={() => handleEdit(b)}
+                            style={{ padding: '6px 10px', background: '#e0f2fe', color: '#0369a1', border: '1px solid #bae6fd', borderRadius: '6px', fontSize: '12px', fontWeight: '600', cursor: 'pointer' }}
+                          >
+                            ✏️ Edit
+                          </button>
                           <button 
                             onClick={() => handleUpdatePayment(b)}
-                            style={{ padding: '6px 12px', background: '#f1f5f9', color: '#0f172a', border: '1px solid #cbd5e1', borderRadius: '6px', fontSize: '12px', fontWeight: '600', cursor: 'pointer' }}
+                            style={{ padding: '6px 10px', background: '#f1f5f9', color: '#0f172a', border: '1px solid #cbd5e1', borderRadius: '6px', fontSize: '12px', fontWeight: '600', cursor: 'pointer' }}
                           >
                             ₹ Pay
                           </button>
                           <button 
                             onClick={() => handleDelete(b._id)}
-                            style={{ padding: '6px 12px', background: '#fef2f2', color: '#dc2626', border: '1px solid #fecaca', borderRadius: '6px', fontSize: '12px', fontWeight: '600', cursor: 'pointer' }}
+                            style={{ padding: '6px 10px', background: '#fef2f2', color: '#dc2626', border: '1px solid #fecaca', borderRadius: '6px', fontSize: '12px', fontWeight: '600', cursor: 'pointer' }}
                           >
                             Cancel
                           </button>
@@ -771,14 +856,13 @@ export default function BookingsPage() {
             {filteredBookings.map(b => {
               const badge = getStatusBadgeColor(b.status);
               let batchName = '';
-              let batchDate = '';
               if (b.package?.groups?.length > 0 && b.packageGroup) {
                 const matchedGrp = b.package.groups.find((g: any) => g._id === b.packageGroup || g._id?.toString() === b.packageGroup);
-                if (matchedGrp) {
-                  batchName = matchedGrp.name;
-                  batchDate = matchedGrp.date;
-                }
+                if (matchedGrp) batchName = matchedGrp.name;
               }
+
+              const startD = b.travelDate ? new Date(b.travelDate).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' }) : '';
+              const endD = b.endTravelDate ? new Date(b.endTravelDate).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' }) : '';
 
               return (
                 <div key={b._id} style={{ background: '#fff', borderRadius: '12px', border: '1px solid #e2e8f0', padding: '16px', boxShadow: '0 2px 4px rgba(0,0,0,0.02)' }}>
@@ -825,9 +909,9 @@ export default function BookingsPage() {
                     )}
 
                     <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                      <span style={{ color: '#64748b' }}>Travel Date:</span>
+                      <span style={{ color: '#64748b' }}>Travel Dates:</span>
                       <strong style={{ color: '#1e293b' }}>
-                        {batchDate ? batchDate : b.travelDate ? new Date(b.travelDate).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' }) : 'Unassigned'}
+                        {startD || 'Unassigned'} {endD ? ` to ${endD}` : ''}
                       </strong>
                     </div>
 
@@ -838,7 +922,7 @@ export default function BookingsPage() {
                       </span>
                     </div>
 
-                    {/* Expandable Form Details & Note Toggler exactly like Enquiry page */}
+                    {/* Expandable Form Details & Note Toggler */}
                     <div style={{ marginTop: '6px', paddingTop: '6px', borderTop: '1px solid #e2e8f0' }}>
                       <details style={{ cursor: 'pointer' }}>
                         <summary style={{ outline: 'none', fontSize: '12px', color: '#2563eb', fontWeight: '600' }}>
@@ -890,12 +974,18 @@ export default function BookingsPage() {
                     </div>
                   </div>
 
-                  <div style={{ display: 'flex', gap: '8px' }}>
+                  <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+                    <button 
+                      onClick={() => handleEdit(b)}
+                      style={{ flex: 1, padding: '10px', background: '#e0f2fe', color: '#0369a1', border: '1px solid #bae6fd', borderRadius: '8px', fontSize: '13px', fontWeight: '600', cursor: 'pointer', textAlign: 'center' }}
+                    >
+                      ✏️ Edit
+                    </button>
                     <button 
                       onClick={() => handleUpdatePayment(b)}
                       style={{ flex: 1, padding: '10px', background: '#f1f5f9', color: '#0f172a', border: '1px solid #cbd5e1', borderRadius: '8px', fontSize: '13px', fontWeight: '600', cursor: 'pointer', textAlign: 'center' }}
                     >
-                      ₹ Record Payment
+                      ₹ Pay
                     </button>
                     <button 
                       onClick={() => handleDelete(b._id)}

@@ -6,6 +6,8 @@ const BookingSchema = new Schema({
   enquiry: { type: Schema.Types.ObjectId, ref: 'Enquiry' },
   numberOfTravelers: { type: Number, required: true, default: 1 },
   travelDate: { type: Date, required: true },
+  endTravelDate: { type: Date },
+  packageGroup: { type: String },
   status: {
     type: String,
     enum: ['confirmed', 'payment_pending', 'paid', 'in_progress', 'completed', 'cancelled'],
