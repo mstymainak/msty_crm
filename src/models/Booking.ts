@@ -19,6 +19,7 @@ const BookingSchema = new Schema({
   paymentMethod: { type: String, enum: ['cash', 'upi', 'bank_transfer', 'card', 'other'] },
   specialRequirements: { type: String },
   notes: { type: String },
+  paymentHistory: [{ amount: Number, date: { type: Date, default: Date.now }, method: String }],
   bookedBy: { type: Schema.Types.ObjectId, ref: 'User' },
   createdAt: { type: Date, default: Date.now },
   updatedAt: { type: Date, default: Date.now },

@@ -18,9 +18,10 @@ export default function BookingsPage() {
   const [customerSearch, setCustomerSearch] = useState('');
   const [enquirySearch, setEnquirySearch] = useState('');
 
-  // Notes editing state
+  // Notes editing & Payment History state
   const [editingNoteId, setEditingNoteId] = useState<string | null>(null);
   const [tempNote, setTempNote] = useState('');
+  const [activeHistoryId, setActiveHistoryId] = useState<string | null>(null);
 
   // Add / Edit Form State
   const [form, setForm] = useState({
@@ -223,27 +224,34 @@ export default function BookingsPage() {
   };
 
   const handleUpdatePayment = async (booking: any) => {
-    const advInput = prompt('Update Advance Paid amount (₹):', String(booking.advancePaid || 0));
+    const advInput = prompt(`Enter new payment amount to add to advance (₹):\nCurrent Advance: ₹${booking.advancePaid || 0}\nRemaining Due: ₹${booking.balancePending || 0}`, '0');
     if (advInput === null) return;
-    const newAdv = Number(advInput);
-    if (isNaN(newAdv)) {
-      alert('Invalid amount entered.');
+    const newAmt = Number(advInput);
+    if (isNaN(newAmt) || newAmt <= 0) {
+      alert('Please enter a valid positive amount.');
       return;
     }
+
+    const methodInput = prompt('Enter payment method (cash / upi / bank_transfer / card):', 'upi');
 
     try {
       const res = await fetch(`/api/bookings/${booking._id}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ advancePaid: newAdv }),
+        body: JSON.stringify({
+          recordNewPayment: {
+            amount: newAmt,
+            method: methodInput || 'cash'
+          }
+        }),
       });
       if (res.ok) {
         fetchBookings();
       } else {
-        alert('Failed to update payment.');
+        alert('Failed to record payment.');
       }
     } catch (err) {
-      alert('Error updating payment.');
+      alert('Error recording payment.');
     }
   };
 
@@ -407,16 +415,16 @@ export default function BookingsPage() {
           {/* Quick Fill from Enquiry */}
           {!form.id && (
             <div style={{ background: '#fff7ed', border: '1px solid #fed7aa', padding: '16px', borderRadius: '8px', marginBottom: '20px' }}>
-              <label style={{ display: 'block', fontSize: '13px', fontWeight: '700', color: '#ea580c', marginBottom: '6px' }}>
-                ⚡ Quick Fill: Search & Select Enquiry to Confirm (Auto-Fetches Family Members & Calculates Cost)
+              <label style={{ display: 'block', fontSize: '13px', fontWeight: '700', color: '#ea580c', marginBottom: '8px' }}>
+                ⚡ Quick Fill: Choose Enquiry to Confirm (Auto-Fetches Family Members & Calculates Cost)
               </label>
-              <div style={{ display: 'flex', gap: '8px', flexDirection: 'column' }}>
+              <div style={{ background: '#fff', border: '1px solid #fdba74', borderRadius: '8px', padding: '8px', display: 'flex', flexDirection: 'column', gap: '6px' }}>
                 <input 
                   type="text" 
-                  placeholder="🔍 Type enquiry name, phone, or message details to search..." 
+                  placeholder="🔍 Filter / search inside choose enquiry..." 
                   value={enquirySearch} 
                   onChange={(e) => setEnquirySearch(e.target.value)} 
-                  style={{ width: '100%', padding: '8px 12px', border: '1px solid #fdba74', borderRadius: '6px', outline: 'none', background: '#fff', fontSize: '13px' }} 
+                  style={{ width: '100%', padding: '8px 12px', border: 'none', borderBottom: '1px solid #fed7aa', outline: 'none', background: '#fff', fontSize: '13px', color: '#0f172a' }} 
                 />
                 <select
                   value={form.enquiry}
@@ -450,9 +458,9 @@ export default function BookingsPage() {
                       setForm({ ...form, enquiry: '' });
                     }
                   }}
-                  style={{ width: '100%', padding: '10px 12px', border: '1px solid #fdba74', borderRadius: '8px', outline: 'none', background: '#fff', fontSize: '14px', color: '#0f172a', fontWeight: '600' }}
+                  style={{ width: '100%', padding: '8px', border: 'none', outline: 'none', background: '#fff', fontSize: '14px', color: '#0f172a', fontWeight: '600' }}
                 >
-                  <option value="">-- Choose Enquiry to Confirm --</option>
+                  <option value="">-- Select Enquiry --</option>
                   {filteredEnquiries.map(eq => (
                     <option key={eq._id} value={eq._id}>
                       {eq.submittedName || eq.customer?.name || 'Enquiry'} - {eq.source} ({eq.members?.length || 0} family members added)
@@ -464,28 +472,28 @@ export default function BookingsPage() {
           )}
 
           <form onSubmit={handleCreateOrUpdateBooking} style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))', gap: '16px' }}>
-            {/* Search & Select Customer */}
+            {/* Search & Choose Customer */}
             <div style={{ background: '#f8fafc', padding: '12px', borderRadius: '8px', border: '1px solid #e2e8f0', gridColumn: '1 / -1' }}>
-              <label style={{ display: 'block', fontSize: '13px', fontWeight: '600', color: '#475569', marginBottom: '6px' }}>
+              <label style={{ display: 'block', fontSize: '13px', fontWeight: '600', color: '#475569', marginBottom: '8px' }}>
                 Search & Choose Customer * {form.enquiry && <span style={{ color: '#dc2626' }}>(Locked by Quick Fill)</span>}
               </label>
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 2fr', gap: '12px', alignItems: 'center' }}>
+              <div style={{ background: form.enquiry ? '#f1f5f9' : '#fff', border: '1px solid #cbd5e1', borderRadius: '8px', padding: '8px', display: 'flex', flexDirection: 'column', gap: '6px' }}>
                 <input 
                   type="text" 
-                  placeholder="🔍 Search customer name/phone..." 
+                  placeholder="🔍 Filter / search inside choose customer..." 
                   value={customerSearch} 
                   disabled={!!form.enquiry}
                   onChange={(e) => setCustomerSearch(e.target.value)} 
-                  style={{ width: '100%', padding: '10px 12px', border: '1px solid #cbd5e1', borderRadius: '6px', outline: 'none', background: form.enquiry ? '#f1f5f9' : '#fff', fontSize: '13px' }} 
+                  style={{ width: '100%', padding: '8px 12px', border: 'none', borderBottom: '1px solid #e2e8f0', outline: 'none', background: 'transparent', fontSize: '13px', color: '#0f172a' }} 
                 />
                 <select 
                   required 
                   disabled={!!form.enquiry}
                   value={form.customer} 
                   onChange={(e) => setForm({...form, customer: e.target.value})} 
-                  style={{ width: '100%', padding: '10px 12px', border: '1px solid #cbd5e1', borderRadius: '6px', outline: 'none', background: form.enquiry ? '#f1f5f9' : '#fff', fontSize: '14px', fontWeight: '600' }}
+                  style={{ width: '100%', padding: '8px', border: 'none', outline: 'none', background: 'transparent', fontSize: '14px', fontWeight: '600' }}
                 >
-                  <option value="">-- Choose Customer --</option>
+                  <option value="">-- Select Customer --</option>
                   {filteredCustomers.map(c => (
                     <option key={c._id} value={c._id}>{c.name} ({c.phone || c.email})</option>
                   ))}
@@ -699,11 +707,11 @@ export default function BookingsPage() {
             <table className="booking-table">
               <thead>
                 <tr>
-                  <th>Customer</th>
-                  <th>Yatra Package & Batch</th>
+                  <th>Customer & Booking Date</th>
+                  <th>Yatra Package, Rate & Batch</th>
                   <th>Travel Dates</th>
                   <th>Travelers & Form Details</th>
-                  <th>Financial Breakdown</th>
+                  <th>Financial Breakdown (Click for History)</th>
                   <th>Status</th>
                   <th>Actions</th>
                 </tr>
@@ -725,12 +733,16 @@ export default function BookingsPage() {
                       <td>
                         <div style={{ fontWeight: '600', color: '#0f172a' }}>{b.customer?.name || 'Unknown'}</div>
                         <div style={{ fontSize: '12px', color: '#64748b' }}>{b.customer?.phone || b.customer?.email}</div>
+                        <div style={{ fontSize: '11px', color: '#94a3b8', marginTop: '4px' }}>
+                          Booked: {new Date(b.createdAt).toLocaleString('en-IN', { day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' })}
+                        </div>
                       </td>
 
                       <td>
                         <div style={{ fontWeight: '600', color: '#1e293b' }}>{b.package?.name || 'Custom Package'}</div>
+                        <div style={{ fontSize: '11px', color: '#64748b', fontWeight: '600' }}>Rate: ₹{b.package?.price || 0}</div>
                         {batchName ? (
-                          <div style={{ fontSize: '12px', color: '#2563eb', fontWeight: '600' }}>Batch: {batchName}</div>
+                          <div style={{ fontSize: '12px', color: '#2563eb', fontWeight: '600', marginTop: '2px' }}>Batch: {batchName}</div>
                         ) : (
                           <div style={{ fontSize: '12px', color: '#64748b' }}>{b.package?.duration || ''}</div>
                         )}
@@ -787,13 +799,35 @@ export default function BookingsPage() {
                         </details>
                       </td>
 
+                      {/* Financial Breakdown with Clickable Payment History Popover */}
                       <td>
-                        <div style={{ fontSize: '13px', display: 'flex', flexDirection: 'column', gap: '2px' }}>
-                          <div>Total: <strong style={{ color: '#0f172a' }}>₹{b.totalAmount || 0}</strong></div>
-                          <div>Adv: <strong style={{ color: '#16a34a' }}>₹{b.advancePaid || 0}</strong></div>
-                          <div style={{ color: (b.balancePending || 0) > 0 ? '#b91c1c' : '#16a34a', fontWeight: '600' }}>
-                            Bal: ₹{b.balancePending || 0}
+                        <div 
+                          onClick={() => setActiveHistoryId(activeHistoryId === b._id ? null : b._id)}
+                          style={{ cursor: 'pointer', padding: '6px', borderRadius: '6px', background: activeHistoryId === b._id ? '#f8fafc' : 'transparent', transition: 'background 0.15s' }}
+                          title="Click to view payment history"
+                        >
+                          <div style={{ fontSize: '13px', display: 'flex', flexDirection: 'column', gap: '2px' }}>
+                            <div>Total: <strong style={{ color: '#0f172a' }}>₹{b.totalAmount || 0}</strong></div>
+                            <div>Adv: <strong style={{ color: '#16a34a' }}>₹{b.advancePaid || 0}</strong></div>
+                            <div style={{ color: (b.balancePending || 0) > 0 ? '#b91c1c' : '#16a34a', fontWeight: '600' }}>
+                              Due: ₹{b.balancePending || 0}
+                            </div>
                           </div>
+
+                          {/* Payment Log Popover Box */}
+                          {activeHistoryId === b._id && (
+                            <div style={{ marginTop: '8px', padding: '8px', background: '#fff', border: '1px solid #cbd5e1', borderRadius: '6px', fontSize: '11px', boxShadow: '0 4px 6px -1px rgba(0,0,0,0.1)' }}>
+                              <div style={{ fontWeight: '700', color: '#0f172a', marginBottom: '4px', borderBottom: '1px solid #e2e8f0', paddingBottom: '2px' }}>📜 Payment History</div>
+                              {b.paymentHistory?.length > 0 ? b.paymentHistory.map((ph: any, i: number) => (
+                                <div key={i} style={{ display: 'flex', justifyContent: 'space-between', color: '#334155', margin: '3px 0' }}>
+                                  <span>{new Date(ph.date).toLocaleDateString('en-IN', { day: 'numeric', month: 'short' })} ({ph.method || 'cash'})</span>
+                                  <strong style={{ color: '#16a34a' }}>+₹{ph.amount}</strong>
+                                </div>
+                              )) : (
+                                <div style={{ color: '#64748b' }}>No separate payment logs recorded.</div>
+                              )}
+                            </div>
+                          )}
                         </div>
                       </td>
 
@@ -870,6 +904,9 @@ export default function BookingsPage() {
                     <div>
                       <div style={{ fontSize: '16px', fontWeight: '700', color: '#0f172a' }}>{b.customer?.name || 'Unknown'}</div>
                       <div style={{ fontSize: '13px', color: '#64748b' }}>{b.customer?.phone || b.customer?.email}</div>
+                      <div style={{ fontSize: '11px', color: '#94a3b8', marginTop: '2px' }}>
+                        Booked: {new Date(b.createdAt).toLocaleString('en-IN', { day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' })}
+                      </div>
                     </div>
                     <select
                       value={b.status}
@@ -899,6 +936,11 @@ export default function BookingsPage() {
                     <div style={{ display: 'flex', justifyContent: 'space-between' }}>
                       <span style={{ color: '#64748b' }}>Package:</span>
                       <strong style={{ color: '#0f172a' }}>{b.package?.name || 'Custom Package'}</strong>
+                    </div>
+
+                    <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                      <span style={{ color: '#64748b' }}>Rate:</span>
+                      <strong style={{ color: '#64748b' }}>₹{b.package?.price || 0}</strong>
                     </div>
 
                     {batchName && (
@@ -960,17 +1002,37 @@ export default function BookingsPage() {
 
                     <div style={{ borderTop: '1px solid #e2e8f0', margin: '6px 0' }} />
 
-                    <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                      <span style={{ color: '#64748b' }}>Total Cost:</span>
-                      <strong style={{ color: '#0f172a' }}>₹{b.totalAmount || 0}</strong>
-                    </div>
-                    <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                      <span style={{ color: '#64748b' }}>Advance Paid:</span>
-                      <strong style={{ color: '#16a34a' }}>₹{b.advancePaid || 0}</strong>
-                    </div>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', fontWeight: '700' }}>
-                      <span style={{ color: '#64748b' }}>Balance Due:</span>
-                      <span style={{ color: (b.balancePending || 0) > 0 ? '#b91c1c' : '#16a34a' }}>₹{b.balancePending || 0}</span>
+                    {/* Financial Breakdown (Clickable for History) */}
+                    <div 
+                      onClick={() => setActiveHistoryId(activeHistoryId === b._id ? null : b._id)}
+                      style={{ cursor: 'pointer', padding: '4px', borderRadius: '6px', background: activeHistoryId === b._id ? '#f1f5f9' : 'transparent' }}
+                    >
+                      <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                        <span style={{ color: '#64748b' }}>Total Cost:</span>
+                        <strong style={{ color: '#0f172a' }}>₹{b.totalAmount || 0}</strong>
+                      </div>
+                      <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                        <span style={{ color: '#64748b' }}>Advance Paid:</span>
+                        <strong style={{ color: '#16a34a' }}>₹{b.advancePaid || 0}</strong>
+                      </div>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', fontWeight: '700' }}>
+                        <span style={{ color: '#64748b' }}>Balance Due:</span>
+                        <span style={{ color: (b.balancePending || 0) > 0 ? '#b91c1c' : '#16a34a' }}>₹{b.balancePending || 0}</span>
+                      </div>
+
+                      {activeHistoryId === b._id && (
+                        <div style={{ marginTop: '8px', padding: '8px', background: '#fff', border: '1px solid #cbd5e1', borderRadius: '6px', fontSize: '11px', boxShadow: '0 4px 6px -1px rgba(0,0,0,0.1)' }}>
+                          <div style={{ fontWeight: '700', color: '#0f172a', marginBottom: '4px', borderBottom: '1px solid #e2e8f0', paddingBottom: '2px' }}>📜 Payment History</div>
+                          {b.paymentHistory?.length > 0 ? b.paymentHistory.map((ph: any, i: number) => (
+                            <div key={i} style={{ display: 'flex', justifyContent: 'space-between', color: '#334155', margin: '3px 0' }}>
+                              <span>{new Date(ph.date).toLocaleDateString('en-IN', { day: 'numeric', month: 'short' })} ({ph.method || 'cash'})</span>
+                              <strong style={{ color: '#16a34a' }}>+₹{ph.amount}</strong>
+                            </div>
+                          )) : (
+                            <div style={{ color: '#64748b' }}>No separate payment logs recorded.</div>
+                          )}
+                        </div>
+                      )}
                     </div>
                   </div>
 
