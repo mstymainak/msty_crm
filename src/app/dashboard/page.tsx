@@ -95,9 +95,9 @@ function LineChart({ data, height = 240 }: { data: { _id: string; count: number 
   });
 
   const maxVal = Math.max(...chartData.map(d => d.value), 5);
-  const width = 1000;
-  const paddingX = 60;
-  const paddingY = 40;
+  const width = 500;
+  const paddingX = 40;
+  const paddingY = 30;
 
   const points = chartData.map((d, i) => ({
     x: (i / (chartData.length - 1)) * (width - paddingX * 2) + paddingX,
@@ -111,7 +111,7 @@ function LineChart({ data, height = 240 }: { data: { _id: string; count: number 
 
   return (
     <div style={{ width: '100%', height, marginTop: '20px' }}>
-      <svg width="100%" height={height} viewBox={`0 0 ${width} ${height}`} preserveAspectRatio="none" style={{ overflow: 'visible' }}>
+      <svg width="100%" height={height} viewBox={`0 0 ${width} ${height}`} preserveAspectRatio="xMidYMid meet" style={{ overflow: 'visible' }}>
         <defs>
           <linearGradient id="lineGradient" x1="0" y1="0" x2="0" y2="1">
             <stop offset="0%" stopColor="#8b5cf6" stopOpacity="0.2" />
@@ -294,9 +294,12 @@ export default function DashboardPage() {
         <div className="dash-card" style={{ padding: '20px' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
             <h3 style={{ margin: 0, fontSize: '15px', fontWeight: '800', color: '#0f172a' }}>Enquiries Overview</h3>
-            <div style={{ background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: '8px', padding: '4px 8px', fontSize: '11px', color: '#64748b', fontWeight: '700' }}>
-              This Week ▾
-            </div>
+            <select style={{ fontSize: '11px', padding: '4px 8px', borderRadius: '6px', border: '1px solid #e2e8f0', color: '#64748b', outline: 'none', background: '#fff' }}>
+              <option>This Week</option>
+              <option>Last 30 Days</option>
+              <option>Last 90 Days</option>
+              <option>This Year</option>
+            </select>
           </div>
           
           <LineChart data={stats.enquiryHistory || []} height={180} />

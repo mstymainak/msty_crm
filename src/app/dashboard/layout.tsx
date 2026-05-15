@@ -176,13 +176,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
           </div>
           
           <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-            <div style={{ position: 'relative' }}>
-              <span style={{ fontSize: '20px' }}>🔔</span>
-              <span style={{ position: 'absolute', top: '-2px', right: '-2px', width: '14px', height: '14px', background: '#f97316', borderRadius: '50%', border: '2px solid #fff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '8px', color: '#fff', fontWeight: '800' }}>3</span>
-            </div>
-            <div style={{ width: '32px', height: '32px', borderRadius: '50%', overflow: 'hidden', border: '2px solid #f1f5f9' }}>
-              <img src="https://ui-avatars.com/api/?name=Mahesh+Sharma&background=random" alt="User" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-            </div>
+            {/* Bell and Profile removed as per request */}
           </div>
         </div>
 
@@ -214,11 +208,13 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
             <span style={{ fontSize: '10px', fontWeight: '700' }}>Enquiries</span>
           </Link>
           
-          <div style={{ position: 'relative', width: '60px', height: '60px', marginTop: '-30px' }}>
-            <div style={{ width: '54px', height: '54px', background: '#f97316', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff', fontSize: '28px', fontWeight: '400', boxShadow: '0 4px 12px rgba(249, 115, 22, 0.4)', cursor: 'pointer' }}>
-              +
+          <Link href="/contact" style={{ textDecoration: 'none' }}>
+            <div style={{ position: 'relative', width: '60px', height: '60px', marginTop: '-30px' }}>
+              <div style={{ width: '54px', height: '54px', background: '#f97316', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff', fontSize: '28px', fontWeight: '400', boxShadow: '0 4px 12px rgba(249, 115, 22, 0.4)', cursor: 'pointer' }}>
+                +
+              </div>
             </div>
-          </div>
+          </Link>
 
           <Link href="/dashboard/customers" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '4px', textDecoration: 'none', color: isActive('/dashboard/customers') ? '#f97316' : '#64748b' }}>
             <span style={{ fontSize: '22px' }}>👥</span>
