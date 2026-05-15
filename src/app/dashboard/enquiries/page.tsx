@@ -666,65 +666,58 @@ export default function EnquiriesPage() {
                           {e.source}
                         </span>
                       </div>
-                            {/* Second Row: Contact details + Member Button & Date/Time (Right Aligned) */}
-                    <div style={{ marginBottom: '8px', fontSize: '13px', display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
-                        <span style={{ color: '#64748b' }}>📞</span>
-                        {e.customer?.phone ? (
-                          <div style={{ display: 'inline-flex', alignItems: 'center' }}>
-                            <a 
-                              href={getWhatsAppLink(e.customer.phone)} 
-                              target="_blank" 
-                              rel="noreferrer"
-                              onClick={(ev) => ev.stopPropagation()}
-                              style={{ textDecoration: 'none', display: 'inline-flex', alignItems: 'center' }}
-                              title="Open WhatsApp Chat"
-                            >
-                              <WhatsAppIcon />
-                            </a>
-                            <a 
-                              href={`tel:${e.customer.phone}`}
-                              onClick={(ev) => ev.stopPropagation()}
-                              style={{ color: '#2563eb', textDecoration: 'none', fontWeight: '600' }}
-                              title="Click to call"
-                            >
-                              {e.customer.phone}
-                            </a>
-                          </div>
-                        ) : <span style={{ color: '#94a3b8' }}>No phone</span>}
-                      </div>
-
-                      {/* Right Aligned Cluster: Member Button + Date & Time */}
-                      <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '4px' }}>
-                        {/* ADD MEMBERS BUTTON ICON WITH COUNT */}
-                        <button 
-                          onClick={(ev) => { ev.stopPropagation(); handleOpenAddMemberModal(e); }}
-                          style={{
-                            background: '#fff3eb',
-                            border: '1px solid #ffd8bf',
-                            borderRadius: '6px',
-                            cursor: 'pointer',
-                            display: 'inline-flex',
-                            alignItems: 'center',
-                            gap: '4px',
-                            padding: '2px 6px',
-                            color: '#ea580c',
-                            fontWeight: '700',
-                            fontSize: '11px',
-                            height: '24px'
-                          }}
-                          title="Add Family Member / Person"
-                        >
-                          <span style={{ fontSize: '13px', lineHeight: 1 }}>➕👤</span>
-                          <span style={{ fontSize: '11px', lineHeight: 1 }}>{e.members?.length || 0}</span>
-                        </button>
-
-                        <div style={{ textAlign: 'right', lineHeight: '1.2' }}>
-                          <div style={{ fontSize: '10px', color: '#64748b', fontWeight: '600' }}>{new Date(e.createdAt).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' })}</div>
-                          <div style={{ fontSize: '9px', color: '#94a3b8' }}>{new Date(e.createdAt).toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' })}</div>
-                        </div>
-                      </div>
                     </div>
+
+                    {/* Second Row: Non-overlapping Contact details (No click details toggler overlay!) */}
+                    <div style={{ marginBottom: '8px', fontSize: '13px', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                      <span style={{ color: '#64748b' }}>📞</span>
+                      {e.customer?.phone ? (
+                        <div style={{ display: 'inline-flex', alignItems: 'center' }}>
+                          <a 
+                            href={getWhatsAppLink(e.customer.phone)} 
+                            target="_blank" 
+                            rel="noreferrer"
+                            onClick={(ev) => ev.stopPropagation()}
+                            style={{ textDecoration: 'none', display: 'inline-flex', alignItems: 'center' }}
+                            title="Open WhatsApp Chat"
+                          >
+                            <WhatsAppIcon />
+                          </a>
+                          <a 
+                            href={`tel:${e.customer.phone}`}
+                            onClick={(ev) => ev.stopPropagation()}
+                            style={{ color: '#2563eb', textDecoration: 'none', fontWeight: '600' }}
+                            title="Click to call"
+                          >
+                            {e.customer.phone}
+                          </a>
+                        </div>
+                      ) : <span style={{ color: '#94a3b8' }}>No phone</span>}
+
+                      {/* ADD MEMBERS BUTTON ICON WITH COUNT BELOW IT (MOBILE) */}
+                      <button 
+                        onClick={(ev) => { ev.stopPropagation(); handleOpenAddMemberModal(e); }}
+                        style={{
+                          background: '#fff3eb',
+                          border: '1px solid #ffd8bf',
+                          borderRadius: '6px',
+                          cursor: 'pointer',
+                          display: 'inline-flex',
+                          alignItems: 'center',
+                          gap: '4px',
+                          padding: '2px 6px',
+                          marginLeft: '12px',
+                          verticalAlign: 'middle',
+                          color: '#ea580c',
+                          fontWeight: '700',
+                          fontSize: '11px',
+                          height: '24px'
+                        }}
+                        title="Add Family Member / Person"
+                      >
+                        <span style={{ fontSize: '13px', lineHeight: 1 }}>➕👤</span>
+                        <span style={{ fontSize: '11px', lineHeight: 1 }}>{e.members?.length || 0}</span>
+                      </button>
                     </div>
 
                     {/* Third Row: Message details toggle (Separate click action so nothing overlaps!) */}
