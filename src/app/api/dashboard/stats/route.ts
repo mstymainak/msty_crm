@@ -19,6 +19,8 @@ export async function GET() {
       recentBookings,
       enquiriesByStatus,
       enquiriesBySource,
+      bookingsByStatus,
+      upcomingBookings,
     ] = await Promise.all([
       Customer.countDocuments({ isDeleted: { $ne: true } }),
       Enquiry.countDocuments({ isDeleted: { $ne: true } }),
@@ -35,6 +37,16 @@ export async function GET() {
         { $match: { isDeleted: { $ne: true } } },
         { $group: { _id: '$source', count: { $sum: 1 } } }
       ]),
+      Booking.aggregate([
+        { $match: { status: { $ne: 'cancelled' } } },
+        { $group: { _id: '$status', count: { $sum: 1 } } }
+      ]),
+      Booking.find({ travelDate: { $gte: new Date() }, status: { $nin: ['cancelled', 'completed'] } })
+        .populate('customer', 'name phone')
+        .populate('package', 'name')
+        .sort({ travelDate: 1 })
+        .limit(5)
+        .lean(),
     ]);
 
     const bookingRevenue = await Booking.aggregate([
@@ -56,6 +68,8 @@ export async function GET() {
       recentBookings,
       enquiriesByStatus,
       enquiriesBySource,
+      bookingsByStatus,
+      upcomingBookings,
     });
   } catch (error) {
     console.error('Dashboard stats error:', error);
