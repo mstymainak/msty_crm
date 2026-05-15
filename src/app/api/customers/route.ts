@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createCustomer, getCustomers } from '@/lib/customerService';
+import { getAuthUser } from '@/lib/auth';
 
 export async function GET() {
   try {
@@ -12,7 +13,13 @@ export async function GET() {
 
 export async function POST(request: NextRequest) {
   try {
+    const user = await getAuthUser();
     const body = await request.json();
+    
+    if (user) {
+      body.createdBy = user.userId;
+    }
+    
     const customer = await createCustomer(body);
     return NextResponse.json(customer, { status: 201 });
   } catch (error) {

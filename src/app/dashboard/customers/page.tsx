@@ -24,6 +24,8 @@ export default function CustomersPage() {
   const [showAdd, setShowAdd] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [form, setForm] = useState({ name: '', email: '', phone: '', source: 'website' });
+  const [users, setUsers] = useState<any[]>([]);
+  const [userFilter, setUserFilter] = useState('all');
 
   // Pagination states
   const [currentPage, setCurrentPage] = useState(1);
@@ -50,6 +52,7 @@ export default function CustomersPage() {
 
   useEffect(() => {
     fetchCustomers();
+    fetch('/api/users').then(r => r.json()).then(d => setUsers(Array.isArray(d) ? d : []));
   }, []);
 
   const handleAdd = async (e: React.FormEvent) => {
@@ -108,11 +111,16 @@ export default function CustomersPage() {
     setCurrentPage(1);
   }, [searchQuery]);
 
-  const filtered = customers.filter(c =>
-    c.name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    c.phone?.includes(searchQuery) ||
-    c.email?.toLowerCase().includes(searchQuery.toLowerCase())
-  );
+  const filtered = customers.filter(c => {
+    if (userFilter !== 'all' && (c.createdBy?._id || c.createdBy) !== userFilter) return false;
+    
+    const search = searchQuery.toLowerCase();
+    return (
+      c.name?.toLowerCase().includes(search) ||
+      c.phone?.includes(searchQuery) ||
+      c.email?.toLowerCase().includes(search)
+    );
+  });
 
   // Pagination Calculations
   const totalItems = filtered.length;
@@ -206,14 +214,24 @@ export default function CustomersPage() {
         </div>
       </div>
 
-      <div style={{ marginBottom: '16px' }}>
+      <div style={{ display: 'flex', gap: '12px', marginBottom: '16px', flexWrap: 'wrap', alignItems: 'center' }}>
         <input 
           type="text" 
           placeholder="Search customers by name, email, or phone..." 
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
-          style={{ width: '100%', padding: '10px 16px', border: '1px solid #e2e8f0', borderRadius: '8px', fontSize: '14px', boxSizing: 'border-box', outline: 'none' }}
+          style={{ flex: 1, minWidth: '250px', padding: '10px 16px', border: '1px solid #e2e8f0', borderRadius: '8px', fontSize: '14px', boxSizing: 'border-box', outline: 'none' }}
         />
+        <select 
+          value={userFilter} 
+          onChange={e => setUserFilter(e.target.value)}
+          style={{ padding: '10px 14px', border: '1px solid #e2e8f0', borderRadius: '8px', fontSize: '14px', background: '#fff', color: '#475569', outline: 'none' }}
+        >
+          <option value="all">All Users</option>
+          {users.map(u => (
+            <option key={u._id} value={u._id}>{u.name}</option>
+          ))}
+        </select>
       </div>
 
       {showAdd && (
@@ -355,6 +373,11 @@ export default function CustomersPage() {
                         >
                           {c.phone}
                         </a>
+                        {c.createdBy?.name && (
+                          <span style={{ fontSize: '9px', color: '#94a3b8', marginLeft: '6px', fontStyle: 'italic' }}>
+                            - {c.createdBy.name.split(' ')[0]}
+                          </span>
+                        )}
                       </div>
                     ) : '-'}
                   </td>
@@ -456,15 +479,15 @@ export default function CustomersPage() {
                             >
                               {c.phone}
                             </a>
+                            {c.createdBy?.name && (
+                              <span style={{ fontSize: '9px', color: '#94a3b8', marginLeft: '6px', fontStyle: 'italic' }}>
+                                - {c.createdBy.name.split(' ')[0]}
+                              </span>
+                            )}
                           </div>
                         ) : '-'}
                       </div>
-                      {c.source && (
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
-                          <span>🔍</span>
-                          <span style={{ textTransform: 'capitalize' }}>{c.source}</span>
-                        </div>
-                      )}
+                      {/* Redundant source removed as per request */}
                     </div>
 
                     {/* Footer: Date / Time and Delete Button */}
