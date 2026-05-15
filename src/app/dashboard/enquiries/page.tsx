@@ -556,10 +556,23 @@ export default function EnquiriesPage() {
                         <select
                            value={e.package || ''}
                            onChange={(ev) => updatePackage(e._id, ev.target.value)}
-                           style={{ padding: '4px 8px', fontSize: '12px', border: '1px solid #cbd5e1', borderRadius: '4px', background: '#fff', color: e.package ? '#0f172a' : '#94a3b8' }}
+                           style={{ 
+                             padding: '4px 8px', 
+                             fontSize: '12px', 
+                             border: '1px solid #cbd5e1', 
+                             borderRadius: '4px', 
+                             background: '#fff', 
+                             color: e.package ? '#0f172a' : '#94a3b8',
+                             maxWidth: '140px',
+                             textOverflow: 'ellipsis'
+                           }}
                         >
                           <option value="">No Package</option>
-                          {packages.map(p => <option key={p._id} value={p._id}>{p.name}</option>)}
+                          {packages.map(p => (
+                            <option key={p._id} value={p._id}>
+                              {p.name.length > 20 ? p.name.substring(0, 17) + '...' : p.name}
+                            </option>
+                          ))}
                         </select>
                         
                         {e.package && packages.find(p => p._id === e.package)?.groups?.length > 0 && (
@@ -670,11 +683,17 @@ export default function EnquiriesPage() {
                             background: '#fff',
                             color: e.package ? '#0f172a' : '#94a3b8',
                             outline: 'none',
-                            cursor: 'pointer'
+                            cursor: 'pointer',
+                            maxWidth: '100px',
+                            textOverflow: 'ellipsis'
                           }}
                         >
                           <option value="">No Package</option>
-                          {packages.map(p => <option key={p._id} value={p._id}>{p.name}</option>)}
+                          {packages.map(p => (
+                            <option key={p._id} value={p._id}>
+                              {p.name.length > 15 ? p.name.substring(0, 12) + '...' : p.name}
+                            </option>
+                          ))}
                         </select>
                         <span style={{
                           padding: '2px 8px',
