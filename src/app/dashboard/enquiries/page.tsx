@@ -589,7 +589,7 @@ export default function EnquiriesPage() {
                     </td>
                     <td style={{ padding: '12px 16px', fontSize: '13px', color: '#334155', fontWeight: '500' }}>
                       <div>{new Date(e.createdAt).toLocaleDateString()}</div>
-                      <div style={{ fontSize: '11px', marginTop: '2px', color: '#475569' }}>{new Date(e.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</div>
+                      <div style={{ fontSize: '11px', marginTop: '2px', color: '#475569' }}>{new Date(e.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: true })}</div>
                     </td>
                     <td style={{ padding: '12px 16px' }}>
                       <button onClick={() => handleDelete(e._id)} style={{ padding: '4px 10px', background: '#fef2f2', color: '#dc2626', border: 'none', borderRadius: '4px', fontSize: '12px', cursor: 'pointer' }}>Delete</button>
@@ -634,7 +634,7 @@ export default function EnquiriesPage() {
                   {/* Date & Time Display (Right Positioned as per mockup) */}
                   <div style={{ position: 'absolute', top: '50px', right: '14px', textAlign: 'right', fontSize: '11px', color: '#64748b', fontWeight: '500', lineHeight: '1.4' }}>
                     <div>{new Date(e.createdAt).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })}</div>
-                    <div>{new Date(e.createdAt).toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' })}</div>
+                    <div>{new Date(e.createdAt).toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit', hour12: true })}</div>
                   </div>
                   <div style={{ flex: 1 }}>
                     {/* First Row: Name, Package Select, Source */}

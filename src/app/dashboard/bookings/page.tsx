@@ -814,7 +814,7 @@ export default function BookingsPage() {
                         <div style={{ fontWeight: '700', color: '#0f172a', fontSize: '15px' }}>{b.customer?.name || 'Unknown'}</div>
                         <div style={{ fontSize: '12px', color: '#64748b', marginTop: '2px' }}>{b.customer?.phone || b.customer?.email}</div>
                         <div style={{ fontSize: '10px', color: '#94a3b8', marginTop: '6px', whiteSpace: 'nowrap' }}>
-                          Booked: {new Date(b.createdAt).toLocaleString('en-IN', { day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' })}
+                          Booked: {new Date(b.createdAt).toLocaleString('en-IN', { day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit', hour12: true })}
                         </div>
                       </td>
 
@@ -908,7 +908,7 @@ export default function BookingsPage() {
                                   <div>
                                     <div style={{ fontWeight: '600' }}>{ph.method?.toUpperCase() || 'CASH'}</div>
                                     <div style={{ fontSize: '10px', color: '#94a3b8' }}>
-                                      {new Date(ph.date).toLocaleString('en-IN', { day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' })}
+                                      {new Date(ph.date).toLocaleString('en-IN', { day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit', hour12: true })}
                                     </div>
                                   </div>
                                   <strong style={{ color: '#16a34a', fontSize: '12px' }}>+₹{ph.amount}</strong>

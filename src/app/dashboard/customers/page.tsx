@@ -352,7 +352,7 @@ export default function CustomersPage() {
                   </td>
                   <td style={{ padding: '12px 16px', fontSize: '13px', color: '#94a3b8' }}>
                     <div>{new Date(c.createdAt).toLocaleDateString()}</div>
-                    <div style={{ fontSize: '11px', marginTop: '2px' }}>{new Date(c.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</div>
+                    <div style={{ fontSize: '11px', marginTop: '2px' }}>{new Date(c.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: true })}</div>
                   </td>
                   <td style={{ padding: '12px 16px' }}>
                     <button onClick={() => handleDelete(c._id)} style={{ padding: '4px 10px', background: '#fef2f2', color: '#dc2626', border: 'none', borderRadius: '4px', fontSize: '12px', cursor: 'pointer' }}>Delete</button>
@@ -444,7 +444,7 @@ export default function CustomersPage() {
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderTop: '1px solid #f1f5f9', paddingTop: '8px' }}>
                       <div style={{ fontSize: '11px', color: '#94a3b8' }}>
                         <span>{new Date(c.createdAt).toLocaleDateString()}</span>
-                        <span style={{ marginLeft: '6px' }}>{new Date(c.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
+                        <span style={{ marginLeft: '6px' }}>{new Date(c.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: true })}</span>
                       </div>
                       <button onClick={() => handleDelete(c._id)} style={{ padding: '4px 10px', background: '#fef2f2', color: '#dc2626', border: 'none', borderRadius: '4px', fontSize: '12px', cursor: 'pointer' }}>Delete</button>
                     </div>

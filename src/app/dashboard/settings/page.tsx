@@ -187,7 +187,7 @@ export default function SettingsPage() {
                   </td>
                   <td style={{ padding: '12px 16px', fontSize: '13px', color: '#94a3b8' }}>
                     <div>{new Date(u.createdAt).toLocaleDateString()}</div>
-                    <div style={{ fontSize: '11px', marginTop: '2px' }}>{new Date(u.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</div>
+                    <div style={{ fontSize: '11px', marginTop: '2px' }}>{new Date(u.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: true })}</div>
                   </td>
                   {currentUserRole === 'admin' && (
                     <td style={{ padding: '12px 16px' }}>
@@ -478,7 +478,7 @@ export default function SettingsPage() {
                         {new Date(u.createdAt).toLocaleDateString('en-GB')}
                       </div>
                       <div style={{ fontSize: '11px', color: '#94a3b8', marginTop: '2px' }}>
-                        {new Date(u.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                        {new Date(u.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: true })}
                       </div>
                     </div>
 
