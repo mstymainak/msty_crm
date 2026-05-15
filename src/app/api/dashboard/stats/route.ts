@@ -21,6 +21,7 @@ export async function GET() {
       enquiriesBySource,
       bookingsByStatus,
       upcomingBookings,
+      enquiryHistory,
     ] = await Promise.all([
       Customer.countDocuments({ isDeleted: { $ne: true } }),
       Enquiry.countDocuments({ isDeleted: { $ne: true } }),
@@ -47,6 +48,22 @@ export async function GET() {
         .sort({ travelDate: 1 })
         .limit(5)
         .lean(),
+      // Add historical enquiries for graph (last 7 days)
+      Enquiry.aggregate([
+        {
+          $match: {
+            isDeleted: { $ne: true },
+            createdAt: { $gte: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000) }
+          }
+        },
+        {
+          $group: {
+            _id: { $dateToString: { format: "%Y-%m-%d", date: "$createdAt" } },
+            count: { $sum: 1 }
+          }
+        },
+        { $sort: { _id: 1 } }
+      ]),
     ]);
 
     const bookingRevenue = await Booking.aggregate([
@@ -70,6 +87,7 @@ export async function GET() {
       enquiriesBySource,
       bookingsByStatus,
       upcomingBookings,
+      enquiryHistory: enquiryHistory || [],
     });
   } catch (error) {
     console.error('Dashboard stats error:', error);

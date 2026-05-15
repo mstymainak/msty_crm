@@ -81,6 +81,72 @@ function DonutChart({ data, colors, size = 140 }: { data: { label: string; value
   );
 }
 
+function LineChart({ data, height = 240 }: { data: { _id: string; count: number }[], height?: number }) {
+  // Fill missing days with zero for last 7 days
+  const last7Days = Array.from({ length: 7 }, (_, i) => {
+    const d = new Date();
+    d.setDate(d.getDate() - (6 - i));
+    return d.toISOString().split('T')[0];
+  });
+
+  const chartData = last7Days.map(date => {
+    const found = data.find(d => d._id === date);
+    return { label: date, value: found ? found.count : 0 };
+  });
+
+  const maxVal = Math.max(...chartData.map(d => d.value), 5);
+  const width = 1000;
+  const paddingX = 60;
+  const paddingY = 40;
+
+  const points = chartData.map((d, i) => ({
+    x: (i / (chartData.length - 1)) * (width - paddingX * 2) + paddingX,
+    y: height - ((d.value / maxVal) * (height - paddingY * 2) + paddingY),
+    label: d.label,
+    value: d.value
+  }));
+
+  const pathLine = points.reduce((acc, p, i) => i === 0 ? `M ${p.x} ${p.y}` : `${acc} L ${p.x} ${p.y}`, "");
+  const pathArea = `${pathLine} L ${points[points.length-1].x} ${height - 20} L ${points[0].x} ${height - 20} Z`;
+
+  return (
+    <div style={{ width: '100%', height, marginTop: '20px' }}>
+      <svg width="100%" height={height} viewBox={`0 0 ${width} ${height}`} preserveAspectRatio="none" style={{ overflow: 'visible' }}>
+        <defs>
+          <linearGradient id="lineGradient" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stopColor="#8b5cf6" stopOpacity="0.2" />
+            <stop offset="100%" stopColor="#8b5cf6" stopOpacity="0" />
+          </linearGradient>
+        </defs>
+
+        {/* Horizontal Grid Lines */}
+        {[0, 1, 2, 3, 4].map(i => {
+          const y = height - ((i / 4) * (height - paddingY * 2) + paddingY);
+          return (
+            <g key={i}>
+              <line x1={paddingX} y1={y} x2={width - paddingX} y2={y} stroke="#f1f5f9" strokeWidth="1" />
+              <text x={paddingX - 10} y={y + 4} fontSize="12" fill="#94a3b8" textAnchor="end">{Math.round((i / 4) * maxVal)}</text>
+            </g>
+          );
+        })}
+
+        <path d={pathArea} fill="url(#lineGradient)" />
+        <path d={pathLine} fill="none" stroke="#8b5cf6" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" />
+
+        {points.map((p, i) => (
+          <g key={i}>
+            <circle cx={p.x} cy={p.y} r="6" fill="#fff" stroke="#8b5cf6" strokeWidth="3" />
+            <text x={p.x} y={height - 5} fontSize="13" fill="#64748b" textAnchor="middle" fontWeight="500">
+              {new Date(p.label).toLocaleDateString('en-IN', { day: 'numeric', month: 'short' })}
+            </text>
+            <text x={p.x} y={p.y - 12} fontSize="12" fill="#8b5cf6" textAnchor="middle" fontWeight="700">{p.value}</text>
+          </g>
+        ))}
+      </svg>
+    </div>
+  );
+}
+
 export default function DashboardPage() {
   const [stats, setStats] = useState<any>(null);
   const [loading, setLoading] = useState(true);
@@ -211,30 +277,36 @@ export default function DashboardPage() {
       {/* Middle Row: Enquiry Status Summary + Enquiries by Source */}
       <div className="main-grid" style={{ display: 'grid', gridTemplateColumns: '1.5fr 1fr', gap: '20px', marginBottom: '24px' }}>
         
-        {/* Enquiry Status Summary Card */}
+        {/* Enquiry Status Summary Card with Graph */}
         <div className="dash-card" style={{ background: '#fff', borderRadius: '16px', boxShadow: '0 1px 4px rgba(0,0,0,0.06)', border: '1px solid #f1f5f9', padding: '24px' }}>
-          <h3 style={{ margin: '0 0 20px', fontSize: '16px', fontWeight: '700', color: '#0f172a' }}>Enquiries Overview</h3>
-          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '12px' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
+            <h3 style={{ margin: 0, fontSize: '16px', fontWeight: '700', color: '#0f172a' }}>Enquiries Overview</h3>
+            <select style={{ fontSize: '12px', padding: '4px 8px', borderRadius: '6px', border: '1px solid #e2e8f0', color: '#64748b', outline: 'none' }}>
+              <option>This Week</option>
+            </select>
+          </div>
+          
+          <LineChart data={stats.enquiryHistory || []} />
+
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '12px', marginTop: '24px' }}>
             {[
               { label: 'Total', value: s.totalEnquiries, bg: '#eff6ff', text: '#2563eb', border: '#bfdbfe' },
               { label: 'New', value: statusMap['new'] || 0, bg: '#fff7ed', text: '#ea580c', border: '#fed7aa' },
-              { label: 'Contacted', value: statusMap['contacted'] || 0, bg: '#fefce8', text: '#ca8a04', border: '#fef08a' },
               { label: 'Qualified', value: statusMap['qualified'] || 0, bg: '#f5f3ff', text: '#7c3aed', border: '#ddd6fe' },
               { label: 'Booked', value: statusMap['booked'] || 0, bg: '#ecfdf5', text: '#059669', border: '#a7f3d0' },
-              { label: 'Lost', value: statusMap['lost'] || 0, bg: '#fef2f2', text: '#dc2626', border: '#fecaca' },
+              { label: 'Cancelled', value: statusMap['lost'] || 0, bg: '#fef2f2', text: '#dc2626', border: '#fecaca' },
             ].map((item, i) => (
               <div key={i} style={{
-                flex: '1 1 100px',
-                minWidth: '90px',
+                flex: 1,
+                minWidth: '80px',
                 textAlign: 'center',
-                padding: '16px 12px',
+                padding: '12px 8px',
                 background: item.bg,
-                borderRadius: '14px',
-                border: `1.5px solid ${item.border}`,
-                transition: 'all 0.2s'
+                borderRadius: '12px',
+                border: `1px solid ${item.border}`,
               }}>
-                <div style={{ fontSize: '28px', fontWeight: '800', color: item.text, letterSpacing: '-0.04em' }}>{item.value}</div>
-                <div style={{ fontSize: '11px', fontWeight: '700', color: item.text, textTransform: 'uppercase', marginTop: '4px', letterSpacing: '0.04em' }}>{item.label}</div>
+                <div style={{ fontSize: '20px', fontWeight: '800', color: item.text, letterSpacing: '-0.02em' }}>{item.value}</div>
+                <div style={{ fontSize: '10px', fontWeight: '700', color: item.text, textTransform: 'uppercase', marginTop: '2px' }}>{item.label}</div>
               </div>
             ))}
           </div>
