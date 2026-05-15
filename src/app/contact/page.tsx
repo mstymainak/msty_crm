@@ -43,7 +43,7 @@ export default function ContactForm() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           customer: customer._id,
-          source: 'website',
+          source: 'crm',
           message: formData.message,
           submittedName: formData.name,
         }),
@@ -98,7 +98,7 @@ export default function ContactForm() {
         <form onSubmit={handleSubmit} className="space-y-6">
           <div>
             <label htmlFor="name" className="block text-sm font-medium text-gray-700">
-              Full Name
+              Full Name <span className="text-red-500">*</span>
             </label>
             <input
               id="name"
@@ -113,13 +113,12 @@ export default function ContactForm() {
 
           <div>
             <label htmlFor="email" className="block text-sm font-medium text-gray-700">
-              Email
+              Email (Optional)
             </label>
             <input
               id="email"
               name="email"
               type="email"
-              required
               value={formData.email}
               onChange={handleChange}
               className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-orange-500 focus:border-orange-500"
@@ -128,7 +127,7 @@ export default function ContactForm() {
 
           <div>
             <label htmlFor="phone" className="block text-sm font-medium text-gray-700">
-              Phone Number
+              Phone Number <span className="text-red-500">*</span>
             </label>
             <input
               id="phone"
@@ -143,7 +142,7 @@ export default function ContactForm() {
 
           <div>
             <label htmlFor="message" className="block text-sm font-medium text-gray-700">
-              Message
+              Message <span className="text-red-500">*</span>
             </label>
             <textarea
               id="message"

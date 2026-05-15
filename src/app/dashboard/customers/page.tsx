@@ -23,7 +23,7 @@ export default function CustomersPage() {
   const [loading, setLoading] = useState(true);
   const [showAdd, setShowAdd] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
-  const [form, setForm] = useState({ name: '', email: '', phone: '', address: '' });
+  const [form, setForm] = useState({ name: '', email: '', phone: '', source: 'website' });
 
   // Pagination states
   const [currentPage, setCurrentPage] = useState(1);
@@ -59,7 +59,7 @@ export default function CustomersPage() {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(form)
     });
-    setForm({ name: '', email: '', phone: '', address: '' });
+    setForm({ name: '', email: '', phone: '', source: 'website' });
     setShowAdd(false);
     fetchCustomers();
   };
@@ -221,9 +221,22 @@ export default function CustomersPage() {
           <h3 style={{ margin: '0 0 16px', fontSize: '16px', fontWeight: '600' }}>Add New Customer</h3>
           <form onSubmit={handleAdd} style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
             <input placeholder="Full Name *" required value={form.name} onChange={e => setForm({ ...form, name: e.target.value })} style={{ padding: '10px 14px', border: '1px solid #e2e8f0', borderRadius: '8px', fontSize: '14px' }} />
-            <input placeholder="Email *" required type="email" value={form.email} onChange={e => setForm({ ...form, email: e.target.value })} style={{ padding: '10px 14px', border: '1px solid #e2e8f0', borderRadius: '8px', fontSize: '14px' }} />
+            <input placeholder="Email (Optional)" type="email" value={form.email} onChange={e => setForm({ ...form, email: e.target.value })} style={{ padding: '10px 14px', border: '1px solid #e2e8f0', borderRadius: '8px', fontSize: '14px' }} />
             <input placeholder="Phone *" required value={form.phone} onChange={e => setForm({ ...form, phone: e.target.value })} style={{ padding: '10px 14px', border: '1px solid #e2e8f0', borderRadius: '8px', fontSize: '14px' }} />
-            <input placeholder="Address" value={form.address} onChange={e => setForm({ ...form, address: e.target.value })} style={{ padding: '10px 14px', border: '1px solid #e2e8f0', borderRadius: '8px', fontSize: '14px' }} />
+            <select 
+              value={form.source} 
+              onChange={e => setForm({ ...form, source: e.target.value })} 
+              style={{ padding: '10px 14px', border: '1px solid #e2e8f0', borderRadius: '8px', fontSize: '14px', background: '#fff' }}
+            >
+              <option value="whatsapp">WhatsApp</option>
+              <option value="facebook">Facebook</option>
+              <option value="instagram">Instagram</option>
+              <option value="website">Website</option>
+              <option value="phone">Phone Call</option>
+              <option value="email">Email</option>
+              <option value="crm">CRM</option>
+              <option value="other">Other</option>
+            </select>
             <div style={{ gridColumn: '1 / -1', display: 'flex', gap: '8px', justifyContent: 'flex-end' }}>
               <button type="button" onClick={() => setShowAdd(false)} style={{ padding: '8px 16px', background: '#f1f5f9', border: 'none', borderRadius: '6px', cursor: 'pointer' }}>Cancel</button>
               <button type="submit" style={{ padding: '8px 16px', background: '#f97316', color: '#fff', border: 'none', borderRadius: '6px', fontWeight: '600', cursor: 'pointer' }}>Save</button>
@@ -346,9 +359,16 @@ export default function CustomersPage() {
                     ) : '-'}
                   </td>
                   <td style={{ padding: '12px 16px' }}>
-                    {c.whatsappNumber && <span style={{ padding: '2px 8px', borderRadius: '10px', fontSize: '11px', background: '#dcfce7', color: '#166534' }}>WhatsApp</span>}
-                    {c.facebookId && <span style={{ padding: '2px 8px', borderRadius: '10px', fontSize: '11px', background: '#dbeafe', color: '#1e40af' }}>Facebook</span>}
-                    {!c.whatsappNumber && !c.facebookId && <span style={{ padding: '2px 8px', borderRadius: '10px', fontSize: '11px', background: '#f1f5f9', color: '#64748b' }}>Website</span>}
+                    <span style={{ 
+                      padding: '2px 8px', 
+                      borderRadius: '10px', 
+                      fontSize: '11px', 
+                      background: c.source === 'whatsapp' ? '#dcfce7' : c.source === 'crm' ? '#fef3c7' : '#f1f5f9', 
+                      color: c.source === 'whatsapp' ? '#166534' : c.source === 'crm' ? '#92400e' : '#64748b',
+                      textTransform: 'capitalize'
+                    }}>
+                      {c.source || 'Website'}
+                    </span>
                   </td>
                   <td style={{ padding: '12px 16px', fontSize: '13px', color: '#94a3b8' }}>
                     <div>{new Date(c.createdAt).toLocaleDateString('en-GB')}</div>
@@ -395,9 +415,16 @@ export default function CustomersPage() {
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px' }}>
                       <div style={{ fontSize: '15px', fontWeight: '700', color: '#0f172a' }}>{c.name}</div>
                       <div>
-                        {c.whatsappNumber && <span style={{ padding: '2px 8px', borderRadius: '10px', fontSize: '11px', background: '#dcfce7', color: '#166534' }}>WhatsApp</span>}
-                        {c.facebookId && <span style={{ padding: '2px 8px', borderRadius: '10px', fontSize: '11px', background: '#dbeafe', color: '#1e40af' }}>Facebook</span>}
-                        {!c.whatsappNumber && !c.facebookId && <span style={{ padding: '2px 8px', borderRadius: '10px', fontSize: '11px', background: '#f1f5f9', color: '#64748b' }}>Website</span>}
+                        <span style={{ 
+                          padding: '2px 8px', 
+                          borderRadius: '10px', 
+                          fontSize: '11px', 
+                          background: c.source === 'whatsapp' ? '#dcfce7' : c.source === 'crm' ? '#fef3c7' : '#f1f5f9', 
+                          color: c.source === 'whatsapp' ? '#166534' : c.source === 'crm' ? '#92400e' : '#64748b',
+                          textTransform: 'capitalize'
+                        }}>
+                          {c.source || 'Website'}
+                        </span>
                       </div>
                     </div>
 
@@ -432,10 +459,10 @@ export default function CustomersPage() {
                           </div>
                         ) : '-'}
                       </div>
-                      {c.address && (
+                      {c.source && (
                         <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
-                          <span>📍</span>
-                          <span>{c.address}</span>
+                          <span>🔍</span>
+                          <span style={{ textTransform: 'capitalize' }}>{c.source}</span>
                         </div>
                       )}
                     </div>

@@ -2,7 +2,8 @@ import { Schema, model, models } from 'mongoose';
 
 const CustomerSchema = new Schema({
   name: { type: String, required: true },
-  email: { type: String, required: true },
+  email: { type: String, required: false },
+  source: { type: String, default: 'website' },
   phone: { type: String },
   whatsappNumber: { type: String },
   facebookId: { type: String },
