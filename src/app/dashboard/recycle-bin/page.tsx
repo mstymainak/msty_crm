@@ -451,7 +451,7 @@ export default function RecycleBinPage() {
                       )}
                     </td>
                     <td style={{ padding: '16px', fontSize: '13px', color: '#64748b' }}>
-                      <div>{new Date(item.deletedAt || Date.now()).toLocaleDateString()}</div>
+                      <div>{new Date(item.deletedAt || Date.now()).toLocaleDateString('en-GB')}</div>
                       <div style={{ fontSize: '11px', color: '#94a3b8', marginTop: '2px' }}>
                         {new Date(item.deletedAt || Date.now()).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: true })}
                       </div>

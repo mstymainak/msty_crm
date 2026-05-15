@@ -137,7 +137,7 @@ function LineChart({ data, height = 240 }: { data: { _id: string; count: number 
           <g key={i}>
             <circle cx={p.x} cy={p.y} r="6" fill="#fff" stroke="#8b5cf6" strokeWidth="3" />
             <text x={p.x} y={height - 5} fontSize="13" fill="#64748b" textAnchor="middle" fontWeight="500">
-              {new Date(p.label).toLocaleDateString('en-IN', { day: 'numeric', month: 'short' })}
+              {new Date(p.label).toLocaleDateString('en-GB', { day: '2-digit', month: '2-digit' })}
             </text>
             <text x={p.x} y={p.y - 12} fontSize="12" fill="#8b5cf6" textAnchor="middle" fontWeight="700">{p.value}</text>
           </g>
@@ -221,8 +221,10 @@ export default function DashboardPage() {
         .dash-card:nth-child(3) { animation-delay: 0.1s; }
         .dash-card:nth-child(4) { animation-delay: 0.15s; }
         .dash-card:nth-child(5) { animation-delay: 0.2s; }
-        .stat-hover { transition: transform 0.2s ease, box-shadow 0.2s ease; cursor: pointer; }
+        .stat-hover { transition: transform 0.2s ease, box-shadow 0.2s ease; cursor: pointer; display: flex; flexDirection: column; }
         .stat-hover:hover { transform: translateY(-4px); box-shadow: 0 12px 24px -4px rgba(0,0,0,0.1) !important; }
+        .stats-grid > a { display: flex; }
+        .stats-grid .dash-card { flex: 1; min-height: 140px; display: flex; flex-direction: column; }
         .enquiry-row { transition: background 0.15s ease; }
         .enquiry-row:hover { background: #f8fafc !important; }
         @media (max-width: 768px) {
@@ -361,7 +363,7 @@ export default function DashboardPage() {
                 <div style={{ textAlign: 'right', flexShrink: 0 }}>
                   <div style={{ fontSize: '11px', color: '#94a3b8', textTransform: 'capitalize' }}>{e.source}</div>
                   <div style={{ fontSize: '11px', color: '#94a3b8', marginTop: '1px' }}>
-                    {new Date(e.createdAt).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })}, {new Date(e.createdAt).toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit', hour12: true })}
+                    {new Date(e.createdAt).toLocaleDateString('en-GB')}, {new Date(e.createdAt).toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit', hour12: true })}
                   </div>
                 </div>
                 <span style={{
@@ -418,7 +420,7 @@ export default function DashboardPage() {
                     <span style={{ fontSize: '13px', fontWeight: '700', color: '#0f172a', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{b.package?.name || 'Package'}</span>
                   </div>
                   <div style={{ fontSize: '12px', color: '#64748b', display: 'flex', alignItems: 'center', gap: '4px', flexShrink: 0 }}>
-                    📅 {new Date(b.travelDate).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })}
+                    📅 {new Date(b.travelDate).toLocaleDateString('en-GB')}
                   </div>
                   <span style={{
                     padding: '4px 10px', borderRadius: '12px', fontSize: '10px', fontWeight: '700',

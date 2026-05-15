@@ -805,8 +805,8 @@ export default function BookingsPage() {
                     if (matchedGrp) batchName = matchedGrp.name;
                   }
 
-                  const startD = b.travelDate ? new Date(b.travelDate).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' }) : '';
-                  const endD = b.endTravelDate ? new Date(b.endTravelDate).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' }) : '';
+                  const startD = b.travelDate ? new Date(b.travelDate).toLocaleDateString('en-GB') : '';
+                  const endD = b.endTravelDate ? new Date(b.endTravelDate).toLocaleDateString('en-GB') : '';
 
                   return (
                     <tr key={b._id}>
@@ -814,7 +814,7 @@ export default function BookingsPage() {
                         <div style={{ fontWeight: '700', color: '#0f172a', fontSize: '15px' }}>{b.customer?.name || 'Unknown'}</div>
                         <div style={{ fontSize: '12px', color: '#64748b', marginTop: '2px' }}>{b.customer?.phone || b.customer?.email}</div>
                         <div style={{ fontSize: '10px', color: '#94a3b8', marginTop: '6px', whiteSpace: 'nowrap' }}>
-                          Booked: {new Date(b.createdAt).toLocaleString('en-IN', { day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit', hour12: true })}
+                          Booked: {new Date(b.createdAt).toLocaleDateString('en-GB')}, {new Date(b.createdAt).toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit', hour12: true })}
                         </div>
                       </td>
 
@@ -908,7 +908,7 @@ export default function BookingsPage() {
                                   <div>
                                     <div style={{ fontWeight: '600' }}>{ph.method?.toUpperCase() || 'CASH'}</div>
                                     <div style={{ fontSize: '10px', color: '#94a3b8' }}>
-                                      {new Date(ph.date).toLocaleString('en-IN', { day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit', hour12: true })}
+                                      {new Date(ph.date).toLocaleDateString('en-GB')}, {new Date(ph.date).toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit', hour12: true })}
                                     </div>
                                   </div>
                                   <strong style={{ color: '#16a34a', fontSize: '12px' }}>+₹{ph.amount}</strong>
@@ -976,8 +976,8 @@ export default function BookingsPage() {
                 if (matchedGrp) batchName = matchedGrp.name;
               }
 
-              const startD = b.travelDate ? new Date(b.travelDate).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' }) : '';
-              const endD = b.endTravelDate ? new Date(b.endTravelDate).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' }) : '';
+              const startD = b.travelDate ? new Date(b.travelDate).toLocaleDateString('en-GB') : '';
+              const endD = b.endTravelDate ? new Date(b.endTravelDate).toLocaleDateString('en-GB') : '';
 
               return (
                 <div key={b._id} style={{ position: 'relative', background: '#fff', borderRadius: '16px', border: '1px solid #f1f5f9', padding: '16px', width: '100%', boxSizing: 'border-box', boxShadow: '0 2px 10px rgba(0,0,0,0.03)', marginBottom: '12px' }}>
@@ -988,7 +988,7 @@ export default function BookingsPage() {
                       <div style={{ fontSize: '18px', fontWeight: '800', color: '#0f172a', letterSpacing: '-0.02em' }}>{b.customer?.name || 'Unknown'}</div>
                       <div style={{ fontSize: '13px', color: '#64748b', marginTop: '2px', fontWeight: '500' }}>{b.customer?.phone || b.customer?.email}</div>
                       <div style={{ fontSize: '12px', color: '#64748b', marginTop: '6px', fontWeight: '500' }}>
-                        Booked: {new Date(b.createdAt).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })}, {new Date(b.createdAt).toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit', hour12: true }).toLowerCase()}
+                        Booked: {new Date(b.createdAt).toLocaleDateString('en-GB')}, {new Date(b.createdAt).toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit', hour12: true }).toLowerCase()}
                       </div>
                     </div>
                     
@@ -1126,7 +1126,7 @@ export default function BookingsPage() {
                           <div style={{ fontWeight: '700', color: '#0f172a', marginBottom: '4px' }}>📜 Payment Logs</div>
                           {b.paymentHistory?.length > 0 ? b.paymentHistory.map((ph: any, i: number) => (
                             <div key={i} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', color: '#334155', margin: '2px 0' }}>
-                              <span>{ph.method?.toUpperCase()} ({new Date(ph.date).toLocaleDateString()})</span>
+                              <span>{ph.method?.toUpperCase()} ({new Date(ph.date).toLocaleDateString('en-GB')})</span>
                               <strong style={{ color: '#16a34a' }}>+₹{ph.amount}</strong>
                             </div>
                           )) : (

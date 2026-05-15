@@ -186,7 +186,7 @@ export default function SettingsPage() {
                     <span style={{ padding: '3px 10px', borderRadius: '10px', fontSize: '11px', fontWeight: '600', background: u.isActive ? '#dcfce7' : '#fef2f2', color: u.isActive ? '#166534' : '#991b1b' }}>{u.isActive ? 'Active' : 'Inactive'}</span>
                   </td>
                   <td style={{ padding: '12px 16px', fontSize: '13px', color: '#94a3b8' }}>
-                    <div>{new Date(u.createdAt).toLocaleDateString()}</div>
+                    <div>{new Date(u.createdAt).toLocaleDateString('en-GB')}</div>
                     <div style={{ fontSize: '11px', marginTop: '2px' }}>{new Date(u.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: true })}</div>
                   </td>
                   {currentUserRole === 'admin' && (
