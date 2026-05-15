@@ -237,7 +237,7 @@ export default function DashboardPage() {
 
       {/* Header */}
       <div style={{ marginBottom: '28px' }}>
-        <h1 style={{ fontSize: '26px', fontWeight: '800', color: '#0f172a', margin: 0, letterSpacing: '-0.03em' }}>Dashboard</h1>
+        <h1 style={{ fontSize: '24px', fontWeight: '700', color: '#0f172a', margin: 0 }}>Dashboard</h1>
         <p style={{ color: '#64748b', margin: '6px 0 0', fontSize: '14px', fontWeight: '500' }}>Welcome back! Here&apos;s what&apos;s happening with your business today.</p>
       </div>
 
@@ -252,7 +252,7 @@ export default function DashboardPage() {
                 </div>
                 <div style={{ fontSize: '13px', color: '#64748b', fontWeight: '600' }}>{card.label}</div>
               </div>
-              <div style={{ fontSize: '32px', fontWeight: '800', color: '#0f172a', letterSpacing: '-0.04em' }}>{card.value}</div>
+              <div style={{ fontSize: '32px', fontWeight: '700', color: '#0f172a' }}>{card.value}</div>
               {card.sub && <div style={{ fontSize: '12px', color: card.subColor, marginTop: '6px', fontWeight: '600' }}>{card.sub} <span style={{ color: '#94a3b8', fontWeight: '400' }}>vs yesterday</span></div>}
             </div>
           </Link>
@@ -267,7 +267,7 @@ export default function DashboardPage() {
               </div>
               <div style={{ fontSize: '13px', color: '#64748b', fontWeight: '600' }}>Revenue</div>
             </div>
-            <div style={{ fontSize: '28px', fontWeight: '800', color: '#0f172a', letterSpacing: '-0.04em' }}>₹{(s.revenue || 0).toLocaleString()}</div>
+            <div style={{ fontSize: '28px', fontWeight: '700', color: '#0f172a' }}>₹{(s.revenue || 0).toLocaleString()}</div>
             <div style={{ fontSize: '12px', color: '#10b981', marginTop: '6px', fontWeight: '600' }}>₹{(s.collected || 0).toLocaleString()} collected</div>
             <div style={{ fontSize: '12px', color: '#ef4444', marginTop: '2px', fontWeight: '700' }}>₹{totalDue.toLocaleString()} total due</div>
           </div>
@@ -305,7 +305,7 @@ export default function DashboardPage() {
                 borderRadius: '12px',
                 border: `1px solid ${item.border}`,
               }}>
-                <div style={{ fontSize: '20px', fontWeight: '800', color: item.text, letterSpacing: '-0.02em' }}>{item.value}</div>
+                <div style={{ fontSize: '20px', fontWeight: '700', color: item.text }}>{item.value}</div>
                 <div style={{ fontSize: '10px', fontWeight: '700', color: item.text, textTransform: 'uppercase', marginTop: '2px' }}>{item.label}</div>
               </div>
             ))}
