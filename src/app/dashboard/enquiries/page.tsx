@@ -666,10 +666,8 @@ export default function EnquiriesPage() {
                           {e.source}
                         </span>
                       </div>
-                    </div>
-
-                    {/* Second Row: Contact details & Members button with Date/Time below source */}
-                    <div style={{ marginBottom: '8px', fontSize: '13px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                            {/* Second Row: Contact details + Member Button & Date/Time (Right Aligned) */}
+                    <div style={{ marginBottom: '8px', fontSize: '13px', display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
                       <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
                         <span style={{ color: '#64748b' }}>📞</span>
                         {e.customer?.phone ? (
@@ -696,8 +694,9 @@ export default function EnquiriesPage() {
                         ) : <span style={{ color: '#94a3b8' }}>No phone</span>}
                       </div>
 
+                      {/* Right Aligned Cluster: Member Button + Date & Time */}
                       <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '4px' }}>
-                        {/* ADD MEMBERS BUTTON ICON WITH COUNT BELOW IT (MOBILE) */}
+                        {/* ADD MEMBERS BUTTON ICON WITH COUNT */}
                         <button 
                           onClick={(ev) => { ev.stopPropagation(); handleOpenAddMemberModal(e); }}
                           style={{
@@ -709,7 +708,6 @@ export default function EnquiriesPage() {
                             alignItems: 'center',
                             gap: '4px',
                             padding: '2px 6px',
-                            verticalAlign: 'middle',
                             color: '#ea580c',
                             fontWeight: '700',
                             fontSize: '11px',
@@ -720,11 +718,13 @@ export default function EnquiriesPage() {
                           <span style={{ fontSize: '13px', lineHeight: 1 }}>➕👤</span>
                           <span style={{ fontSize: '11px', lineHeight: 1 }}>{e.members?.length || 0}</span>
                         </button>
-                        
-                        <div style={{ fontSize: '10px', color: '#94a3b8', fontWeight: '500' }}>
-                          {new Date(e.createdAt).toLocaleDateString('en-IN', { day: 'numeric', month: 'short' })} • {new Date(e.createdAt).toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' })}
+
+                        <div style={{ textAlign: 'right', lineHeight: '1.2' }}>
+                          <div style={{ fontSize: '10px', color: '#64748b', fontWeight: '600' }}>{new Date(e.createdAt).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' })}</div>
+                          <div style={{ fontSize: '9px', color: '#94a3b8' }}>{new Date(e.createdAt).toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' })}</div>
                         </div>
                       </div>
+                    </div>
                     </div>
 
                     {/* Third Row: Message details toggle (Separate click action so nothing overlaps!) */}
