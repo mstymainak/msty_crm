@@ -636,35 +636,40 @@ export default function EnquiriesPage() {
                       <div style={{ fontSize: '15px', fontWeight: '700', color: '#0f172a' }}>
                         {e.submittedName || e.customer?.name || 'Unknown'}
                       </div>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                        <select
-                          value={e.package || ''}
-                          onChange={(ev) => updatePackage(e._id, ev.target.value)}
-                          style={{
-                            padding: '4px 8px',
+                      <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '4px' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                          <select
+                            value={e.package || ''}
+                            onChange={(ev) => updatePackage(e._id, ev.target.value)}
+                            style={{
+                              padding: '4px 8px',
+                              fontSize: '11px',
+                              border: '1px solid #cbd5e1',
+                              borderRadius: '6px',
+                              background: '#fff',
+                              color: e.package ? '#0f172a' : '#94a3b8',
+                              outline: 'none',
+                              cursor: 'pointer'
+                            }}
+                          >
+                            <option value="">No Package</option>
+                            {packages.map(p => <option key={p._id} value={p._id}>{p.name}</option>)}
+                          </select>
+                          <span style={{
+                            padding: '2px 8px',
+                            borderRadius: '12px',
                             fontSize: '11px',
-                            border: '1px solid #cbd5e1',
-                            borderRadius: '6px',
-                            background: '#fff',
-                            color: e.package ? '#0f172a' : '#94a3b8',
-                            outline: 'none',
-                            cursor: 'pointer'
-                          }}
-                        >
-                          <option value="">No Package</option>
-                          {packages.map(p => <option key={p._id} value={p._id}>{p.name}</option>)}
-                        </select>
-                        <span style={{
-                          padding: '2px 8px',
-                          borderRadius: '12px',
-                          fontSize: '11px',
-                          fontWeight: '600',
-                          background: '#eff6ff',
-                          color: '#3b82f6',
-                          textTransform: 'capitalize'
-                        }}>
-                          {e.source}
-                        </span>
+                            fontWeight: '600',
+                            background: '#eff6ff',
+                            color: '#3b82f6',
+                            textTransform: 'capitalize'
+                          }}>
+                            {e.source}
+                          </span>
+                        </div>
+                        <div style={{ fontSize: '10px', color: '#64748b', fontWeight: '500' }}>
+                          {new Date(e.createdAt).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' })} | {new Date(e.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                        </div>
                       </div>
                     </div>
 
@@ -944,17 +949,20 @@ export default function EnquiriesPage() {
               display: 'flex',
               justifyContent: 'space-between',
               alignItems: 'center',
-              padding: '16px 20px',
+              padding: '24px 20px',
               borderBottom: '1px solid #f1f5f9',
-              background: '#f8fafc'
+              background: '#fff'
             }}>
-              <div>
-                <h3 style={{ margin: 0, fontSize: '16px', fontWeight: '700', color: '#0f172a' }}>
-                  👥 Enquiry Members
-                </h3>
-                <p style={{ margin: '2px 0 0', fontSize: '12px', color: '#64748b' }}>
-                  For Customer: {memberModalEnquiry.customer?.name}
-                </p>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                <span style={{ fontSize: '24px' }}>👥</span>
+                <div>
+                  <h3 style={{ margin: 0, fontSize: '20px', fontWeight: '800', color: '#1e293b', letterSpacing: '-0.02em' }}>
+                    Enquiry Members
+                  </h3>
+                  <p style={{ margin: '4px 0 0', fontSize: '14px', color: '#64748b', fontWeight: '500' }}>
+                    For Customer: {memberModalEnquiry.customer?.name}
+                  </p>
+                </div>
               </div>
               <button
                 onClick={() => setMemberModalEnquiry(null)}
@@ -962,10 +970,13 @@ export default function EnquiriesPage() {
                   background: 'none',
                   border: 'none',
                   cursor: 'pointer',
-                  fontSize: '24px',
+                  fontSize: '28px',
                   color: '#94a3b8',
                   padding: '4px',
-                  lineHeight: 1
+                  lineHeight: 1,
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center'
                 }}
               >
                 ×
@@ -1038,39 +1049,35 @@ export default function EnquiriesPage() {
 
               {/* Add New Member Form */}
               <div style={{ borderTop: '1px solid #f1f5f9', paddingTop: '16px' }}>
-                <h4 style={{ margin: '0 0 12px', fontSize: '12px', fontWeight: '700', color: '#475569', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
-                  ➕ Add New Person
+                <h4 style={{ margin: '0 0 16px', fontSize: '13px', fontWeight: '700', color: '#475569', textTransform: 'uppercase', letterSpacing: '0.05em', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <span style={{ fontSize: '16px' }}>➕</span> ADD NEW PERSON
                 </h4>
                 
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: '12px' }}>
-                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
-                    <input
-                      placeholder="Full Name *"
-                      value={newMemberForm.name}
-                      onChange={(e) => setNewMemberForm({ ...newMemberForm, name: e.target.value })}
-                      style={{ padding: '10px 12px', border: '1px solid #cbd5e1', borderRadius: '8px', fontSize: '13px', outline: 'none' }}
-                    />
-                    <input
-                      placeholder="Relation (e.g. Spouse)"
-                      value={newMemberForm.relation}
-                      onChange={(e) => setNewMemberForm({ ...newMemberForm, relation: e.target.value })}
-                      style={{ padding: '10px 12px', border: '1px solid #cbd5e1', borderRadius: '8px', fontSize: '13px', outline: 'none' }}
-                    />
-                  </div>
-                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
-                    <input
-                      placeholder="Phone Number"
-                      value={newMemberForm.phone}
-                      onChange={(e) => setNewMemberForm({ ...newMemberForm, phone: e.target.value })}
-                      style={{ padding: '10px 12px', border: '1px solid #cbd5e1', borderRadius: '8px', fontSize: '13px', outline: 'none' }}
-                    />
-                    <input
-                      placeholder="City"
-                      value={newMemberForm.city}
-                      onChange={(e) => setNewMemberForm({ ...newMemberForm, city: e.target.value })}
-                      style={{ padding: '10px 12px', border: '1px solid #cbd5e1', borderRadius: '8px', fontSize: '13px', outline: 'none' }}
-                    />
-                  </div>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+                  <input
+                    placeholder="Full Name *"
+                    value={newMemberForm.name}
+                    onChange={(e) => setNewMemberForm({ ...newMemberForm, name: e.target.value })}
+                    style={{ width: '100%', padding: '14px 16px', border: '1px solid #cbd5e1', borderRadius: '12px', fontSize: '14px', outline: 'none', background: '#fff', boxSizing: 'border-box' }}
+                  />
+                  <input
+                    placeholder="Relation (e.g. Spouse, Brother, Sister)"
+                    value={newMemberForm.relation}
+                    onChange={(e) => setNewMemberForm({ ...newMemberForm, relation: e.target.value })}
+                    style={{ width: '100%', padding: '14px 16px', border: '1px solid #cbd5e1', borderRadius: '12px', fontSize: '14px', outline: 'none', background: '#fff', boxSizing: 'border-box' }}
+                  />
+                  <input
+                    placeholder="Phone Number"
+                    value={newMemberForm.phone}
+                    onChange={(e) => setNewMemberForm({ ...newMemberForm, phone: e.target.value })}
+                    style={{ width: '100%', padding: '14px 16px', border: '1px solid #cbd5e1', borderRadius: '12px', fontSize: '14px', outline: 'none', background: '#fff', boxSizing: 'border-box' }}
+                  />
+                  <input
+                    placeholder="City"
+                    value={newMemberForm.city}
+                    onChange={(e) => setNewMemberForm({ ...newMemberForm, city: e.target.value })}
+                    style={{ width: '100%', padding: '14px 16px', border: '1px solid #cbd5e1', borderRadius: '12px', fontSize: '14px', outline: 'none', background: '#fff', boxSizing: 'border-box' }}
+                  />
                 </div>
                 
                 <button
@@ -1078,16 +1085,16 @@ export default function EnquiriesPage() {
                   disabled={savingMember}
                   style={{
                     width: '100%',
-                    padding: '10px',
+                    padding: '14px',
                     background: '#f97316',
                     color: '#fff',
                     border: 'none',
-                    borderRadius: '8px',
+                    borderRadius: '12px',
                     fontWeight: '700',
-                    fontSize: '13px',
+                    fontSize: '15px',
                     cursor: 'pointer',
-                    marginTop: '12px',
-                    boxShadow: '0 2px 4px rgba(249, 115, 22, 0.1)',
+                    marginTop: '20px',
+                    boxShadow: '0 4px 6px -1px rgba(249, 115, 22, 0.2)',
                     transition: 'all 0.2s'
                   }}
                 >
@@ -1098,23 +1105,23 @@ export default function EnquiriesPage() {
             
             {/* Footer */}
             <div style={{
-              display: 'flex',
-              justifyContent: 'flex-end',
-              padding: '12px 20px',
-              background: '#f8fafc',
+              padding: '16px 20px 24px',
+              background: '#fff',
               borderTop: '1px solid #f1f5f9'
             }}>
               <button
                 onClick={() => setMemberModalEnquiry(null)}
                 style={{
-                  padding: '8px 16px',
+                  width: '100%',
+                  padding: '14px',
                   background: '#f1f5f9',
                   border: 'none',
-                  borderRadius: '6px',
-                  fontSize: '13px',
+                  borderRadius: '12px',
+                  fontSize: '15px',
                   color: '#475569',
-                  fontWeight: '600',
-                  cursor: 'pointer'
+                  fontWeight: '700',
+                  cursor: 'pointer',
+                  transition: 'all 0.2s'
                 }}
               >
                 Close Dialog
