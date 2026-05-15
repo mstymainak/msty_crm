@@ -146,26 +146,88 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
       </aside>
 
       {/* Main content */}
-      <main style={{ flex: 1, marginLeft: '260px', minHeight: '100vh' }}>
+      <main style={{ flex: 1, marginLeft: '260px', minHeight: '100vh', paddingBottom: '80px' }}>
         {/* Top bar (mobile) */}
         <div style={{
           display: 'none',
-          padding: '12px 20px',
+          padding: '10px 16px',
           background: '#fff',
-          borderBottom: '1px solid #e2e8f0',
+          borderBottom: '1px solid #f1f5f9',
           alignItems: 'center',
           justifyContent: 'space-between',
+          position: 'sticky',
+          top: 0,
+          zIndex: 30,
         }} className="mobile-topbar">
-          <button
-            onClick={() => setSidebarOpen(!sidebarOpen)}
-            style={{ fontSize: '24px', background: 'none', border: 'none', cursor: 'pointer' }}
-          >☰</button>
-          <span style={{ fontWeight: '700', color: '#0f172a' }}>MSTY CRM</span>
-          <div style={{ width: '24px' }} />
+          <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+            <button
+              onClick={() => setSidebarOpen(!sidebarOpen)}
+              style={{ fontSize: '24px', background: 'none', border: 'none', cursor: 'pointer', color: '#1e293b' }}
+            >☰</button>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <div style={{ width: '32px', height: '32px', borderRadius: '6px', background: '#fff', border: '1px solid #f1f5f9', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                <img src="/logo.png" alt="Logo" style={{ width: '24px', height: '24px', objectFit: 'contain' }} />
+              </div>
+              <div style={{ display: 'flex', flexDirection: 'column' }}>
+                <span style={{ fontSize: '14px', fontWeight: '800', color: '#0f172a', lineHeight: '1' }}>Mahesh Sharma</span>
+                <span style={{ fontSize: '10px', color: '#64748b', fontWeight: '500' }}>Tirth Yatra CRM</span>
+              </div>
+            </div>
+          </div>
+          
+          <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+            <div style={{ position: 'relative' }}>
+              <span style={{ fontSize: '20px' }}>🔔</span>
+              <span style={{ position: 'absolute', top: '-2px', right: '-2px', width: '14px', height: '14px', background: '#f97316', borderRadius: '50%', border: '2px solid #fff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '8px', color: '#fff', fontWeight: '800' }}>3</span>
+            </div>
+            <div style={{ width: '32px', height: '32px', borderRadius: '50%', overflow: 'hidden', border: '2px solid #f1f5f9' }}>
+              <img src="https://ui-avatars.com/api/?name=Mahesh+Sharma&background=random" alt="User" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+            </div>
+          </div>
         </div>
 
-        <div style={{ padding: '24px 32px' }}>
+        <div style={{ padding: '20px 16px' }} className="main-content-padding">
           {children}
+        </div>
+
+        {/* Bottom Nav (Mobile) */}
+        <div style={{
+          display: 'none',
+          position: 'fixed',
+          bottom: 0,
+          left: 0,
+          right: 0,
+          height: '70px',
+          background: '#fff',
+          borderTop: '1px solid #f1f5f9',
+          justifyContent: 'space-around',
+          alignItems: 'center',
+          zIndex: 40,
+          padding: '0 10px',
+        }} className="bottom-nav">
+          <Link href="/dashboard" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '4px', textDecoration: 'none', color: isActive('/dashboard') ? '#f97316' : '#64748b' }}>
+            <span style={{ fontSize: '22px' }}>🏠</span>
+            <span style={{ fontSize: '10px', fontWeight: '700' }}>Dashboard</span>
+          </Link>
+          <Link href="/dashboard/enquiries" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '4px', textDecoration: 'none', color: isActive('/dashboard/enquiries') ? '#f97316' : '#64748b' }}>
+            <span style={{ fontSize: '22px' }}>📩</span>
+            <span style={{ fontSize: '10px', fontWeight: '700' }}>Enquiries</span>
+          </Link>
+          
+          <div style={{ position: 'relative', width: '60px', height: '60px', marginTop: '-30px' }}>
+            <div style={{ width: '54px', height: '54px', background: '#f97316', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff', fontSize: '28px', fontWeight: '400', boxShadow: '0 4px 12px rgba(249, 115, 22, 0.4)', cursor: 'pointer' }}>
+              +
+            </div>
+          </div>
+
+          <Link href="/dashboard/customers" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '4px', textDecoration: 'none', color: isActive('/dashboard/customers') ? '#f97316' : '#64748b' }}>
+            <span style={{ fontSize: '22px' }}>👥</span>
+            <span style={{ fontSize: '10px', fontWeight: '700' }}>Customers</span>
+          </Link>
+          <Link href="/dashboard/packages" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '4px', textDecoration: 'none', color: isActive('/dashboard/packages') ? '#f97316' : '#64748b' }}>
+            <span style={{ fontSize: '22px' }}>🛕</span>
+            <span style={{ fontSize: '10px', fontWeight: '700' }}>Packages</span>
+          </Link>
         </div>
       </main>
 
@@ -173,7 +235,9 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
         @media (max-width: 768px) {
           .sidebar-desktop { transform: translateX(-100%); }
           .mobile-topbar { display: flex !important; }
+          .bottom-nav { display: flex !important; }
           main { margin-left: 0 !important; }
+          .main-content-padding { padding: 20px 16px !important; }
         }
       `}</style>
     </div>

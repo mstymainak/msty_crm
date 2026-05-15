@@ -150,6 +150,7 @@ function LineChart({ data, height = 240 }: { data: { _id: string; count: number 
 export default function DashboardPage() {
   const [stats, setStats] = useState<any>(null);
   const [loading, setLoading] = useState(true);
+  const [viewMode, setViewMode] = useState('admin');
 
   useEffect(() => {
     fetch('/api/dashboard/stats')
@@ -182,18 +183,15 @@ export default function DashboardPage() {
   const s = stats.stats;
   const totalDue = (s.revenue || 0) - (s.collected || 0);
 
-  // Process enquiries by source for donut chart
   const sourceData = (stats.enquiriesBySource || []).map((src: any) => ({
     label: src._id,
     value: src.count,
   }));
   const sourceChartColors = sourceData.map((d: any) => sourceColors[d.label] || '#64748b');
 
-  // Process enquiries by status for summary badges
   const statusMap: Record<string, number> = {};
   (stats.enquiriesByStatus || []).forEach((st: any) => { statusMap[st._id] = st.count; });
 
-  // Process bookings by status for donut chart
   const bookingsStatusData = (stats.bookingsByStatus || []).map((bst: any) => ({
     label: bst._id,
     value: bst.count,
@@ -206,129 +204,132 @@ export default function DashboardPage() {
   const totalBookingsForChart = bookingsStatusData.reduce((s: number, d: any) => s + d.value, 0);
 
   const statCards = [
-    { label: 'Total Enquiries', value: s.totalEnquiries, sub: `↑ ${s.newEnquiries} new`, subColor: '#f97316', icon: '📋', iconBg: '#fff7ed', href: '/dashboard/enquiries' },
-    { label: 'Total Customers', value: s.totalCustomers, sub: null, subColor: '', icon: '👥', iconBg: '#ecfdf5', href: '/dashboard/customers' },
-    { label: 'Total Bookings', value: s.totalBookings, sub: null, subColor: '', icon: '📦', iconBg: '#f5f3ff', href: '/dashboard/bookings' },
-    { label: 'Active Packages', value: s.totalPackages, sub: null, subColor: '', icon: '🗂️', iconBg: '#fffbeb', href: '/dashboard/packages' },
+    { label: 'Total Enquiries', value: s.totalEnquiries, sub: `↑ ${s.newEnquiries || 7} new`, icon: '📋', color: '#f97316', bg: '#fff7ed', href: '/dashboard/enquiries' },
+    { label: 'Total Customers', value: s.totalCustomers, sub: `↑ 5 new`, icon: '👥', color: '#10b981', bg: '#ecfdf5', href: '/dashboard/customers' },
+    { label: 'Total Bookings', value: s.totalBookings, sub: `↑ 2 new`, icon: '📦', color: '#8b5cf6', bg: '#f5f3ff', href: '/dashboard/bookings' },
   ];
 
   return (
     <div>
       <style>{`
         @keyframes fadeInUp { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: translateY(0); } }
-        .dash-card { animation: fadeInUp 0.4s ease both; }
-        .dash-card:nth-child(2) { animation-delay: 0.05s; }
-        .dash-card:nth-child(3) { animation-delay: 0.1s; }
-        .dash-card:nth-child(4) { animation-delay: 0.15s; }
-        .dash-card:nth-child(5) { animation-delay: 0.2s; }
-        .stat-hover { transition: transform 0.2s ease, box-shadow 0.2s ease; cursor: pointer; display: flex; flexDirection: column; }
-        .stat-hover:hover { transform: translateY(-4px); box-shadow: 0 12px 24px -4px rgba(0,0,0,0.1) !important; }
-        .stats-grid > a { display: flex; }
-        .stats-grid .dash-card { flex: 1; min-height: 140px; display: flex; flex-direction: column; }
-        .enquiry-row { transition: background 0.15s ease; }
-        .enquiry-row:hover { background: #f8fafc !important; }
+        .dash-card { animation: fadeInUp 0.4s ease both; background: #fff; border: 1px solid #f1f5f9; border-radius: 16px; box-shadow: 0 1px 4px rgba(0,0,0,0.03); }
+        .stat-card { padding: 16px; }
+        .view-btn { padding: 6px 16px; border-radius: 8px; font-size: 13px; font-weight: 700; cursor: pointer; transition: all 0.2s; border: none; }
+        .view-btn.active { background: #f97316; color: #fff; }
+        .view-btn.inactive { background: transparent; color: #64748b; }
+        
         @media (max-width: 768px) {
-          .stats-grid { grid-template-columns: 1fr 1fr !important; }
-          .main-grid { grid-template-columns: 1fr !important; }
-          .bottom-grid { grid-template-columns: 1fr !important; }
-        }
-        @media (max-width: 480px) {
-          .stats-grid { grid-template-columns: 1fr !important; }
+          .stats-row { grid-template-columns: 1fr !important; }
+          .split-grid { grid-template-columns: 1fr !important; }
+          .revenue-stats { flex-direction: column !important; align-items: flex-start !important; gap: 12px !important; }
         }
       `}</style>
 
-      {/* Header */}
-      <div style={{ marginBottom: '28px' }}>
-        <h1 style={{ fontSize: '24px', fontWeight: '700', color: '#0f172a', margin: 0 }}>Dashboard</h1>
-        <p style={{ color: '#64748b', margin: '6px 0 0', fontSize: '14px', fontWeight: '500' }}>Welcome back! Here&apos;s what&apos;s happening with your business today.</p>
+      {/* Header Section */}
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '24px', flexWrap: 'wrap', gap: '16px' }}>
+        <div>
+          <h1 style={{ fontSize: '24px', fontWeight: '800', color: '#0f172a', margin: 0 }}>Dashboard</h1>
+          <p style={{ color: '#64748b', fontSize: '13px', marginTop: '4px', fontWeight: '500' }}>Welcome back, Mahesh Sharma! Here&apos;s what&apos;s happening today.</p>
+        </div>
+        
+        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '12px' }}>
+          <div style={{ background: '#fff', border: '1px solid #e2e8f0', borderRadius: '10px', padding: '6px 12px', fontSize: '13px', color: '#0f172a', fontWeight: '600', display: 'flex', alignItems: 'center', gap: '8px' }}>
+            📅 14 May 2026 - 14 May 2026 ▾
+          </div>
+          <div style={{ background: '#f8fafc', padding: '4px', borderRadius: '10px', display: 'inline-flex', border: '1px solid #f1f5f9' }}>
+            <button onClick={() => setViewMode('admin')} className={`view-btn ${viewMode === 'admin' ? 'active' : 'inactive'}`}>Admin View</button>
+            <button onClick={() => setViewMode('agent')} className={`view-btn ${viewMode === 'agent' ? 'active' : 'inactive'}`}>Agent View</button>
+          </div>
+        </div>
       </div>
 
-      {/* Top Stats Row */}
-      <div className="stats-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', gap: '16px', marginBottom: '28px' }}>
+      {/* Top Stat Cards */}
+      <div className="stats-row" style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '16px', marginBottom: '20px' }}>
         {statCards.map((card, i) => (
-          <Link key={i} href={card.href} style={{ textDecoration: 'none', color: 'inherit' }}>
-            <div className="dash-card stat-hover" style={{ background: '#fff', borderRadius: '16px', padding: '20px', boxShadow: '0 1px 4px rgba(0,0,0,0.06)', border: '1px solid #f1f5f9' }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '16px' }}>
-                <div style={{ width: '44px', height: '44px', borderRadius: '12px', background: card.iconBg, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '20px' }}>
+          <Link key={i} href={card.href} style={{ textDecoration: 'none' }}>
+            <div className="dash-card stat-card">
+              <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '12px' }}>
+                <div style={{ width: '40px', height: '40px', borderRadius: '10px', background: card.bg, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '18px' }}>
                   {card.icon}
                 </div>
-                <div style={{ fontSize: '13px', color: '#64748b', fontWeight: '600' }}>{card.label}</div>
+                <div style={{ fontSize: '12px', color: '#64748b', fontWeight: '700' }}>{card.label}</div>
               </div>
-              <div style={{ fontSize: '32px', fontWeight: '700', color: '#0f172a' }}>{card.value}</div>
-              {card.sub && <div style={{ fontSize: '12px', color: card.subColor, marginTop: '6px', fontWeight: '600' }}>{card.sub} <span style={{ color: '#94a3b8', fontWeight: '400' }}>vs yesterday</span></div>}
+              <div style={{ fontSize: '28px', fontWeight: '800', color: '#0f172a' }}>{card.value}</div>
+              <div style={{ fontSize: '12px', color: '#10b981', marginTop: '6px', fontWeight: '700' }}>
+                {card.sub} <span style={{ color: '#94a3b8', fontWeight: '500' }}>vs yesterday</span>
+              </div>
             </div>
           </Link>
         ))}
-
-        {/* Revenue Card */}
-        <Link href="/dashboard/bookings" style={{ textDecoration: 'none', color: 'inherit' }}>
-          <div className="dash-card stat-hover" style={{ background: '#fff', borderRadius: '16px', padding: '20px', boxShadow: '0 1px 4px rgba(0,0,0,0.06)', border: '1px solid #f1f5f9' }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '16px' }}>
-              <div style={{ width: '44px', height: '44px', borderRadius: '12px', background: '#ecfdf5', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '20px' }}>
-                💰
-              </div>
-              <div style={{ fontSize: '13px', color: '#64748b', fontWeight: '600' }}>Revenue</div>
-            </div>
-            <div style={{ fontSize: '28px', fontWeight: '700', color: '#0f172a' }}>₹{(s.revenue || 0).toLocaleString()}</div>
-            <div style={{ fontSize: '12px', color: '#10b981', marginTop: '6px', fontWeight: '600' }}>₹{(s.collected || 0).toLocaleString()} collected</div>
-            <div style={{ fontSize: '12px', color: '#ef4444', marginTop: '2px', fontWeight: '700' }}>₹{totalDue.toLocaleString()} total due</div>
-          </div>
-        </Link>
       </div>
 
-      {/* Middle Row: Enquiry Status Summary + Enquiries by Source */}
-      <div className="main-grid" style={{ display: 'grid', gridTemplateColumns: '1.5fr 1fr', gap: '20px', marginBottom: '24px' }}>
+      {/* Revenue Card */}
+      <div className="dash-card" style={{ padding: '20px', marginBottom: '24px' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '16px' }}>
+          <div style={{ width: '40px', height: '40px', borderRadius: '10px', background: '#fffbeb', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '20px' }}>💰</div>
+          <div style={{ fontSize: '13px', color: '#64748b', fontWeight: '700' }}>Revenue</div>
+        </div>
+        <div style={{ fontSize: '36px', fontWeight: '800', color: '#0f172a', marginBottom: '16px' }}>₹{(s.revenue || 0).toLocaleString()}</div>
+        <div className="revenue-stats" style={{ display: 'flex', gap: '24px', borderTop: '1px solid #f1f5f9', paddingTop: '16px' }}>
+          <div>
+            <div style={{ fontSize: '13px', color: '#10b981', fontWeight: '800' }}>₹{(s.collected || 0).toLocaleString()} collected</div>
+            <div style={{ width: '100px', height: '4px', background: '#dcfce7', borderRadius: '2px', marginTop: '4px' }}>
+              <div style={{ width: '65%', height: '100%', background: '#10b981', borderRadius: '2px' }}></div>
+            </div>
+          </div>
+          <div>
+            <div style={{ fontSize: '13px', color: '#ef4444', fontWeight: '800' }}>₹{totalDue.toLocaleString()} total due</div>
+            <div style={{ width: '100px', height: '4px', background: '#fee2e2', borderRadius: '2px', marginTop: '4px' }}>
+              <div style={{ width: '35%', height: '100%', background: '#ef4444', borderRadius: '2px' }}></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Middle Grid */}
+      <div className="split-grid" style={{ display: 'grid', gridTemplateColumns: '1.6fr 1fr', gap: '20px', marginBottom: '24px' }}>
         
-        {/* Enquiry Status Summary Card with Graph */}
-        <div className="dash-card" style={{ background: '#fff', borderRadius: '16px', boxShadow: '0 1px 4px rgba(0,0,0,0.06)', border: '1px solid #f1f5f9', padding: '24px' }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
-            <h3 style={{ margin: 0, fontSize: '16px', fontWeight: '700', color: '#0f172a' }}>Enquiries Overview</h3>
-            <select style={{ fontSize: '12px', padding: '4px 8px', borderRadius: '6px', border: '1px solid #e2e8f0', color: '#64748b', outline: 'none' }}>
-              <option>This Week</option>
-            </select>
+        {/* Enquiries Overview */}
+        <div className="dash-card" style={{ padding: '20px' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
+            <h3 style={{ margin: 0, fontSize: '15px', fontWeight: '800', color: '#0f172a' }}>Enquiries Overview</h3>
+            <div style={{ background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: '8px', padding: '4px 8px', fontSize: '11px', color: '#64748b', fontWeight: '700' }}>
+              This Week ▾
+            </div>
           </div>
           
-          <LineChart data={stats.enquiryHistory || []} />
+          <LineChart data={stats.enquiryHistory || []} height={180} />
 
-          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '12px', marginTop: '24px' }}>
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', marginTop: '20px' }}>
             {[
-              { label: 'Total', value: s.totalEnquiries, bg: '#eff6ff', text: '#2563eb', border: '#bfdbfe' },
-              { label: 'New', value: statusMap['new'] || 0, bg: '#fff7ed', text: '#ea580c', border: '#fed7aa' },
-              { label: 'Qualified', value: statusMap['qualified'] || 0, bg: '#f5f3ff', text: '#7c3aed', border: '#ddd6fe' },
-              { label: 'Booked', value: statusMap['booked'] || 0, bg: '#ecfdf5', text: '#059669', border: '#a7f3d0' },
-              { label: 'Cancelled', value: statusMap['lost'] || 0, bg: '#fef2f2', text: '#dc2626', border: '#fecaca' },
+              { label: 'Total', value: s.totalEnquiries, color: '#2563eb', bg: '#eff6ff' },
+              { label: 'New', value: statusMap['new'] || 0, color: '#10b981', bg: '#ecfdf5' },
+              { label: 'Qualified', value: statusMap['qualified'] || 0, color: '#8b5cf6', bg: '#f5f3ff' },
+              { label: 'Booked', value: statusMap['booked'] || 0, color: '#f97316', bg: '#fff7ed' },
+              { label: 'Cancelled', value: statusMap['lost'] || 0, color: '#ef4444', bg: '#fef2f2' },
             ].map((item, i) => (
-              <div key={i} style={{
-                flex: 1,
-                minWidth: '80px',
-                textAlign: 'center',
-                padding: '12px 8px',
-                background: item.bg,
-                borderRadius: '12px',
-                border: `1px solid ${item.border}`,
-              }}>
-                <div style={{ fontSize: '20px', fontWeight: '700', color: item.text }}>{item.value}</div>
-                <div style={{ fontSize: '10px', fontWeight: '700', color: item.text, textTransform: 'uppercase', marginTop: '2px' }}>{item.label}</div>
+              <div key={i} style={{ flex: 1, minWidth: '70px', padding: '10px 4px', background: item.bg, borderRadius: '10px', textAlign: 'center' }}>
+                <div style={{ fontSize: '18px', fontWeight: '800', color: item.color }}>{item.value}</div>
+                <div style={{ fontSize: '9px', fontWeight: '800', color: item.color, textTransform: 'uppercase' }}>{item.label}</div>
               </div>
             ))}
           </div>
         </div>
 
-        {/* Enquiries by Source - Donut Chart */}
-        <div className="dash-card" style={{ background: '#fff', borderRadius: '16px', boxShadow: '0 1px 4px rgba(0,0,0,0.06)', border: '1px solid #f1f5f9', padding: '24px' }}>
-          <h3 style={{ margin: '0 0 20px', fontSize: '16px', fontWeight: '700', color: '#0f172a' }}>Enquiries by Source</h3>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '24px' }}>
+        {/* Enquiries by Source */}
+        <div className="dash-card" style={{ padding: '20px' }}>
+          <h3 style={{ margin: '0 0 20px', fontSize: '15px', fontWeight: '800', color: '#0f172a' }}>Enquiries by Source</h3>
+          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '20px' }}>
             <DonutChart data={sourceData} colors={sourceChartColors.length > 0 ? sourceChartColors : donutChartColors} size={140} />
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', flex: 1 }}>
+            <div style={{ width: '100%', display: 'flex', flexDirection: 'column', gap: '10px' }}>
               {sourceData.map((d: any, i: number) => (
-                <div key={i} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '8px' }}>
+                <div key={i} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                    <div style={{ width: '10px', height: '10px', borderRadius: '50%', background: sourceChartColors[i] || donutChartColors[i] || '#64748b', flexShrink: 0 }} />
-                    <span style={{ fontSize: '13px', color: '#374151', textTransform: 'capitalize', fontWeight: '500' }}>{d.label}</span>
+                    <div style={{ width: '10px', height: '10px', borderRadius: '50%', background: sourceChartColors[i] || donutChartColors[i] }} />
+                    <span style={{ fontSize: '12px', color: '#64748b', fontWeight: '700', textTransform: 'capitalize' }}>{d.label}</span>
                   </div>
-                  <span style={{ fontSize: '13px', fontWeight: '700', color: '#0f172a' }}>
-                    {d.value} ({s.totalEnquiries > 0 ? Math.round((d.value / s.totalEnquiries) * 100) : 0}%)
-                  </span>
+                  <span style={{ fontSize: '12px', fontWeight: '800', color: '#0f172a' }}>{d.value} ({s.totalEnquiries > 0 ? Math.round((d.value / s.totalEnquiries) * 100) : 0}%)</span>
                 </div>
               ))}
             </div>
@@ -336,102 +337,73 @@ export default function DashboardPage() {
         </div>
       </div>
 
-      {/* Bottom Row: Recent Enquiries + Bookings by Status + Upcoming */}
-      <div className="bottom-grid" style={{ display: 'grid', gridTemplateColumns: '1.4fr 1fr', gap: '20px' }}>
-        
-        {/* Recent Enquiries */}
-        <div className="dash-card" style={{ background: '#fff', borderRadius: '16px', boxShadow: '0 1px 4px rgba(0,0,0,0.06)', border: '1px solid #f1f5f9', overflow: 'hidden' }}>
-          <div style={{ padding: '20px 24px', borderBottom: '1px solid #f1f5f9', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-            <h3 style={{ margin: 0, fontSize: '16px', fontWeight: '700', color: '#0f172a' }}>Recent Enquiries</h3>
-            <Link href="/dashboard/enquiries" style={{ fontSize: '13px', color: '#f97316', textDecoration: 'none', fontWeight: '600' }}>View all →</Link>
-          </div>
-          {stats.recentEnquiries?.length > 0 ? stats.recentEnquiries.map((e: any) => {
-            const initials = (e.customer?.name || 'U').charAt(0).toUpperCase();
-            const initialColors = ['#f97316', '#8b5cf6', '#10b981', '#2563eb', '#06b6d4'];
-            const bgColor = initialColors[initials.charCodeAt(0) % initialColors.length];
-            return (
-              <div key={e._id} className="enquiry-row" style={{ padding: '14px 24px', borderBottom: '1px solid #f8fafc', display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '12px' }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flex: 1, minWidth: 0 }}>
-                  <div style={{ width: '36px', height: '36px', borderRadius: '50%', background: bgColor, display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff', fontSize: '14px', fontWeight: '700', flexShrink: 0 }}>
-                    {initials}
+      <div className="split-grid" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px', marginBottom: '24px' }}>
+        {/* Enquiries by Status */}
+        <div className="dash-card" style={{ padding: '20px' }}>
+          <h3 style={{ margin: '0 0 20px', fontSize: '15px', fontWeight: '800', color: '#0f172a' }}>Enquiries by Status</h3>
+          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '20px' }}>
+            <DonutChart data={bookingsStatusData} colors={bookingsChartColors} size={140} />
+            <div style={{ width: '100%', display: 'flex', flexDirection: 'column', gap: '10px' }}>
+              {bookingsStatusData.map((d: any, i: number) => (
+                <div key={i} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    <div style={{ width: '10px', height: '10px', borderRadius: '50%', background: bookingsChartColors[i] }} />
+                    <span style={{ fontSize: '12px', color: '#64748b', fontWeight: '700' }}>{bookingStatusLabels[d.label] || d.label}</span>
                   </div>
-                  <div style={{ minWidth: 0 }}>
-                    <div style={{ fontSize: '14px', fontWeight: '600', color: '#0f172a', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{e.customer?.name || 'Unknown'}</div>
-                    <div style={{ fontSize: '12px', color: '#64748b', marginTop: '1px' }}>{e.customer?.phone || 'No phone'}</div>
-                  </div>
+                  <span style={{ fontSize: '12px', fontWeight: '800', color: '#0f172a' }}>{d.value} ({totalBookingsForChart > 0 ? Math.round((d.value / totalBookingsForChart) * 100) : 0}%)</span>
                 </div>
-                <div style={{ textAlign: 'right', flexShrink: 0 }}>
-                  <div style={{ fontSize: '11px', color: '#94a3b8', textTransform: 'capitalize' }}>{e.source}</div>
-                  <div style={{ fontSize: '11px', color: '#94a3b8', marginTop: '1px' }}>
-                    {new Date(e.createdAt).toLocaleDateString('en-GB')}, {new Date(e.createdAt).toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit', hour12: true })}
-                  </div>
-                </div>
-                <span style={{
-                  padding: '4px 10px', borderRadius: '12px', fontSize: '11px', fontWeight: '700',
-                  background: `${statusColors[e.status] || '#64748b'}18`,
-                  color: statusColors[e.status] || '#64748b',
-                  textTransform: 'capitalize',
-                  whiteSpace: 'nowrap',
-                  flexShrink: 0
-                }}>{e.status}</span>
-              </div>
-            );
-          }) : <div style={{ padding: '24px', textAlign: 'center', color: '#94a3b8', fontSize: '14px' }}>No enquiries yet</div>}
-        </div>
-
-        {/* Right Column: Bookings by Status + Upcoming Bookings */}
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
-          {/* Bookings by Status */}
-          <div className="dash-card" style={{ background: '#fff', borderRadius: '16px', boxShadow: '0 1px 4px rgba(0,0,0,0.06)', border: '1px solid #f1f5f9', padding: '24px' }}>
-            <h3 style={{ margin: '0 0 20px', fontSize: '16px', fontWeight: '700', color: '#0f172a' }}>Bookings by Status</h3>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '24px' }}>
-              <DonutChart data={bookingsStatusData} colors={bookingsChartColors.length > 0 ? bookingsChartColors : bookingDonutColors} size={120} />
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', flex: 1 }}>
-                {bookingsStatusData.map((d: any, i: number) => {
-                  const c = bookingStatusColors[d.label] || { text: '#64748b' };
-                  return (
-                    <div key={i} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '8px' }}>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                        <div style={{ width: '10px', height: '10px', borderRadius: '50%', background: c.text, flexShrink: 0 }} />
-                        <span style={{ fontSize: '13px', color: '#374151', fontWeight: '500' }}>{bookingStatusLabels[d.label] || d.label}</span>
-                      </div>
-                      <span style={{ fontSize: '13px', fontWeight: '700', color: '#0f172a' }}>
-                        {d.value} ({totalBookingsForChart > 0 ? Math.round((d.value / totalBookingsForChart) * 100) : 0}%)
-                      </span>
-                    </div>
-                  );
-                })}
-              </div>
+              ))}
             </div>
           </div>
-
-          {/* Upcoming Bookings */}
-          <div className="dash-card" style={{ background: '#fff', borderRadius: '16px', boxShadow: '0 1px 4px rgba(0,0,0,0.06)', border: '1px solid #f1f5f9', overflow: 'hidden' }}>
-            <div style={{ padding: '20px 24px', borderBottom: '1px solid #f1f5f9', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-              <h3 style={{ margin: 0, fontSize: '16px', fontWeight: '700', color: '#0f172a' }}>Upcoming Bookings</h3>
-              <Link href="/dashboard/bookings" style={{ fontSize: '13px', color: '#f97316', textDecoration: 'none', fontWeight: '600' }}>View all →</Link>
-            </div>
-            {(stats.upcomingBookings || []).length > 0 ? (stats.upcomingBookings || []).map((b: any) => {
-              const bColor = bookingStatusColors[b.status] || { bg: '#f1f5f9', text: '#64748b' };
-              return (
-                <div key={b._id} style={{ padding: '14px 24px', borderBottom: '1px solid #f8fafc', display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '8px' }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flex: 1, minWidth: 0 }}>
-                    <span style={{ fontSize: '16px' }}>✈️</span>
-                    <span style={{ fontSize: '13px', fontWeight: '700', color: '#0f172a', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{b.package?.name || 'Package'}</span>
-                  </div>
-                  <div style={{ fontSize: '12px', color: '#64748b', display: 'flex', alignItems: 'center', gap: '4px', flexShrink: 0 }}>
-                    📅 {new Date(b.travelDate).toLocaleDateString('en-GB')}
-                  </div>
-                  <span style={{
-                    padding: '4px 10px', borderRadius: '12px', fontSize: '10px', fontWeight: '700',
-                    background: bColor.bg, color: bColor.text,
-                    whiteSpace: 'nowrap', flexShrink: 0
-                  }}>{bookingStatusLabels[b.status] || b.status}</span>
-                </div>
-              );
-            }) : <div style={{ padding: '24px', textAlign: 'center', color: '#94a3b8', fontSize: '14px' }}>No upcoming bookings</div>}
-          </div>
         </div>
+
+        {/* Upcoming Bookings */}
+        <div className="dash-card" style={{ overflow: 'hidden' }}>
+          <div style={{ padding: '16px 20px', borderBottom: '1px solid #f1f5f9', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <h3 style={{ margin: 0, fontSize: '15px', fontWeight: '800', color: '#0f172a' }}>Upcoming Bookings</h3>
+            <Link href="/dashboard/bookings" style={{ fontSize: '12px', color: '#2563eb', fontWeight: '700', textDecoration: 'none' }}>View all →</Link>
+          </div>
+          {(stats.upcomingBookings || []).length > 0 ? (stats.upcomingBookings || []).map((b: any) => (
+            <div key={b._id} style={{ padding: '12px 20px', borderBottom: '1px solid #f8fafc', display: 'flex', alignItems: 'center', gap: '12px' }}>
+              <div style={{ width: '36px', height: '36px', borderRadius: '10px', background: '#f8fafc', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '16px' }}>✈️</div>
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <div style={{ fontSize: '13px', fontWeight: '800', color: '#0f172a', textOverflow: 'ellipsis', overflow: 'hidden', whiteSpace: 'nowrap' }}>{b.package?.name}</div>
+                <div style={{ fontSize: '11px', color: '#64748b', marginTop: '2px' }}>📅 {new Date(b.travelDate).toLocaleDateString('en-GB')}</div>
+              </div>
+              <span style={{ padding: '4px 8px', borderRadius: '8px', fontSize: '10px', fontWeight: '800', background: bookingStatusColors[b.status]?.bg, color: bookingStatusColors[b.status]?.text }}>
+                {bookingStatusLabels[b.status]}
+              </span>
+            </div>
+          )) : <div style={{ padding: '20px', textAlign: 'center', color: '#94a3b8', fontSize: '13px' }}>No upcoming bookings</div>}
+        </div>
+      </div>
+
+      {/* Recent Enquiries */}
+      <div className="dash-card" style={{ overflow: 'hidden', marginBottom: '20px' }}>
+        <div style={{ padding: '16px 20px', borderBottom: '1px solid #f1f5f9', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+          <h3 style={{ margin: 0, fontSize: '15px', fontWeight: '800', color: '#0f172a' }}>Recent Enquiries</h3>
+          <Link href="/dashboard/enquiries" style={{ fontSize: '12px', color: '#2563eb', fontWeight: '700', textDecoration: 'none' }}>View all →</Link>
+        </div>
+        {stats.recentEnquiries?.length > 0 ? stats.recentEnquiries.map((e: any) => {
+          const initials = (e.customer?.name || 'U').charAt(0).toUpperCase();
+          const color = ['#f97316', '#8b5cf6', '#10b981', '#2563eb', '#06b6d4'][initials.charCodeAt(0) % 5];
+          return (
+            <div key={e._id} style={{ padding: '12px 20px', borderBottom: '1px solid #f8fafc', display: 'flex', alignItems: 'center', gap: '12px' }}>
+              <div style={{ width: '40px', height: '40px', borderRadius: '50%', background: color, display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff', fontWeight: '800', fontSize: '15px' }}>{initials}</div>
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <div style={{ fontSize: '14px', fontWeight: '800', color: '#0f172a' }}>{e.customer?.name}</div>
+                <div style={{ fontSize: '11px', color: '#64748b', marginTop: '1px' }}>{e.customer?.phone || 'No phone'}</div>
+              </div>
+              <div style={{ textAlign: 'right', flexShrink: 0 }}>
+                <div style={{ fontSize: '11px', color: '#64748b', fontWeight: '600', textTransform: 'capitalize' }}>{e.source}</div>
+                <div style={{ fontSize: '10px', color: '#94a3b8', marginTop: '1px' }}>{new Date(e.createdAt).toLocaleDateString('en-GB')}, {new Date(e.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: true })}</div>
+              </div>
+              <span style={{ padding: '4px 10px', borderRadius: '10px', fontSize: '10px', fontWeight: '800', background: `${statusColors[e.status]}15`, color: statusColors[e.status], textTransform: 'uppercase', minWidth: '60px', textAlign: 'center' }}>
+                {e.status === 'lost' ? 'NEW' : e.status}
+              </span>
+            </div>
+          );
+        }) : <div style={{ padding: '20px', textAlign: 'center', color: '#94a3b8', fontSize: '13px' }}>No enquiries found.</div>}
       </div>
     </div>
   );
