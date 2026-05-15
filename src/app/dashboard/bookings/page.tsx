@@ -1026,9 +1026,11 @@ export default function BookingsPage() {
                         </button>
                       </div>
                       
-                      <div style={{ textAlign: 'right', marginTop: '4px' }}>
-                        <div style={{ fontSize: '12px', fontWeight: '800', color: '#1e293b', textTransform: 'uppercase' }}>{b.package?.name || 'Custom Package'}</div>
-                        <div style={{ fontSize: '11px', color: '#64748b', marginTop: '2px' }}>Rate: ₹{b.package?.price || 0}</div>
+                      <div style={{ textAlign: 'right', marginTop: '4px', maxWidth: '160px' }}>
+                        <div style={{ fontSize: '11px', fontWeight: '800', color: '#1e293b', textTransform: 'uppercase', lineHeight: '1.2', wordBreak: 'break-word' }}>
+                          {b.package?.name || 'Custom Package'}
+                        </div>
+                        <div style={{ fontSize: '10px', color: '#64748b', marginTop: '2px', fontWeight: '600' }}>Rate: ₹{b.package?.price || 0}</div>
                       </div>
                     </div>
                   </div>
