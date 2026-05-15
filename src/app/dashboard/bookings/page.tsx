@@ -983,15 +983,15 @@ export default function BookingsPage() {
                 <div key={b._id} style={{ position: 'relative', background: '#fff', borderRadius: '16px', border: '1px solid #f1f5f9', padding: '20px', width: '100%', boxSizing: 'border-box', boxShadow: '0 2px 8px rgba(0,0,0,0.04)' }}>
                   
                   {/* Top Row: Customer info, Status badge, 3-dot Menu */}
-                  <div style={{ marginBottom: '16px', paddingRight: '150px' }}>
-                    <div style={{ fontSize: '18px', fontWeight: '700', color: '#0f172a' }}>{b.customer?.name || 'Unknown'}</div>
-                    <div style={{ fontSize: '13px', color: '#64748b', marginTop: '2px' }}>{b.customer?.phone || b.customer?.email}</div>
-                    <div style={{ fontSize: '11px', color: '#94a3b8', marginTop: '4px' }}>
-                      Booked: {new Date(b.createdAt).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })}, {new Date(b.createdAt).toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' })}
+                  <div style={{ marginBottom: '16px', paddingRight: '130px' }}>
+                    <div style={{ fontSize: '18px', fontWeight: '700', color: '#0f172a', letterSpacing: '-0.01em' }}>{b.customer?.name || 'Unknown'}</div>
+                    <div style={{ fontSize: '13px', color: '#475569', marginTop: '2px', fontWeight: '500' }}>{b.customer?.phone || b.customer?.email}</div>
+                    <div style={{ fontSize: '11px', color: '#64748b', marginTop: '6px', fontWeight: '500' }}>
+                      📅 {new Date(b.createdAt).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })}, {new Date(b.createdAt).toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' })}
                     </div>
                   </div>
                   
-                  <div style={{ position: 'absolute', top: '20px', right: '12px', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                  <div style={{ position: 'absolute', top: '20px', right: '10px', display: 'flex', alignItems: 'center', gap: '4px' }}>
                     <select
                       value={b.status}
                       onChange={(e) => handleStatusChange(b, e.target.value)}
@@ -999,13 +999,13 @@ export default function BookingsPage() {
                         background: badge.bg,
                         color: badge.text,
                         border: `1px solid ${badge.border}`,
-                        padding: '4px 6px',
+                        padding: '4px 8px',
                         borderRadius: '6px',
                         fontSize: '10px',
                         fontWeight: '700',
                         outline: 'none',
                         cursor: 'pointer',
-                        maxWidth: '110px',
+                        maxWidth: '105px',
                         textOverflow: 'ellipsis'
                       }}
                     >
@@ -1019,7 +1019,7 @@ export default function BookingsPage() {
 
                     <button 
                       onClick={() => setExpandedDetailsId(expandedDetailsId === b._id ? null : b._id)}
-                      style={{ background: 'transparent', border: 'none', cursor: 'pointer', padding: '4px', fontSize: '18px', color: '#64748b', lineHeight: 1 }}
+                      style={{ background: 'transparent', border: 'none', cursor: 'pointer', padding: '4px', fontSize: '18px', color: '#94a3b8', lineHeight: 1 }}
                       title="View Details & Notes"
                     >
                       ⋮
@@ -1028,9 +1028,9 @@ export default function BookingsPage() {
 
                   {/* Optional View Details & Notes Drawer / Box */}
                   {expandedDetailsId === b._id && (
-                    <div style={{ background: '#f8fafc', border: '1px solid #cbd5e1', borderRadius: '12px', padding: '16px', marginBottom: '16px', fontSize: '13px' }}>
+                    <div style={{ background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: '12px', padding: '16px', marginBottom: '16px', fontSize: '13px' }}>
                       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px', borderBottom: '1px solid #e2e8f0', paddingBottom: '6px' }}>
-                        <span style={{ fontWeight: '700', color: '#0f172a' }}>📝 Booking Form Details & Notes</span>
+                        <span style={{ fontWeight: '700', color: '#0f172a' }}>📝 Booking Details & Notes</span>
                         <div style={{ display: 'flex', gap: '8px' }}>
                           <button onClick={() => { setEditingNoteId(b._id); setTempNote(b.notes || ''); }} style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: '13px' }}>✏️ Edit</button>
                           {b.notes && <button onClick={() => deleteNote(b._id)} style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: '13px' }}>🗑️ Delete</button>}
@@ -1046,7 +1046,7 @@ export default function BookingsPage() {
                           <textarea
                             value={tempNote}
                             onChange={(ev) => setTempNote(ev.target.value)}
-                            style={{ width: '100%', padding: '10px', border: '1px solid #cbd5e1', borderRadius: '6px', fontSize: '12px', boxSizing: 'border-box', minHeight: '60px', resize: 'vertical' }}
+                            style={{ width: '100%', padding: '10px', border: '1px solid #cbd5e1', borderRadius: '8px', fontSize: '12px', boxSizing: 'border-box', minHeight: '60px', resize: 'vertical' }}
                             placeholder="Type booking note or family members here..."
                             autoFocus
                           />
@@ -1060,52 +1060,52 @@ export default function BookingsPage() {
                   )}
 
                   {/* Middle Section: Side-by-Side Grid Layout matching the Mockup */}
-                  <div style={{ display: 'grid', gridTemplateColumns: '1.4fr 1fr', gap: '10px', alignItems: 'flex-start', marginBottom: '20px' }}>
+                  <div style={{ display: 'grid', gridTemplateColumns: '1.2fr 1fr', gap: '12px', alignItems: 'start', marginBottom: '20px' }}>
                     
                     {/* Left Column: Package Info List */}
                     <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', fontSize: '13px' }}>
-                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', gap: '8px' }}>
                         <span style={{ color: '#64748b' }}>Package:</span>
-                        <strong style={{ color: '#0f172a', textAlign: 'right', flex: 1, marginLeft: '8px' }}>{b.package?.name?.toUpperCase() || 'CUSTOM PACKAGE'}</strong>
+                        <strong style={{ color: '#0f172a', textAlign: 'right' }}>{b.package?.name || 'Custom Package'}</strong>
                       </div>
 
-                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', gap: '8px' }}>
                         <span style={{ color: '#64748b' }}>Rate:</span>
-                        <strong style={{ color: '#2563eb', textAlign: 'right' }}>₹{b.package?.price || 0}</strong>
+                        <strong style={{ color: '#2563eb' }}>₹{b.package?.price || 0}</strong>
                       </div>
 
                       {b.package?.duration && (
-                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', gap: '8px' }}>
                           <span style={{ color: '#64748b' }}>Duration:</span>
-                          <strong style={{ color: '#0f172a', textAlign: 'right' }}>{b.package.duration.toUpperCase()}</strong>
+                          <strong style={{ color: '#475569' }}>{b.package.duration}</strong>
                         </div>
                       )}
 
                       {batchName && (
-                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', gap: '8px' }}>
                           <span style={{ color: '#64748b' }}>Batch:</span>
-                          <strong style={{ color: '#0f172a', textAlign: 'right' }}>{batchName}</strong>
+                          <strong style={{ color: '#0f172a' }}>{batchName}</strong>
                         </div>
                       )}
 
-                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                        <span style={{ color: '#64748b' }}>Travel:</span>
-                        <strong style={{ color: '#0f172a', textAlign: 'right' }}>{startD || 'Unassigned'}</strong>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', gap: '8px', flexDirection: 'column' }}>
+                        <span style={{ color: '#64748b' }}>Travel Dates:</span>
+                        <strong style={{ color: '#1e293b', fontSize: '12px' }}>{startD || 'N/A'} {endD ? `- ${endD}` : ''}</strong>
                       </div>
 
-                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', gap: '8px' }}>
                         <span style={{ color: '#64748b' }}>Travelers:</span>
-                        <strong style={{ color: '#ea580c', textAlign: 'right' }}>{b.numberOfTravelers} Pax</strong>
+                        <strong style={{ color: '#ea580c' }}>{b.numberOfTravelers} Pax</strong>
                       </div>
                     </div>
 
                     {/* Right Column: Gray Financial Breakdown Box */}
                     <div 
                       onClick={() => setActiveHistoryId(activeHistoryId === b._id ? null : b._id)}
-                      style={{ background: '#f8fafc', border: '1px solid #f1f5f9', borderRadius: '12px', padding: '14px', width: '100%', boxSizing: 'border-box', cursor: 'pointer', minHeight: '140px' }}
+                      style={{ background: '#f8fafc', border: '1px solid #f1f5f9', borderRadius: '12px', padding: '14px', width: '100%', boxSizing: 'border-box', cursor: 'pointer' }}
                       title="Click to view payment history"
                     >
-                      <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', fontSize: '13px' }}>
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', fontSize: '13px' }}>
                         <div style={{ display: 'flex', justifyContent: 'space-between' }}>
                           <span style={{ color: '#64748b' }}>Total</span>
                           <strong style={{ color: '#0f172a' }}>₹{b.totalAmount || 0}</strong>
@@ -1116,7 +1116,7 @@ export default function BookingsPage() {
                           <strong style={{ color: b.advancePaid > 0 ? '#16a34a' : '#0f172a' }}>₹{b.advancePaid || 0}</strong>
                         </div>
 
-                        <div style={{ borderTop: '1px dashed #cbd5e1', margin: '4px 0' }} />
+                        <div style={{ borderTop: '1px dashed #cbd5e1', margin: '6px 0' }} />
 
                         <div style={{ display: 'flex', justifyContent: 'space-between', color: (b.balancePending || 0) > 0 ? '#ef4444' : '#16a34a', fontWeight: '700' }}>
                           <span>Due:</span>
@@ -1127,13 +1127,15 @@ export default function BookingsPage() {
                       {/* Clickable Payment Log History inside Financial Box */}
                       {activeHistoryId === b._id && (
                         <div style={{ marginTop: '10px', paddingTop: '8px', borderTop: '1px solid #cbd5e1', fontSize: '11px' }}>
-                          <div style={{ fontWeight: '700', color: '#0f172a', marginBottom: '4px' }}>📜 Logs</div>
+                          <div style={{ fontWeight: '700', color: '#0f172a', marginBottom: '4px' }}>📜 Payment Logs</div>
                           {b.paymentHistory?.length > 0 ? b.paymentHistory.map((ph: any, i: number) => (
                             <div key={i} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', color: '#334155', margin: '2px 0' }}>
-                              <span>{ph.method?.toUpperCase().slice(0, 3)}</span>
+                              <span>{ph.method?.toUpperCase()} ({new Date(ph.date).toLocaleDateString()})</span>
                               <strong style={{ color: '#16a34a' }}>+₹{ph.amount}</strong>
                             </div>
-                          )) : null}
+                          )) : (
+                            <div style={{ color: '#64748b' }}>No separate payment logs recorded.</div>
+                          )}
                         </div>
                       )}
                     </div>
@@ -1141,13 +1143,13 @@ export default function BookingsPage() {
 
                   {/* Bottom Row: 3 Equal-Width Action Buttons Cluster */}
                   <div style={{ display: 'flex', gap: '8px', width: '100%' }}>
-                    <button onClick={() => handleEdit(b)} className="btn-edit" style={{ flex: 1, padding: '12px', borderRadius: '10px', fontSize: '14px', fontWeight: '700' }}>
+                    <button onClick={() => handleEdit(b)} className="btn-edit">
                       ✏️ Edit
                     </button>
-                    <button onClick={() => handleUpdatePayment(b)} className="btn-pay" style={{ flex: 1, padding: '12px', borderRadius: '10px', fontSize: '14px', fontWeight: '700' }}>
+                    <button onClick={() => handleUpdatePayment(b)} className="btn-pay">
                       ₹ Pay
                     </button>
-                    <button onClick={() => handleDelete(b._id)} className="btn-delete" style={{ flex: 1, padding: '12px', borderRadius: '10px', fontSize: '14px', fontWeight: '700' }}>
+                    <button onClick={() => handleDelete(b._id)} className="btn-delete">
                       🗑️ Delete
                     </button>
                   </div>
