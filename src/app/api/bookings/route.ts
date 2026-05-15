@@ -19,6 +19,12 @@ export async function POST(request: NextRequest) {
     // Automatically set who created the booking
     if (user) {
       body.bookedBy = user.userId;
+      
+      // Add attribution to notes if present
+      if (body.notes && body.notes.trim()) {
+        const firstName = user.name.split(' ')[0];
+        body.notes = `${body.notes.trim()} - ${firstName}`;
+      }
     }
 
     const booking = await createBooking(body);

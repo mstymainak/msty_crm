@@ -259,6 +259,22 @@ export default function EnquiriesPage() {
 
   const selectStyle = { padding: '8px 12px', border: '1px solid #e2e8f0', borderRadius: '6px', fontSize: '13px', background: '#fff', cursor: 'pointer', outline: 'none', color: '#475569' };
 
+  const renderNoteWithAttribution = (note: string) => {
+    if (!note) return null;
+    const match = note.match(/^([\s\S]*)\s-\s(\w+)$/);
+    if (match) {
+      return (
+        <>
+          {match[1]}
+          <span style={{ fontSize: '9px', color: '#94a3b8', marginLeft: '4px', fontStyle: 'italic', display: 'inline-block' }}>
+            - {match[2]}
+          </span>
+        </>
+      );
+    }
+    return note;
+  };
+
   return (
     <div>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px', flexWrap: 'wrap', gap: '12px' }}>
@@ -529,7 +545,7 @@ export default function EnquiriesPage() {
                           ) : e.adminNote ? (
                             <div style={{ marginTop: '10px', paddingTop: '10px', borderTop: '1px dashed #cbd5e1', color: '#0f172a', fontWeight: '500', whiteSpace: 'pre-wrap' }}>
                               <span style={{ fontSize: '10px', textTransform: 'uppercase', color: '#64748b', display: 'block', marginBottom: '4px', fontWeight: '600' }}>Note</span>
-                              {e.adminNote}
+                              {renderNoteWithAttribution(e.adminNote)}
                             </div>
                           ) : null}
                         </div>
@@ -774,7 +790,7 @@ export default function EnquiriesPage() {
                             </div>
                           ) : e.adminNote ? (
                             <div style={{ fontSize: '11px', color: '#0f172a', background: '#f8fafc', padding: '6px', borderRadius: '4px', marginTop: '4px' }}>
-                              {e.adminNote}
+                              {renderNoteWithAttribution(e.adminNote)}
                             </div>
                           ) : null}
                         </div>

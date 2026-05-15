@@ -30,6 +30,14 @@ export async function PUT(request: NextRequest, { params }: { params: Promise<{ 
       return NextResponse.json({ error: 'Access denied. Only the creator or an admin can edit this booking.' }, { status: 403 });
     }
 
+    // Add attribution to notes if present and being updated
+    if (body.notes && body.notes.trim()) {
+      const firstName = user.name.split(' ')[0];
+      // Remove any existing attribution first to avoid duplicates
+      const cleanNote = body.notes.trim().replace(/\s-\s\w+$/, '');
+      body.notes = `${cleanNote} - ${firstName}`;
+    }
+
     const booking = await updateBooking(id, body);
     return NextResponse.json(booking);
   } catch (error) {

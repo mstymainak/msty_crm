@@ -331,6 +331,22 @@ export default function BookingsPage() {
   const selectedEnqObj = enquiries.find(eq => eq._id === form.enquiry);
   const selectedCustObj = customers.find(c => c._id === form.customer);
 
+  const renderNoteWithAttribution = (note: string) => {
+    if (!note) return null;
+    const match = note.match(/^([\s\S]*)\s-\s(\w+)$/);
+    if (match) {
+      return (
+        <>
+          {match[1]}
+          <span style={{ fontSize: '9px', color: '#94a3b8', marginLeft: '4px', fontStyle: 'italic', display: 'inline-block' }}>
+            - {match[2]}
+          </span>
+        </>
+      );
+    }
+    return note;
+  };
+
   return (
     <div>
       <style>{`
@@ -864,7 +880,7 @@ export default function BookingsPage() {
                             </div>
 
                             <div style={{ whiteSpace: 'pre-wrap', color: '#334155', paddingRight: '45px', fontWeight: '500', lineHeight: 1.4 }}>
-                              {b.notes || 'No notes added yet.'}
+                              {b.notes ? renderNoteWithAttribution(b.notes) : 'No notes added yet.'}
                             </div>
 
                             {editingNoteId === b._id && (
@@ -1071,7 +1087,7 @@ export default function BookingsPage() {
                       </div>
 
                       <div style={{ whiteSpace: 'pre-wrap', color: '#334155', lineHeight: 1.4, fontWeight: '500' }}>
-                        {b.notes || 'No notes added yet.'}
+                        {b.notes ? renderNoteWithAttribution(b.notes) : 'No notes added yet.'}
                       </div>
 
                       {editingNoteId === b._id && (
