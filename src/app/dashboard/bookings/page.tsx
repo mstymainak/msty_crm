@@ -11,6 +11,7 @@ export default function BookingsPage() {
   const [refreshing, setRefreshing] = useState(false);
   const [showAddForm, setShowAddForm] = useState(false);
   const [showCompletedOnly, setShowCompletedOnly] = useState(false);
+  const [currentUser, setCurrentUser] = useState<any>(null);
 
   // Pagination State
   const [currentPage, setCurrentPage] = useState(1);
@@ -63,6 +64,7 @@ export default function BookingsPage() {
 
   useEffect(() => {
     fetchBookings();
+    fetch('/api/auth/me').then(r => r.json()).then(d => setCurrentUser(d.user));
     fetch('/api/customers').then(r => r.json()).then(d => setCustomers(Array.isArray(d) ? d : []));
     fetch('/api/packages').then(r => r.json()).then(d => setPackages(Array.isArray(d) ? d : []));
     fetch('/api/enquiries').then(r => r.json()).then(d => setEnquiries(Array.isArray(d) ? d : []));
@@ -816,6 +818,11 @@ export default function BookingsPage() {
                         <div style={{ fontSize: '10px', color: '#94a3b8', marginTop: '6px', whiteSpace: 'nowrap' }}>
                           Booked: {new Date(b.createdAt).toLocaleDateString('en-GB')}, {new Date(b.createdAt).toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit', hour12: true })}
                         </div>
+                        {b.bookedBy?.name && (
+                          <div style={{ fontSize: '11px', color: '#64748b', fontWeight: '700', marginTop: '4px' }}>
+                            👤 {b.bookedBy.name.split(' ')[0]}
+                          </div>
+                        )}
                       </td>
 
                       <td>
@@ -947,17 +954,27 @@ export default function BookingsPage() {
                       </td>
 
                       <td>
-                        <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', alignItems: 'center' }}>
-                          <button onClick={() => handleEdit(b)} className="btn-edit" title="Edit Booking">
-                            ✏️ Edit
-                          </button>
-                          <button onClick={() => handleUpdatePayment(b)} className="btn-pay" title="Record Payment">
-                            ₹ Pay
-                          </button>
-                          <button onClick={() => handleDelete(b._id)} className="btn-delete" title="Delete Booking">
-                            🗑️ Delete
-                          </button>
-                        </div>
+                        {(() => {
+                          const isOwner = currentUser && b.bookedBy && (b.bookedBy._id || b.bookedBy) === currentUser.userId;
+                          const isAdmin = currentUser && currentUser.role === 'admin';
+                          const canEdit = isAdmin || isOwner;
+                          
+                          if (!canEdit) return <span style={{ fontSize: '12px', color: '#94a3b8', fontWeight: '500' }}>View Only</span>;
+
+                          return (
+                            <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', alignItems: 'center' }}>
+                              <button onClick={() => handleEdit(b)} className="btn-edit" title="Edit Booking">
+                                ✏️ Edit
+                              </button>
+                              <button onClick={() => handleUpdatePayment(b)} className="btn-pay" title="Record Payment">
+                                ₹ Pay
+                              </button>
+                              <button onClick={() => handleDelete(b._id)} className="btn-delete" title="Delete Booking">
+                                🗑️ Delete
+                              </button>
+                            </div>
+                          );
+                        })()}
                       </td>
                     </tr>
                   );
@@ -990,6 +1007,11 @@ export default function BookingsPage() {
                       <div style={{ fontSize: '12px', color: '#64748b', marginTop: '6px', fontWeight: '500' }}>
                         Booked: {new Date(b.createdAt).toLocaleDateString('en-GB')}, {new Date(b.createdAt).toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit', hour12: true }).toLowerCase()}
                       </div>
+                      {b.bookedBy?.name && (
+                        <div style={{ fontSize: '11px', color: '#64748b', fontWeight: '700', marginTop: '4px' }}>
+                          👤 {b.bookedBy.name.split(' ')[0]}
+                        </div>
+                      )}
                     </div>
                     
                     <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '4px' }}>
@@ -1138,17 +1160,31 @@ export default function BookingsPage() {
                   </div>
 
                   {/* Bottom Row: 3 Equal-Width Action Buttons Cluster */}
-                  <div style={{ display: 'flex', gap: '8px', width: '100%' }}>
-                    <button onClick={() => handleEdit(b)} style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px', padding: '10px', borderRadius: '10px', border: '1px solid #dbeafe', background: '#eff6ff', color: '#2563eb', fontSize: '13px', fontWeight: '700', cursor: 'pointer' }}>
-                      <span style={{ fontSize: '14px' }}>✏️</span> Edit
-                    </button>
-                    <button onClick={() => handleUpdatePayment(b)} style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px', padding: '10px', borderRadius: '10px', border: '1px solid #dcfce7', background: '#f0fdf4', color: '#16a34a', fontSize: '13px', fontWeight: '700', cursor: 'pointer' }}>
-                      <span style={{ fontSize: '14px' }}>₹</span> Pay
-                    </button>
-                    <button onClick={() => handleDelete(b._id)} style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px', padding: '10px', borderRadius: '10px', border: '1px solid #fee2e2', background: '#fef2f2', color: '#ef4444', fontSize: '13px', fontWeight: '700', cursor: 'pointer' }}>
-                      <span style={{ fontSize: '14px' }}>🗑️</span> Delete
-                    </button>
-                  </div>
+                  {(() => {
+                    const isOwner = currentUser && b.bookedBy && (b.bookedBy._id || b.bookedBy) === currentUser.userId;
+                    const isAdmin = currentUser && currentUser.role === 'admin';
+                    const canEdit = isAdmin || isOwner;
+
+                    if (!canEdit) return (
+                      <div style={{ textAlign: 'center', padding: '10px', background: '#f8fafc', borderRadius: '10px', color: '#94a3b8', fontSize: '12px', fontWeight: '600' }}>
+                        🔒 Read-Only (Created by {b.bookedBy?.name || 'Admin'})
+                      </div>
+                    );
+
+                    return (
+                      <div style={{ display: 'flex', gap: '8px', width: '100%' }}>
+                        <button onClick={() => handleEdit(b)} style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px', padding: '10px', borderRadius: '10px', border: '1px solid #dbeafe', background: '#eff6ff', color: '#2563eb', fontSize: '13px', fontWeight: '700', cursor: 'pointer' }}>
+                          <span style={{ fontSize: '14px' }}>✏️</span> Edit
+                        </button>
+                        <button onClick={() => handleUpdatePayment(b)} style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px', padding: '10px', borderRadius: '10px', border: '1px solid #dcfce7', background: '#f0fdf4', color: '#16a34a', fontSize: '13px', fontWeight: '700', cursor: 'pointer' }}>
+                          <span style={{ fontSize: '14px' }}>₹</span> Pay
+                        </button>
+                        <button onClick={() => handleDelete(b._id)} style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px', padding: '10px', borderRadius: '10px', border: '1px solid #fee2e2', background: '#fef2f2', color: '#ef4444', fontSize: '13px', fontWeight: '700', cursor: 'pointer' }}>
+                          <span style={{ fontSize: '14px' }}>🗑️</span> Delete
+                        </button>
+                      </div>
+                    );
+                  })()}
                 </div>
               );
             })}
