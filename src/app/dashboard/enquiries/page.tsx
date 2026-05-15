@@ -621,6 +621,7 @@ export default function EnquiriesPage() {
                     toggleSelectEnquiry(e._id);
                   }}
                   style={{
+                    position: 'relative',
                     background: isSelected ? '#f0f7ff' : pc.bg,
                     borderRadius: '12px',
                     border: isSelected ? '2px solid #3b82f6' : `1px solid ${pc.text}20`,
@@ -630,6 +631,11 @@ export default function EnquiriesPage() {
                     transition: 'all 0.15s'
                   }}
                 >
+                  {/* Date & Time Display (Right Positioned as per mockup) */}
+                  <div style={{ position: 'absolute', top: '50px', right: '14px', textAlign: 'right', fontSize: '11px', color: '#64748b', fontWeight: '500', lineHeight: '1.4' }}>
+                    <div>{new Date(e.createdAt).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })}</div>
+                    <div>{new Date(e.createdAt).toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' })}</div>
+                  </div>
                   <div style={{ flex: 1 }}>
                     {/* First Row: Name, Package Select, Source */}
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
