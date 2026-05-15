@@ -55,7 +55,7 @@ export default function EnquiriesPage() {
 
   // Member Modal States for adding people/family members to an enquiry
   const [memberModalEnquiry, setMemberModalEnquiry] = useState<any | null>(null);
-  const [newMemberForm, setNewMemberForm] = useState({ name: '', phone: '', relation: '', age: '' });
+  const [newMemberForm, setNewMemberForm] = useState({ name: '', phone: '', relation: '', city: '' });
   const [savingMember, setSavingMember] = useState(false);
 
   const [refreshing, setRefreshing] = useState(false);
@@ -151,7 +151,7 @@ export default function EnquiriesPage() {
   // Add Member submit logic
   const handleOpenAddMemberModal = (enquiry: any) => {
     setMemberModalEnquiry(enquiry);
-    setNewMemberForm({ name: '', phone: '', relation: '', age: '' });
+    setNewMemberForm({ name: '', phone: '', relation: '', city: '' });
   };
 
   const handleAddMemberSubmit = async () => {
@@ -170,7 +170,7 @@ export default function EnquiriesPage() {
       if (res.ok) {
         const updatedEnquiry = await res.json();
         setMemberModalEnquiry(updatedEnquiry);
-        setNewMemberForm({ name: '', phone: '', relation: '', age: '' });
+        setNewMemberForm({ name: '', phone: '', relation: '', city: '' });
         fetchEnquiries();
       } else {
         alert('Failed to add member.');
@@ -1009,7 +1009,7 @@ export default function EnquiriesPage() {
                             )}
                           </div>
                           <div style={{ fontSize: '11px', color: '#64748b', marginTop: '4px' }}>
-                            {m.phone && `📞 ${m.phone}`} {m.phone && m.age && '•'} {m.age && `Age: ${m.age}`}
+                            {m.phone && `📞 ${m.phone}`} {m.phone && m.city && '•'} {m.city && `City: ${m.city}`}
                           </div>
                         </div>
                         
@@ -1042,31 +1042,35 @@ export default function EnquiriesPage() {
                   ➕ Add New Person
                 </h4>
                 
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
-                  <input
-                    placeholder="Full Name *"
-                    value={newMemberForm.name}
-                    onChange={(e) => setNewMemberForm({ ...newMemberForm, name: e.target.value })}
-                    style={{ padding: '8px 12px', border: '1px solid #cbd5e1', borderRadius: '6px', fontSize: '13px', outline: 'none' }}
-                  />
-                  <input
-                    placeholder="Relation (e.g. Spouse)"
-                    value={newMemberForm.relation}
-                    onChange={(e) => setNewMemberForm({ ...newMemberForm, relation: e.target.value })}
-                    style={{ padding: '8px 12px', border: '1px solid #cbd5e1', borderRadius: '6px', fontSize: '13px', outline: 'none' }}
-                  />
-                  <input
-                    placeholder="Phone Number"
-                    value={newMemberForm.phone}
-                    onChange={(e) => setNewMemberForm({ ...newMemberForm, phone: e.target.value })}
-                    style={{ padding: '8px 12px', border: '1px solid #cbd5e1', borderRadius: '6px', fontSize: '13px', outline: 'none' }}
-                  />
-                  <input
-                    placeholder="Age"
-                    value={newMemberForm.age}
-                    onChange={(e) => setNewMemberForm({ ...newMemberForm, age: e.target.value })}
-                    style={{ padding: '8px 12px', border: '1px solid #cbd5e1', borderRadius: '6px', fontSize: '13px', outline: 'none' }}
-                  />
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: '12px' }}>
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
+                    <input
+                      placeholder="Full Name *"
+                      value={newMemberForm.name}
+                      onChange={(e) => setNewMemberForm({ ...newMemberForm, name: e.target.value })}
+                      style={{ padding: '10px 12px', border: '1px solid #cbd5e1', borderRadius: '8px', fontSize: '13px', outline: 'none' }}
+                    />
+                    <input
+                      placeholder="Relation (e.g. Spouse)"
+                      value={newMemberForm.relation}
+                      onChange={(e) => setNewMemberForm({ ...newMemberForm, relation: e.target.value })}
+                      style={{ padding: '10px 12px', border: '1px solid #cbd5e1', borderRadius: '8px', fontSize: '13px', outline: 'none' }}
+                    />
+                  </div>
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
+                    <input
+                      placeholder="Phone Number"
+                      value={newMemberForm.phone}
+                      onChange={(e) => setNewMemberForm({ ...newMemberForm, phone: e.target.value })}
+                      style={{ padding: '10px 12px', border: '1px solid #cbd5e1', borderRadius: '8px', fontSize: '13px', outline: 'none' }}
+                    />
+                    <input
+                      placeholder="City"
+                      value={newMemberForm.city}
+                      onChange={(e) => setNewMemberForm({ ...newMemberForm, city: e.target.value })}
+                      style={{ padding: '10px 12px', border: '1px solid #cbd5e1', borderRadius: '8px', fontSize: '13px', outline: 'none' }}
+                    />
+                  </div>
                 </div>
                 
                 <button

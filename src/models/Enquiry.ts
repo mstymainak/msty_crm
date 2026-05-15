@@ -15,7 +15,7 @@ const EnquirySchema = new Schema({
     name: { type: String, required: true },
     phone: { type: String, default: '' },
     relation: { type: String, default: '' },
-    age: { type: String, default: '' }
+    city: { type: String, default: '' }
   }],
   isDeleted: { type: Boolean, default: false },
   deletedAt: { type: Date, default: null },

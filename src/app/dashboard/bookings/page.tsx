@@ -980,53 +980,50 @@ export default function BookingsPage() {
               const endD = b.endTravelDate ? new Date(b.endTravelDate).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' }) : '';
 
               return (
-                <div key={b._id} style={{ background: '#fff', borderRadius: '16px', border: '1px solid #f1f5f9', padding: '20px', width: '100%', boxSizing: 'border-box', boxShadow: '0 2px 8px rgba(0,0,0,0.04)' }}>
+                <div key={b._id} style={{ position: 'relative', background: '#fff', borderRadius: '16px', border: '1px solid #f1f5f9', padding: '20px', width: '100%', boxSizing: 'border-box', boxShadow: '0 2px 8px rgba(0,0,0,0.04)' }}>
                   
                   {/* Top Row: Customer info, Status badge, 3-dot Menu */}
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '16px', gap: '8px', flexWrap: 'wrap' }}>
-                    <div style={{ flex: '1 1 140px', minWidth: '140px' }}>
-                      <div style={{ fontSize: '18px', fontWeight: '700', color: '#0f172a' }}>{b.customer?.name || 'Unknown'}</div>
-                      <div style={{ fontSize: '13px', color: '#64748b', marginTop: '2px' }}>{b.customer?.phone || b.customer?.email}</div>
-                      <div style={{ fontSize: '11px', color: '#94a3b8', marginTop: '4px' }}>
-                        Booked: {new Date(b.createdAt).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })}, {new Date(b.createdAt).toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' })}
-                      </div>
+                  <div style={{ marginBottom: '16px', paddingRight: '150px' }}>
+                    <div style={{ fontSize: '18px', fontWeight: '700', color: '#0f172a' }}>{b.customer?.name || 'Unknown'}</div>
+                    <div style={{ fontSize: '13px', color: '#64748b', marginTop: '2px' }}>{b.customer?.phone || b.customer?.email}</div>
+                    <div style={{ fontSize: '11px', color: '#94a3b8', marginTop: '4px' }}>
+                      Booked: {new Date(b.createdAt).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })}, {new Date(b.createdAt).toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' })}
                     </div>
-                    
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '6px', flex: '0 0 auto' }}>
-                      <select
-                        value={b.status}
-                        onChange={(e) => handleStatusChange(b, e.target.value)}
-                        style={{
-                          background: badge.bg,
-                          color: badge.text,
-                          border: `1px solid ${badge.border}`,
-                          padding: '4px 8px',
-                          borderRadius: '6px',
-                          fontSize: '11px',
-                          fontWeight: '700',
-                          outline: 'none',
-                          cursor: 'pointer',
-                          maxWidth: '130px',
-                          textOverflow: 'ellipsis'
-                        }}
-                      >
-                        <option value="confirmed">Confirmed</option>
-                        <option value="payment_pending">Payment Pending</option>
-                        <option value="paid">Paid</option>
-                        <option value="in_progress">In Progress</option>
-                        <option value="completed">Completed</option>
-                        <option value="cancelled">Cancelled</option>
-                      </select>
+                  </div>
+                  
+                  <div style={{ position: 'absolute', top: '20px', right: '12px', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                    <select
+                      value={b.status}
+                      onChange={(e) => handleStatusChange(b, e.target.value)}
+                      style={{
+                        background: badge.bg,
+                        color: badge.text,
+                        border: `1px solid ${badge.border}`,
+                        padding: '4px 6px',
+                        borderRadius: '6px',
+                        fontSize: '10px',
+                        fontWeight: '700',
+                        outline: 'none',
+                        cursor: 'pointer',
+                        maxWidth: '110px',
+                        textOverflow: 'ellipsis'
+                      }}
+                    >
+                      <option value="confirmed">Confirmed</option>
+                      <option value="payment_pending">Pending</option>
+                      <option value="paid">Paid</option>
+                      <option value="in_progress">In Progress</option>
+                      <option value="completed">Completed</option>
+                      <option value="cancelled">Cancelled</option>
+                    </select>
 
-                      {/* 3-Dot Toggler for View Details & Notes */}
-                      <button 
-                        onClick={() => setExpandedDetailsId(expandedDetailsId === b._id ? null : b._id)}
-                        style={{ background: 'transparent', border: 'none', cursor: 'pointer', padding: '4px 8px', fontSize: '18px', color: '#64748b', lineHeight: 1 }}
-                        title="View Details & Notes"
-                      >
-                        ⋮
-                      </button>
-                    </div>
+                    <button 
+                      onClick={() => setExpandedDetailsId(expandedDetailsId === b._id ? null : b._id)}
+                      style={{ background: 'transparent', border: 'none', cursor: 'pointer', padding: '4px', fontSize: '18px', color: '#64748b', lineHeight: 1 }}
+                      title="View Details & Notes"
+                    >
+                      ⋮
+                    </button>
                   </div>
 
                   {/* Optional View Details & Notes Drawer / Box */}
@@ -1110,24 +1107,19 @@ export default function BookingsPage() {
                     >
                       <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', fontSize: '13px' }}>
                         <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                          <span style={{ color: '#64748b' }}>Total Cost</span>
+                          <span style={{ color: '#64748b' }}>Total</span>
                           <strong style={{ color: '#0f172a' }}>₹{b.totalAmount || 0}</strong>
                         </div>
                         
                         <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                          <span style={{ color: '#64748b' }}>Advance Paid</span>
-                          <strong style={{ color: b.advancePaid > 0 ? '#16a34a' : '#0f172a' }}>₹{b.advancePaid || 0}</strong>
-                        </div>
-
-                        <div style={{ display: 'flex', justifyContent: 'space-between' }}>
                           <span style={{ color: '#64748b' }}>Paid</span>
-                          <span style={{ color: '#64748b' }}>—</span>
+                          <strong style={{ color: b.advancePaid > 0 ? '#16a34a' : '#0f172a' }}>₹{b.advancePaid || 0}</strong>
                         </div>
 
                         <div style={{ borderTop: '1px dashed #cbd5e1', margin: '6px 0' }} />
 
                         <div style={{ display: 'flex', justifyContent: 'space-between', color: (b.balancePending || 0) > 0 ? '#ef4444' : '#16a34a', fontWeight: '700' }}>
-                          <span>Balance Due:</span>
+                          <span>Due:</span>
                           <span>₹{b.balancePending || 0}</span>
                         </div>
                       </div>
