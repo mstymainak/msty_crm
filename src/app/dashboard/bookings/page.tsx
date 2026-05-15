@@ -1060,52 +1060,52 @@ export default function BookingsPage() {
                   )}
 
                   {/* Middle Section: Side-by-Side Grid Layout matching the Mockup */}
-                  <div style={{ display: 'grid', gridTemplateColumns: '1.2fr 1fr', gap: '12px', alignItems: 'center', marginBottom: '20px' }}>
+                  <div style={{ display: 'grid', gridTemplateColumns: '1.4fr 1fr', gap: '10px', alignItems: 'flex-start', marginBottom: '20px' }}>
                     
                     {/* Left Column: Package Info List */}
                     <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', fontSize: '13px' }}>
-                      <div style={{ display: 'flex', justifyContent: 'space-between', gap: '8px' }}>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                         <span style={{ color: '#64748b' }}>Package:</span>
-                        <strong style={{ color: '#0f172a', textAlign: 'right' }}>{b.package?.name || 'Custom Package'}</strong>
+                        <strong style={{ color: '#0f172a', textAlign: 'right', flex: 1, marginLeft: '8px' }}>{b.package?.name?.toUpperCase() || 'CUSTOM PACKAGE'}</strong>
                       </div>
 
-                      <div style={{ display: 'flex', justifyContent: 'space-between', gap: '8px' }}>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                         <span style={{ color: '#64748b' }}>Rate:</span>
-                        <strong style={{ color: '#2563eb' }}>₹{b.package?.price || 0}</strong>
+                        <strong style={{ color: '#2563eb', textAlign: 'right' }}>₹{b.package?.price || 0}</strong>
                       </div>
 
                       {b.package?.duration && (
-                        <div style={{ display: 'flex', justifyContent: 'space-between', gap: '8px' }}>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                           <span style={{ color: '#64748b' }}>Duration:</span>
-                          <strong style={{ color: '#475569' }}>{b.package.duration}</strong>
+                          <strong style={{ color: '#0f172a', textAlign: 'right' }}>{b.package.duration.toUpperCase()}</strong>
                         </div>
                       )}
 
                       {batchName && (
-                        <div style={{ display: 'flex', justifyContent: 'space-between', gap: '8px' }}>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                           <span style={{ color: '#64748b' }}>Batch:</span>
-                          <strong style={{ color: '#0f172a' }}>{batchName}</strong>
+                          <strong style={{ color: '#0f172a', textAlign: 'right' }}>{batchName}</strong>
                         </div>
                       )}
 
-                      <div style={{ display: 'flex', justifyContent: 'space-between', gap: '8px' }}>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                         <span style={{ color: '#64748b' }}>Travel:</span>
-                        <strong style={{ color: '#1e293b' }}>{startD || 'Unassigned'}</strong>
+                        <strong style={{ color: '#0f172a', textAlign: 'right' }}>{startD || 'Unassigned'}</strong>
                       </div>
 
-                      <div style={{ display: 'flex', justifyContent: 'space-between', gap: '8px' }}>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                         <span style={{ color: '#64748b' }}>Travelers:</span>
-                        <strong style={{ color: '#ea580c' }}>{b.numberOfTravelers} Pax</strong>
+                        <strong style={{ color: '#ea580c', textAlign: 'right' }}>{b.numberOfTravelers} Pax</strong>
                       </div>
                     </div>
 
                     {/* Right Column: Gray Financial Breakdown Box */}
                     <div 
                       onClick={() => setActiveHistoryId(activeHistoryId === b._id ? null : b._id)}
-                      style={{ background: '#f8fafc', border: '1px solid #f1f5f9', borderRadius: '12px', padding: '14px', width: '100%', boxSizing: 'border-box', cursor: 'pointer' }}
+                      style={{ background: '#f8fafc', border: '1px solid #f1f5f9', borderRadius: '12px', padding: '14px', width: '100%', boxSizing: 'border-box', cursor: 'pointer', minHeight: '140px' }}
                       title="Click to view payment history"
                     >
-                      <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', fontSize: '13px' }}>
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', fontSize: '13px' }}>
                         <div style={{ display: 'flex', justifyContent: 'space-between' }}>
                           <span style={{ color: '#64748b' }}>Total</span>
                           <strong style={{ color: '#0f172a' }}>₹{b.totalAmount || 0}</strong>
@@ -1116,7 +1116,7 @@ export default function BookingsPage() {
                           <strong style={{ color: b.advancePaid > 0 ? '#16a34a' : '#0f172a' }}>₹{b.advancePaid || 0}</strong>
                         </div>
 
-                        <div style={{ borderTop: '1px dashed #cbd5e1', margin: '6px 0' }} />
+                        <div style={{ borderTop: '1px dashed #cbd5e1', margin: '4px 0' }} />
 
                         <div style={{ display: 'flex', justifyContent: 'space-between', color: (b.balancePending || 0) > 0 ? '#ef4444' : '#16a34a', fontWeight: '700' }}>
                           <span>Due:</span>
@@ -1127,15 +1127,13 @@ export default function BookingsPage() {
                       {/* Clickable Payment Log History inside Financial Box */}
                       {activeHistoryId === b._id && (
                         <div style={{ marginTop: '10px', paddingTop: '8px', borderTop: '1px solid #cbd5e1', fontSize: '11px' }}>
-                          <div style={{ fontWeight: '700', color: '#0f172a', marginBottom: '4px' }}>📜 Payment Logs</div>
+                          <div style={{ fontWeight: '700', color: '#0f172a', marginBottom: '4px' }}>📜 Logs</div>
                           {b.paymentHistory?.length > 0 ? b.paymentHistory.map((ph: any, i: number) => (
                             <div key={i} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', color: '#334155', margin: '2px 0' }}>
-                              <span>{ph.method?.toUpperCase()} ({new Date(ph.date).toLocaleDateString()})</span>
+                              <span>{ph.method?.toUpperCase().slice(0, 3)}</span>
                               <strong style={{ color: '#16a34a' }}>+₹{ph.amount}</strong>
                             </div>
-                          )) : (
-                            <div style={{ color: '#64748b' }}>No separate payment logs recorded.</div>
-                          )}
+                          )) : null}
                         </div>
                       )}
                     </div>
@@ -1143,13 +1141,13 @@ export default function BookingsPage() {
 
                   {/* Bottom Row: 3 Equal-Width Action Buttons Cluster */}
                   <div style={{ display: 'flex', gap: '8px', width: '100%' }}>
-                    <button onClick={() => handleEdit(b)} className="btn-edit">
+                    <button onClick={() => handleEdit(b)} className="btn-edit" style={{ flex: 1, padding: '12px', borderRadius: '10px', fontSize: '14px', fontWeight: '700' }}>
                       ✏️ Edit
                     </button>
-                    <button onClick={() => handleUpdatePayment(b)} className="btn-pay">
+                    <button onClick={() => handleUpdatePayment(b)} className="btn-pay" style={{ flex: 1, padding: '12px', borderRadius: '10px', fontSize: '14px', fontWeight: '700' }}>
                       ₹ Pay
                     </button>
-                    <button onClick={() => handleDelete(b._id)} className="btn-delete">
+                    <button onClick={() => handleDelete(b._id)} className="btn-delete" style={{ flex: 1, padding: '12px', borderRadius: '10px', fontSize: '14px', fontWeight: '700' }}>
                       🗑️ Delete
                     </button>
                   </div>
