@@ -813,7 +813,7 @@ export default function BookingsPage() {
                       <td>
                         <div style={{ fontWeight: '700', color: '#0f172a', fontSize: '15px' }}>{b.customer?.name || 'Unknown'}</div>
                         <div style={{ fontSize: '12px', color: '#64748b', marginTop: '2px' }}>{b.customer?.phone || b.customer?.email}</div>
-                        <div style={{ fontSize: '11px', color: '#94a3b8', marginTop: '6px' }}>
+                        <div style={{ fontSize: '10px', color: '#94a3b8', marginTop: '6px', whiteSpace: 'nowrap' }}>
                           Booked: {new Date(b.createdAt).toLocaleString('en-IN', { day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' })}
                         </div>
                       </td>
@@ -1073,16 +1073,6 @@ export default function BookingsPage() {
                     
                     {/* Left Column: Package Info List */}
                     <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', fontSize: '13px' }}>
-                      <div style={{ display: 'flex', justifyContent: 'space-between', gap: '8px' }}>
-                        <span style={{ color: '#64748b', fontWeight: '500' }}>Package:</span>
-                        <strong style={{ color: '#0f172a', textAlign: 'right' }}>{b.package?.name || 'Custom Package'}</strong>
-                      </div>
-
-                      <div style={{ display: 'flex', justifyContent: 'space-between', gap: '8px' }}>
-                        <span style={{ color: '#64748b', fontWeight: '500' }}>Rate:</span>
-                        <strong style={{ color: '#2563eb' }}>₹{b.package?.price || 0}</strong>
-                      </div>
-
                       {b.package?.duration && (
                         <div style={{ display: 'flex', justifyContent: 'space-between', gap: '8px' }}>
                           <span style={{ color: '#64748b', fontWeight: '500' }}>Duration:</span>
@@ -1090,9 +1080,12 @@ export default function BookingsPage() {
                         </div>
                       )}
 
-                      <div style={{ display: 'flex', justifyContent: 'space-between', gap: '8px' }}>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', gap: '8px', alignItems: 'flex-start' }}>
                         <span style={{ color: '#64748b', fontWeight: '500' }}>Travel:</span>
-                        <strong style={{ color: '#0f172a' }}>{startD || 'Unassigned'}</strong>
+                        <div style={{ textAlign: 'right' }}>
+                          <strong style={{ color: '#0f172a', display: 'block' }}>{startD || 'Unassigned'}</strong>
+                          {endD && <div style={{ fontSize: '11px', color: '#64748b', fontWeight: '500' }}>to {endD}</div>}
+                        </div>
                       </div>
 
                       <div style={{ display: 'flex', justifyContent: 'space-between', gap: '8px' }}>
