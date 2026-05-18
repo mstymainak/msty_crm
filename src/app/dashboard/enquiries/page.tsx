@@ -477,7 +477,10 @@ export default function EnquiriesPage() {
                             </a>
                             <a 
                               href={`tel:${e.customer.phone}`} 
-                              onClick={(ev) => ev.stopPropagation()}
+                              onClick={(ev) => {
+                                ev.stopPropagation();
+                                updateStatus(e._id, 'contacted');
+                              }}
                               style={{ color: '#2563eb', textDecoration: 'none', fontWeight: '500' }}
                               title="Click to call"
                             >
@@ -726,7 +729,10 @@ export default function EnquiriesPage() {
                           </a>
                           <a 
                             href={`tel:${e.customer.phone}`}
-                            onClick={(ev) => ev.stopPropagation()}
+                            onClick={(ev) => {
+                              ev.stopPropagation();
+                              updateStatus(e._id, 'contacted');
+                            }}
                             style={{ color: '#2563eb', textDecoration: 'none', fontWeight: '600' }}
                             title="Click to call"
                           >
