@@ -12,6 +12,8 @@ const EnquirySchema = new Schema({
   packageGroup: { type: String, default: null },
   submittedName: { type: String, default: '' },
   adminNote: { type: String, default: '' },
+  acquiredBy: { type: Schema.Types.ObjectId, ref: 'User' },
+  acquiredChangedByAdmin: { type: Boolean, default: false },
   notes: [{ type: String }],
   members: [{
     name: { type: String, required: true },
@@ -21,8 +23,6 @@ const EnquirySchema = new Schema({
   }],
   isDeleted: { type: Boolean, default: false },
   deletedAt: { type: Date, default: null },
-  acquiredBy: { type: Schema.Types.ObjectId, ref: 'User', default: null },
-  acquiredChangedByAdmin: { type: Boolean, default: false },
   createdAt: { type: Date, default: Date.now },
   updatedAt: { type: Date, default: Date.now },
 });

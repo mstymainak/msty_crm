@@ -64,22 +64,6 @@ export default function EnquiriesPage() {
   const [users, setUsers] = useState<any[]>([]);
 
   useEffect(() => {
-    fetch('/api/auth/me')
-      .then(r => r.json())
-      .then(d => {
-        if (d.success) setCurrentUser(d.user);
-      });
-  }, []);
-
-  useEffect(() => {
-    if (currentUser?.role === 'admin') {
-      fetch('/api/users')
-        .then(r => r.json())
-        .then(d => setUsers(Array.isArray(d) ? d : []));
-    }
-  }, [currentUser]);
-
-  useEffect(() => {
     const interval = setInterval(() => {
       fetchEnquiries();
     }, 5000); // Auto refresh every 5 seconds
@@ -118,6 +102,8 @@ export default function EnquiriesPage() {
   useEffect(() => { 
     fetchEnquiries(); 
     fetch('/api/packages').then(r => r.json()).then(d => setPackages(Array.isArray(d) ? d : []));
+    fetch('/api/auth/me').then(r => r.json()).then(d => setCurrentUser(d.user));
+    fetch('/api/users').then(r => r.json()).then(d => setUsers(Array.isArray(d) ? d : []));
     
     // Request notification permission
     if ('Notification' in window && Notification.permission === 'default') {
@@ -145,24 +131,6 @@ export default function EnquiriesPage() {
     fetchEnquiries();
   };
 
-  const handleAcquire = async (id: string, userId?: string) => {
-    const targetUserId = userId || currentUser?.userId;
-    if (!targetUserId) return;
-    
-    const eq = enquiries.find(e => e._id === id);
-    const isChanging = eq && eq.acquiredBy && (eq.acquiredBy._id || eq.acquiredBy) !== targetUserId;
-    
-    await fetch(`/api/enquiries/${id}`, { 
-      method: 'PUT', 
-      headers: { 'Content-Type': 'application/json' }, 
-      body: JSON.stringify({ 
-        acquiredBy: targetUserId,
-        acquiredChangedByAdmin: currentUser?.role === 'admin' && isChanging ? true : (eq?.acquiredChangedByAdmin || false)
-      }) 
-    });
-    fetchEnquiries();
-  };
-
   const saveNote = async (id: string, noteText: string) => {
     await fetch(`/api/enquiries/${id}`, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ adminNote: noteText }) });
     setEditingNoteId(null);
@@ -172,6 +140,25 @@ export default function EnquiriesPage() {
   const deleteNote = async (id: string) => {
     if (!confirm('Delete this note?')) return;
     await fetch(`/api/enquiries/${id}`, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ adminNote: '' }) });
+    fetchEnquiries();
+  };
+
+  const handleAcquire = async (id: string) => {
+    if (!currentUser) return;
+    await fetch(`/api/enquiries/${id}`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ acquiredBy: currentUser.userId })
+    });
+    fetchEnquiries();
+  };
+
+  const handleAdminChangeAcquire = async (id: string, userId: string) => {
+    await fetch(`/api/enquiries/${id}`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ acquiredBy: userId, acquiredChangedByAdmin: true })
+    });
     fetchEnquiries();
   };
 
@@ -694,35 +681,63 @@ export default function EnquiriesPage() {
                       </select>
                     </td>
                     <td style={{ padding: '12px 16px' }}>
-                      {e.acquiredBy ? (
-                        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start' }}>
-                          {currentUser?.role === 'admin' ? (
-                            <select
-                              value={typeof e.acquiredBy === 'object' ? e.acquiredBy._id : e.acquiredBy}
-                              onChange={(ev) => handleAcquire(e._id, ev.target.value)}
-                              style={{ padding: '4px 8px', borderRadius: '6px', fontSize: '12px', fontWeight: '600', border: '1px solid #cbd5e1', background: '#fff', color: '#0f172a', cursor: 'pointer' }}
+                      {(() => {
+                        const isAcquired = !!e.acquiredBy;
+                        const acquiredByName = e.acquiredBy?.name || 'Unknown';
+                        const acquiredByFirstName = acquiredByName.split(' ')[0];
+                        const isMe = e.acquiredBy?._id === currentUser?.userId;
+                        const isAdmin = currentUser?.role === 'admin';
+
+                        if (!isAcquired) {
+                          return (
+                            <button
+                              onClick={() => handleAcquire(e._id)}
+                              style={{ padding: '4px 8px', background: '#3b82f6', color: '#fff', border: 'none', borderRadius: '4px', fontSize: '12px', cursor: 'pointer', fontWeight: '600' }}
                             >
-                              {users.length > 0 ? users.map((u: any) => (
-                                <option key={u._id} value={u._id}>{u.name.split(' ')[0]}</option>
-                              )) : <option value={typeof e.acquiredBy === 'object' ? e.acquiredBy._id : e.acquiredBy}>{typeof e.acquiredBy === 'object' ? e.acquiredBy.name.split(' ')[0] : 'Acquired'}</option>}
-                            </select>
-                          ) : (
-                            <span style={{ fontSize: '12px', fontWeight: '700', color: '#0f172a', background: '#f1f5f9', padding: '4px 8px', borderRadius: '6px' }}>
-                              👤 {typeof e.acquiredBy === 'object' ? e.acquiredBy.name.split(' ')[0] : 'Acquired'}
-                            </span>
-                          )}
-                          {e.acquiredChangedByAdmin && (
-                            <span style={{ fontSize: '9px', color: '#64748b', marginTop: '2px', fontWeight: '600' }}>changed by admin</span>
-                          )}
-                        </div>
-                      ) : (
-                        <button 
-                          onClick={() => handleAcquire(e._id)} 
-                          style={{ padding: '4px 8px', background: '#eff6ff', color: '#2563eb', border: '1px solid #bfdbfe', borderRadius: '6px', fontSize: '12px', cursor: 'pointer', fontWeight: '600' }}
-                        >
-                          Acquire
-                        </button>
-                      )}
+                              Acquire
+                            </button>
+                          );
+                        }
+
+                        if (isMe) {
+                          return (
+                            <div>
+                              <span style={{ fontSize: '12px', color: '#16a34a', fontWeight: '600' }}>Acquired</span>
+                              {e.acquiredChangedByAdmin && (
+                                <div style={{ fontSize: '9px', color: '#64748b', marginTop: '2px' }}>changed by admin</div>
+                              )}
+                            </div>
+                          );
+                        }
+
+                        if (isAdmin) {
+                          return (
+                            <div>
+                              <select
+                                value={e.acquiredBy?._id || ''}
+                                onChange={(ev) => handleAdminChangeAcquire(e._id, ev.target.value)}
+                                style={{ padding: '4px 8px', fontSize: '12px', border: '1px solid #cbd5e1', borderRadius: '4px', background: '#fff' }}
+                              >
+                                {users.map(u => (
+                                  <option key={u._id} value={u._id}>{u.name}</option>
+                                ))}
+                              </select>
+                              {e.acquiredChangedByAdmin && (
+                                <div style={{ fontSize: '9px', color: '#64748b', marginTop: '2px' }}>changed by admin</div>
+                              )}
+                            </div>
+                          );
+                        }
+
+                        return (
+                          <div>
+                            <span style={{ fontSize: '12px', color: '#0f172a', fontWeight: '600' }}>{acquiredByFirstName}</span>
+                            {e.acquiredChangedByAdmin && (
+                              <div style={{ fontSize: '9px', color: '#64748b', marginTop: '2px' }}>changed by admin</div>
+                            )}
+                          </div>
+                        );
+                      })()}
                     </td>
                     <td style={{ padding: '12px 16px', fontSize: '13px', color: '#334155', fontWeight: '500' }}>
                       <div>{new Date(e.createdAt).toLocaleDateString('en-GB')}</div>
@@ -931,7 +946,7 @@ export default function EnquiriesPage() {
 
                     {/* Status Select, Priority Select & Delete Button */}
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                      <div style={{ display: 'flex', gap: '6px', alignItems: 'center' }}>
+                      <div style={{ display: 'flex', gap: '6px' }}>
                         <select
                           value={e.status}
                           onChange={(ev) => updateStatus(e._id, ev.target.value)}
@@ -953,38 +968,66 @@ export default function EnquiriesPage() {
                           <option value="medium">Medium</option>
                           <option value="low">Low</option>
                         </select>
+                      </div>
 
-                        {/* Acquire Button or Name */}
-                        {e.acquiredBy ? (
-                          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start' }}>
-                            {currentUser?.role === 'admin' ? (
+                      {/* ACQUIRE BUTTON (MOBILE) */}
+                      {(() => {
+                        const isAcquired = !!e.acquiredBy;
+                        const acquiredByName = e.acquiredBy?.name || 'Unknown';
+                        const acquiredByFirstName = acquiredByName.split(' ')[0];
+                        const isMe = e.acquiredBy?._id === currentUser?.userId;
+                        const isAdmin = currentUser?.role === 'admin';
+
+                        if (!isAcquired) {
+                          return (
+                            <button
+                              onClick={() => handleAcquire(e._id)}
+                              style={{ padding: '4px 8px', background: '#3b82f6', color: '#fff', border: 'none', borderRadius: '4px', fontSize: '12px', cursor: 'pointer', fontWeight: '600' }}
+                            >
+                              Acquire
+                            </button>
+                          );
+                        }
+
+                        if (isMe) {
+                          return (
+                            <div>
+                              <span style={{ fontSize: '12px', color: '#16a34a', fontWeight: '600' }}>Acquired</span>
+                              {e.acquiredChangedByAdmin && (
+                                <div style={{ fontSize: '9px', color: '#64748b', marginTop: '2px' }}>changed by admin</div>
+                              )}
+                            </div>
+                          );
+                        }
+
+                        if (isAdmin) {
+                          return (
+                            <div>
                               <select
-                                value={typeof e.acquiredBy === 'object' ? e.acquiredBy._id : e.acquiredBy}
-                                onChange={(ev) => handleAcquire(e._id, ev.target.value)}
-                                style={{ padding: '4px 8px', borderRadius: '6px', fontSize: '12px', fontWeight: '600', border: '1px solid #cbd5e1', background: '#fff', color: '#0f172a', cursor: 'pointer' }}
+                                value={e.acquiredBy?._id || ''}
+                                onChange={(ev) => handleAdminChangeAcquire(e._id, ev.target.value)}
+                                style={{ padding: '4px 8px', fontSize: '12px', border: '1px solid #cbd5e1', borderRadius: '4px', background: '#fff' }}
                               >
-                                {users.length > 0 ? users.map((u: any) => (
-                                  <option key={u._id} value={u._id}>{u.name.split(' ')[0]}</option>
-                                )) : <option value={typeof e.acquiredBy === 'object' ? e.acquiredBy._id : e.acquiredBy}>{typeof e.acquiredBy === 'object' ? e.acquiredBy.name.split(' ')[0] : 'Acquired'}</option>}
+                                {users.map(u => (
+                                  <option key={u._id} value={u._id}>{u.name}</option>
+                                ))}
                               </select>
-                            ) : (
-                              <span style={{ fontSize: '12px', fontWeight: '700', color: '#0f172a', background: '#f1f5f9', padding: '4px 8px', borderRadius: '6px' }}>
-                                👤 {typeof e.acquiredBy === 'object' ? e.acquiredBy.name.split(' ')[0] : 'Acquired'}
-                              </span>
-                            )}
+                              {e.acquiredChangedByAdmin && (
+                                <div style={{ fontSize: '9px', color: '#64748b', marginTop: '2px' }}>changed by admin</div>
+                              )}
+                            </div>
+                          );
+                        }
+
+                        return (
+                          <div>
+                            <span style={{ fontSize: '12px', color: '#0f172a', fontWeight: '600' }}>{acquiredByFirstName}</span>
                             {e.acquiredChangedByAdmin && (
-                              <span style={{ fontSize: '9px', color: '#64748b', marginTop: '2px', fontWeight: '600' }}>changed by admin</span>
+                              <div style={{ fontSize: '9px', color: '#64748b', marginTop: '2px' }}>changed by admin</div>
                             )}
                           </div>
-                        ) : (
-                          <button 
-                            onClick={() => handleAcquire(e._id)} 
-                            style={{ padding: '4px 8px', background: '#eff6ff', color: '#2563eb', border: '1px solid #bfdbfe', borderRadius: '6px', fontSize: '12px', cursor: 'pointer', fontWeight: '600' }}
-                          >
-                            Acquire
-                          </button>
-                        )}
-                      </div>
+                        );
+                      })()}
 
                       <button onClick={() => handleDelete(e._id)} style={{ padding: '4px 10px', background: '#fef2f2', color: '#dc2626', border: 'none', borderRadius: '6px', fontSize: '12px', cursor: 'pointer', fontWeight: '600' }}>Delete</button>
                     </div>
