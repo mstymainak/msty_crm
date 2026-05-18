@@ -570,7 +570,7 @@ export default function EnquiriesPage() {
                           <option value="">No Package</option>
                           {packages.map(p => (
                             <option key={p._id} value={p._id}>
-                              {p.name.length > 20 ? p.name.substring(0, 17) + '...' : p.name}
+                              {p.name}
                             </option>
                           ))}
                         </select>
@@ -691,7 +691,7 @@ export default function EnquiriesPage() {
                           <option value="">No Package</option>
                           {packages.map(p => (
                             <option key={p._id} value={p._id}>
-                              {p.name.length > 15 ? p.name.substring(0, 12) + '...' : p.name}
+                              {p.name}
                             </option>
                           ))}
                         </select>
