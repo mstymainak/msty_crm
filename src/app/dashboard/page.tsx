@@ -81,13 +81,20 @@ function DonutChart({ data, colors, size = 140 }: { data: { label: string; value
   );
 }
 
-function LineChart({ data, height = 240, endDate }: { data: { _id: string; count: number }[], height?: number, endDate: string }) {
-  // Fill missing days with zero for last 7 days ending at endDate
-  const days = Array.from({ length: 7 }, (_, i) => {
-    const d = new Date(endDate);
-    d.setDate(d.getDate() - (6 - i));
-    return d.toISOString().split('T')[0];
-  });
+function LineChart({ data, height = 240, startDate, endDate }: { data: { _id: string; count: number }[], height?: number, startDate: string, endDate: string }) {
+  // Fill missing days with zero for the selected range (which will be 7 days)
+  const getDaysArray = (start: string, end: string) => {
+    const arr = [];
+    const dt = new Date(start);
+    const endDt = new Date(end);
+    while (dt <= endDt) {
+      arr.push(new Date(dt).toISOString().split('T')[0]);
+      dt.setDate(dt.getDate() + 1);
+    }
+    return arr;
+  };
+  
+  const days = getDaysArray(startDate, endDate);
 
   const chartData = days.map(date => {
     const found = data.find(d => d._id === date);
@@ -150,6 +157,7 @@ function LineChart({ data, height = 240, endDate }: { data: { _id: string; count
 export default function DashboardPage() {
   const [stats, setStats] = useState<any>(null);
   const [loading, setLoading] = useState(true);
+  const [graphTimeline, setGraphTimeline] = useState('last_week');
   
   const [startDate, setStartDate] = useState(() => {
     const d = new Date();
@@ -311,15 +319,33 @@ export default function DashboardPage() {
         <div className="dash-card" style={{ padding: '20px' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
             <h3 style={{ margin: 0, fontSize: '15px', fontWeight: '800', color: '#0f172a' }}>Enquiries Overview</h3>
-            <select style={{ fontSize: '11px', padding: '4px 8px', borderRadius: '6px', border: '1px solid #e2e8f0', color: '#64748b', outline: 'none', background: '#fff' }}>
-              <option>This Week</option>
-              <option>Last 30 Days</option>
-              <option>Last 90 Days</option>
-              <option>This Year</option>
+            <select 
+              value={graphTimeline}
+              onChange={e => setGraphTimeline(e.target.value)}
+              style={{ fontSize: '11px', padding: '4px 8px', borderRadius: '6px', border: '1px solid #e2e8f0', color: '#64748b', outline: 'none', background: '#fff' }}
+            >
+              <option value="first_week">First Week</option>
+              <option value="last_week">Last Week</option>
             </select>
           </div>
           
-          <LineChart data={stats.enquiryHistory || []} height={180} endDate={endDate} />
+          {(() => {
+            const getGraphRange = () => {
+              if (graphTimeline === 'first_week') {
+                const start = new Date(startDate);
+                const end = new Date(start);
+                end.setDate(end.getDate() + 6);
+                return { start: startDate, end: end.toISOString().split('T')[0] };
+              } else {
+                const end = new Date(endDate);
+                const start = new Date(end);
+                start.setDate(start.getDate() - 6);
+                return { start: start.toISOString().split('T')[0], end: endDate };
+              }
+            };
+            const range = getGraphRange();
+            return <LineChart data={stats.enquiryHistory || []} height={180} startDate={range.start} endDate={range.end} />;
+          })()}
 
           <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', marginTop: '20px' }}>
             {[
