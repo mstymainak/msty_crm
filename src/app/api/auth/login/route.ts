@@ -42,13 +42,18 @@ export async function POST(request: NextRequest) {
       user: { id: user._id, name: user.name, email: user.email, role: user.role },
     });
 
-    response.cookies.set('auth-token', token, {
+    const cookieOptions: any = {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
       sameSite: 'lax',
-      maxAge: rememberMe ? 60 * 60 * 24 * 30 : 60 * 60 * 24 * 7, // 30 days vs 7 days
       path: '/',
-    });
+    };
+    
+    if (rememberMe) {
+      cookieOptions.maxAge = 60 * 60 * 24 * 30; // 30 days
+    }
+
+    response.cookies.set('auth-token', token, cookieOptions);
 
     return response;
   } catch (error) {

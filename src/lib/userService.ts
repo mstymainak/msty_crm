@@ -11,6 +11,25 @@ export async function createUser(data: any) {
 
 export async function getUsers() {
   await dbConnect();
+  const now = new Date();
+  const sevenDaysAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+  
+  // Auto-deactivate agents not active for 7 days
+  await User.updateMany(
+    { 
+      role: 'agent', 
+      isActive: true, 
+      $or: [
+        { lastLogin: { $lt: sevenDaysAgo } },
+        { lastLogin: { $exists: false }, createdAt: { $lt: sevenDaysAgo } }
+      ]
+    },
+    { 
+      isActive: false, 
+      updatedAt: now 
+    }
+  );
+
   return await User.find({}).select('-password').sort({ createdAt: -1 });
 }
 
