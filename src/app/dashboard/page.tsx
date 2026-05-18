@@ -81,15 +81,23 @@ function DonutChart({ data, colors, size = 140 }: { data: { label: string; value
   );
 }
 
-function LineChart({ data, height = 240 }: { data: { _id: string; count: number }[], height?: number }) {
-  // Fill missing days with zero for last 7 days
-  const last7Days = Array.from({ length: 7 }, (_, i) => {
+function LineChart({ data, timeline = 'this_week', height = 240 }: { data: { _id: string; count: number }[], timeline?: string, height?: number }) {
+  let length = 7;
+  if (timeline === 'last_30_days') length = 30;
+  if (timeline === 'last_90_days') length = 90;
+  if (timeline === 'this_year') {
+    const start = new Date(new Date().getFullYear(), 0, 1);
+    const today = new Date();
+    length = Math.ceil((today.getTime() - start.getTime()) / (1000 * 60 * 60 * 24)) + 1;
+  }
+
+  const daysArray = Array.from({ length }, (_, i) => {
     const d = new Date();
-    d.setDate(d.getDate() - (6 - i));
+    d.setDate(d.getDate() - (length - 1 - i));
     return d.toISOString().split('T')[0];
   });
 
-  const chartData = last7Days.map(date => {
+  const chartData = daysArray.map(date => {
     const found = data.find(d => d._id === date);
     return { label: date, value: found ? found.count : 0 };
   });
@@ -100,7 +108,7 @@ function LineChart({ data, height = 240 }: { data: { _id: string; count: number 
   const paddingY = 30;
 
   const points = chartData.map((d, i) => ({
-    x: (i / (chartData.length - 1)) * (width - paddingX * 2) + paddingX,
+    x: (i / (chartData.length - 1 || 1)) * (width - paddingX * 2) + paddingX,
     y: height - ((d.value / maxVal) * (height - paddingY * 2) + paddingY),
     label: d.label,
     value: d.value
@@ -119,7 +127,6 @@ function LineChart({ data, height = 240 }: { data: { _id: string; count: number 
           </linearGradient>
         </defs>
 
-        {/* Horizontal Grid Lines */}
         {[0, 1, 2, 3, 4].map(i => {
           const y = height - ((i / 4) * (height - paddingY * 2) + paddingY);
           return (
@@ -133,15 +140,22 @@ function LineChart({ data, height = 240 }: { data: { _id: string; count: number 
         <path d={pathArea} fill="url(#lineGradient)" />
         <path d={pathLine} fill="none" stroke="#8b5cf6" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" />
 
-        {points.map((p, i) => (
-          <g key={i}>
-            <circle cx={p.x} cy={p.y} r="6" fill="#fff" stroke="#8b5cf6" strokeWidth="3" />
-            <text x={p.x} y={height - 5} fontSize="13" fill="#64748b" textAnchor="middle" fontWeight="500">
-              {new Date(p.label).toLocaleDateString('en-GB', { day: '2-digit', month: '2-digit' })}
-            </text>
-            <text x={p.x} y={p.y - 12} fontSize="12" fill="#8b5cf6" textAnchor="middle" fontWeight="700">{p.value}</text>
-          </g>
-        ))}
+        {points.map((p, i) => {
+          const showLabel = length <= 7 || (length <= 30 && i % 5 === 0) || (length <= 90 && i % 15 === 0) || (i % 30 === 0);
+          return (
+            <g key={i}>
+              <circle cx={p.x} cy={p.y} r={length > 30 ? "2" : "4"} fill="#fff" stroke="#8b5cf6" strokeWidth={length > 30 ? "1" : "2"} />
+              {showLabel && (
+                <text x={p.x} y={height - 5} fontSize="11" fill="#64748b" textAnchor="middle" fontWeight="500">
+                  {new Date(p.label).toLocaleDateString('en-GB', { day: '2-digit', month: '2-digit' })}
+                </text>
+              )}
+              {length <= 30 && (
+                <text x={p.x} y={p.y - 12} fontSize="10" fill="#8b5cf6" textAnchor="middle" fontWeight="700">{p.value}</text>
+              )}
+            </g>
+          );
+        })}
       </svg>
     </div>
   );
@@ -151,13 +165,31 @@ export default function DashboardPage() {
   const [stats, setStats] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [viewMode, setViewMode] = useState('admin');
+  const [selectedTimeline, setSelectedTimeline] = useState('this_week');
+  const [selectedUser, setSelectedUser] = useState('all');
+  const [users, setUsers] = useState<any[]>([]);
+  const [currentUser, setCurrentUser] = useState<any>(null);
 
   useEffect(() => {
-    fetch('/api/dashboard/stats')
+    fetch('/api/users').then(r => r.json()).then(d => setUsers(Array.isArray(d) ? d : []));
+    fetch('/api/auth/me').then(r => r.json()).then(d => setCurrentUser(d));
+  }, []);
+
+  useEffect(() => {
+    setLoading(true);
+    let url = `/api/dashboard/stats?timeline=${selectedTimeline}`;
+    if (viewMode === 'agent') {
+      if (selectedUser !== 'all') {
+        url += `&userId=${selectedUser}`;
+      } else if (currentUser && currentUser.role !== 'admin') {
+        url += `&userId=${currentUser._id}`;
+      }
+    }
+    fetch(url)
       .then(res => res.json())
       .then(data => { setStats(data); setLoading(false); })
       .catch(() => setLoading(false));
-  }, []);
+  }, [selectedTimeline, selectedUser, viewMode, currentUser]);
 
   if (loading) {
     return (
@@ -235,11 +267,25 @@ export default function DashboardPage() {
         
         <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '12px' }}>
           <div style={{ background: '#fff', border: '1px solid #e2e8f0', borderRadius: '10px', padding: '6px 12px', fontSize: '13px', color: '#0f172a', fontWeight: '600', display: 'flex', alignItems: 'center', gap: '8px' }}>
-            📅 14 May 2026 - 14 May 2026 ▾
+            📅 {new Date().toLocaleDateString('en-GB')} ▾
           </div>
-          <div style={{ background: '#f8fafc', padding: '4px', borderRadius: '10px', display: 'inline-flex', border: '1px solid #f1f5f9' }}>
-            <button onClick={() => setViewMode('admin')} className={`view-btn ${viewMode === 'admin' ? 'active' : 'inactive'}`}>Admin View</button>
-            <button onClick={() => setViewMode('agent')} className={`view-btn ${viewMode === 'agent' ? 'active' : 'inactive'}`}>Agent View</button>
+          <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+            {viewMode === 'agent' && currentUser?.role === 'admin' && (
+              <select 
+                value={selectedUser} 
+                onChange={e => setSelectedUser(e.target.value)}
+                style={{ padding: '6px 12px', border: '1px solid #e2e8f0', borderRadius: '10px', fontSize: '13px', background: '#fff', color: '#475569', outline: 'none' }}
+              >
+                <option value="all">All Agents</option>
+                {users.map(u => (
+                  <option key={u._id} value={u._id}>{u.name}</option>
+                ))}
+              </select>
+            )}
+            <div style={{ background: '#f8fafc', padding: '4px', borderRadius: '10px', display: 'inline-flex', border: '1px solid #f1f5f9' }}>
+              <button onClick={() => { setViewMode('admin'); setSelectedUser('all'); }} className={`view-btn ${viewMode === 'admin' ? 'active' : 'inactive'}`}>Admin View</button>
+              <button onClick={() => setViewMode('agent')} className={`view-btn ${viewMode === 'agent' ? 'active' : 'inactive'}`}>Agent View</button>
+            </div>
           </div>
         </div>
       </div>
@@ -294,15 +340,19 @@ export default function DashboardPage() {
         <div className="dash-card" style={{ padding: '20px' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
             <h3 style={{ margin: 0, fontSize: '15px', fontWeight: '800', color: '#0f172a' }}>Enquiries Overview</h3>
-            <select style={{ fontSize: '11px', padding: '4px 8px', borderRadius: '6px', border: '1px solid #e2e8f0', color: '#64748b', outline: 'none', background: '#fff' }}>
-              <option>This Week</option>
-              <option>Last 30 Days</option>
-              <option>Last 90 Days</option>
-              <option>This Year</option>
+            <select 
+              value={selectedTimeline}
+              onChange={(e) => setSelectedTimeline(e.target.value)}
+              style={{ fontSize: '11px', padding: '4px 8px', borderRadius: '6px', border: '1px solid #e2e8f0', color: '#64748b', outline: 'none', background: '#fff' }}
+            >
+              <option value="this_week">This Week</option>
+              <option value="last_30_days">Last 30 Days</option>
+              <option value="last_90_days">Last 90 Days</option>
+              <option value="this_year">This Year</option>
             </select>
           </div>
           
-          <LineChart data={stats.enquiryHistory || []} height={180} />
+          <LineChart data={stats.enquiryHistory || []} timeline={selectedTimeline} height={180} />
 
           <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', marginTop: '20px' }}>
             {[
