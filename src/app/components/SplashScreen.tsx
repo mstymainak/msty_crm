@@ -89,7 +89,7 @@ export default function SplashScreen() {
         <img 
           src="/msty_logo.png" 
           alt="MSTY Logo" 
-          style={{ width: '120px', height: 'auto', marginBottom: '16px', filter: 'drop-shadow(0 4px 8px rgba(0,0,0,0.3))' }} 
+          style={{ width: '120px', height: 'auto', display: 'block', margin: '0 auto 16px', filter: 'drop-shadow(0 4px 8px rgba(0,0,0,0.3))' }} 
         />
         <h1 style={{ color: '#fff', fontSize: '28px', fontWeight: '800', margin: 0, textShadow: '0 2px 4px rgba(0,0,0,0.6)' }}>MSTY CRM</h1>
         <p style={{ color: '#f1f5f9', fontSize: '14px', marginTop: '4px', textShadow: '0 1px 2px rgba(0,0,0,0.6)', letterSpacing: '1px' }}>TIRTH YATRA MANAGEMENT</p>
