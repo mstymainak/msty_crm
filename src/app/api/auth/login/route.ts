@@ -8,7 +8,7 @@ export async function POST(request: NextRequest) {
     // Auto-seed admin user on first login attempt
     await seedAdminUser();
 
-    const { email, password } = await request.json();
+    const { email, password, rememberMe } = await request.json();
 
     if (!email || !password) {
       return NextResponse.json({ error: 'Email and password are required' }, { status: 400 });
@@ -46,7 +46,7 @@ export async function POST(request: NextRequest) {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
       sameSite: 'lax',
-      maxAge: 60 * 60 * 24 * 7, // 7 days
+      maxAge: rememberMe ? 60 * 60 * 24 * 30 : 60 * 60 * 24 * 7, // 30 days vs 7 days
       path: '/',
     });
 

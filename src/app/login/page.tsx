@@ -9,6 +9,7 @@ export default function LoginPage() {
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+  const [rememberMe, setRememberMe] = useState(false);
   const router = useRouter();
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -20,7 +21,7 @@ export default function LoginPage() {
       const res = await fetch('/api/auth/login', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email, password }),
+        body: JSON.stringify({ email, password, rememberMe }),
       });
 
       const data = await res.json();
@@ -174,6 +175,19 @@ export default function LoginPage() {
                 {showPassword ? '🙈' : '👁️'}
               </button>
             </div>
+          </div>
+
+          <div style={{ display: 'flex', alignItems: 'center', marginBottom: '24px' }}>
+            <input
+              id="remember-me"
+              type="checkbox"
+              checked={rememberMe}
+              onChange={(e) => setRememberMe(e.target.checked)}
+              style={{ marginRight: '8px', cursor: 'pointer', accentColor: '#f97316' }}
+            />
+            <label htmlFor="remember-me" style={{ fontSize: '14px', color: '#475569', cursor: 'pointer' }}>
+              Remember Me
+            </label>
           </div>
 
           <button
