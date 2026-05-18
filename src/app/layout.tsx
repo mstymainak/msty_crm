@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Geist } from "next/font/google";
 import "./globals.css";
+import SplashScreen from "@/app/components/SplashScreen";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -10,6 +11,7 @@ const geistSans = Geist({
 export const metadata: Metadata = {
   title: "Mahesh Sharma Tirth Yatra CRM",
   description: "Complete CRM system for pilgrimage management",
+  manifest: "/manifest.json",
 };
 
 export default function RootLayout({
@@ -22,7 +24,10 @@ export default function RootLayout({
       lang="en"
       className={`${geistSans.variable} h-full antialiased`}
     >
-      <body className="min-h-full flex flex-col">{children}</body>
+      <body className="min-h-full flex flex-col">
+        <SplashScreen />
+        {children}
+      </body>
     </html>
   );
 }
