@@ -479,7 +479,9 @@ export default function EnquiriesPage() {
                               href={`tel:${e.customer.phone}`} 
                               onClick={(ev) => {
                                 ev.stopPropagation();
-                                updateStatus(e._id, 'contacted');
+                                if (e.status === 'new') {
+                                  updateStatus(e._id, 'contacted');
+                                }
                               }}
                               style={{ color: '#2563eb', textDecoration: 'none', fontWeight: '500' }}
                               title="Click to call"
@@ -731,7 +733,9 @@ export default function EnquiriesPage() {
                             href={`tel:${e.customer.phone}`}
                             onClick={(ev) => {
                               ev.stopPropagation();
-                              updateStatus(e._id, 'contacted');
+                              if (e.status === 'new') {
+                                updateStatus(e._id, 'contacted');
+                              }
                             }}
                             style={{ color: '#2563eb', textDecoration: 'none', fontWeight: '600' }}
                             title="Click to call"
