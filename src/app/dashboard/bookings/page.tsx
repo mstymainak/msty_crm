@@ -1018,7 +1018,9 @@ export default function BookingsPage() {
                   {/* Top Row: Customer info, Status badge, 3-dot Menu */}
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '12px' }}>
                     <div style={{ flex: 1, paddingRight: '12px', minWidth: 0 }}>
-                      <div style={{ fontSize: '18px', fontWeight: '800', color: '#0f172a', letterSpacing: '-0.02em', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }} title={b.customer?.name || 'Unknown'}>{b.customer?.name || 'Unknown'}</div>
+                      <div style={{ fontSize: '18px', fontWeight: '800', color: '#0f172a', letterSpacing: '-0.02em' }}>
+                        {b.customer?.name ? (b.customer.name.length > 20 ? b.customer.name.slice(0, 20) + '...' : b.customer.name) : 'Unknown'}
+                      </div>
                       <div style={{ fontSize: '13px', color: '#64748b', marginTop: '2px', fontWeight: '500' }}>{b.customer?.phone || b.customer?.email}</div>
                       <div style={{ fontSize: '12px', color: '#64748b', marginTop: '6px', fontWeight: '500' }}>
                         Booked: {new Date(b.createdAt).toLocaleDateString('en-GB')}, {new Date(b.createdAt).toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit', hour12: true }).toLowerCase()}
@@ -1065,8 +1067,8 @@ export default function BookingsPage() {
                       </div>
                       
                       <div style={{ textAlign: 'right', marginTop: '4px', maxWidth: '120px' }}>
-                        <div style={{ fontSize: '11px', fontWeight: '800', color: '#1e293b', textTransform: 'uppercase', lineHeight: '1.2', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }} title={b.package?.name || 'Custom Package'}>
-                          {b.package?.name || 'Custom Package'}
+                        <div style={{ fontSize: '11px', fontWeight: '800', color: '#1e293b', textTransform: 'uppercase', lineHeight: '1.2' }}>
+                          {b.package?.name ? (b.package.name.length > 15 ? b.package.name.slice(0, 15) + '...' : b.package.name) : 'Custom Package'}
                         </div>
                         <div style={{ fontSize: '10px', color: '#64748b', marginTop: '2px', fontWeight: '600' }}>Rate: ₹{b.package?.price || 0}</div>
                       </div>
