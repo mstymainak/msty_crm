@@ -51,16 +51,23 @@ export default function SplashScreen() {
           from { opacity: 0; transform: scale(0.8); }
           to { opacity: 1; transform: scale(1); }
         }
+        .splash-bg {
+          background-image: url(/image2.jpeg);
+        }
+        @media (min-width: 768px) {
+          .splash-bg {
+            background-image: url(/image1.jpeg);
+          }
+        }
       `}</style>
       
       {/* Background Image with Zoom Animation */}
-      <div style={{
+      <div className="splash-bg" style={{
         position: 'absolute',
         top: 0,
         left: 0,
         width: '100%',
         height: '100%',
-        backgroundImage: 'url(/image2.jpeg)',
         backgroundSize: 'cover',
         backgroundPosition: 'center',
         animation: 'zoomIn 4s ease-out forwards',
