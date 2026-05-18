@@ -493,7 +493,7 @@ export default function EnquiriesPage() {
             <thead>
               <tr style={{ borderBottom: '1px solid #e2e8f0', background: '#f8fafc' }}>
                 {['Customer', 'Message', 'Package', 'Source', 'Status', 'Priority', 'Acquired', 'Date', 'Actions'].map(h => (
-                  <th key={h} style={{ padding: '12px 16px', textAlign: 'left', fontSize: '12px', fontWeight: '600', color: '#64748b', textTransform: 'uppercase' }}>{h}</th>
+                  <th key={h} style={{ padding: '12px 8px', textAlign: 'left', fontSize: '12px', fontWeight: '600', color: '#64748b', textTransform: 'uppercase' }}>{h}</th>
                 ))}
               </tr>
             </thead>
@@ -519,7 +519,7 @@ export default function EnquiriesPage() {
                       transition: 'all 0.15s'
                     }}
                   >
-                    <td style={{ padding: '12px 16px' }}>
+                    <td style={{ padding: '12px 8px' }}>
                       <div style={{ fontSize: '14px', fontWeight: '600', color: '#0f172a', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: '120px' }} title={e.submittedName || e.customer?.name || 'Unknown'}>{e.submittedName || e.customer?.name || 'Unknown'}</div>
                       <div style={{ fontSize: '12px', color: '#334155', fontWeight: '500', display: 'flex', alignItems: 'center', gap: '4px' }}>
                         {e.customer?.phone ? (
@@ -577,7 +577,7 @@ export default function EnquiriesPage() {
                         </button>
                       </div>
                     </td>
-                    <td style={{ padding: '12px 16px', fontSize: '13px', color: '#1e293b', maxWidth: '250px' }}>
+                    <td style={{ padding: '12px 8px', fontSize: '13px', color: '#1e293b', maxWidth: '180px' }}>
                       <details style={{ cursor: 'pointer' }}>
                         <summary style={{ outline: 'none', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', fontWeight: '500' }}>
                           {e.message.split('\n')[0] || 'View message'}
@@ -615,7 +615,7 @@ export default function EnquiriesPage() {
                         </div>
                       </details>
                     </td>
-                    <td style={{ padding: '12px 16px' }}>
+                    <td style={{ padding: '12px 8px' }}>
                       <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
                         <select
                            value={e.package || ''}
@@ -653,10 +653,10 @@ export default function EnquiriesPage() {
                         )}
                       </div>
                     </td>
-                    <td style={{ padding: '12px 16px' }}>
+                    <td style={{ padding: '12px 8px' }}>
                       <span style={{ padding: '3px 10px', borderRadius: '10px', fontSize: '11px', fontWeight: '600', background: '#f1f5f9', color: '#475569', textTransform: 'capitalize' }}>{e.source}</span>
                     </td>
-                    <td style={{ padding: '12px 16px' }}>
+                    <td style={{ padding: '12px 8px' }}>
                       <select
                         value={e.status}
                         onChange={(ev) => updateStatus(e._id, ev.target.value)}
@@ -669,7 +669,7 @@ export default function EnquiriesPage() {
                         <option value="lost">Lost</option>
                       </select>
                     </td>
-                    <td style={{ padding: '12px 16px' }}>
+                    <td style={{ padding: '12px 8px' }}>
                       <select
                         value={e.priority}
                         onChange={(ev) => updatePriority(e._id, ev.target.value)}
@@ -680,7 +680,7 @@ export default function EnquiriesPage() {
                         <option value="low">Low</option>
                       </select>
                     </td>
-                    <td style={{ padding: '12px 16px' }}>
+                    <td style={{ padding: '12px 8px' }}>
                       {(() => {
                         const isAcquired = !!e.acquiredBy;
                         const acquiredByName = e.acquiredBy?.name || 'Unknown';
@@ -739,11 +739,11 @@ export default function EnquiriesPage() {
                         );
                       })()}
                     </td>
-                    <td style={{ padding: '12px 16px', fontSize: '13px', color: '#334155', fontWeight: '500' }}>
+                    <td style={{ padding: '12px 8px', fontSize: '13px', color: '#334155', fontWeight: '500' }}>
                       <div>{new Date(e.createdAt).toLocaleDateString('en-GB')}</div>
                       <div style={{ fontSize: '11px', marginTop: '2px', color: '#475569' }}>{new Date(e.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: true })}</div>
                     </td>
-                    <td style={{ padding: '12px 16px' }}>
+                    <td style={{ padding: '12px 8px' }}>
                       <button onClick={() => handleDelete(e._id)} style={{ padding: '4px 10px', background: '#fef2f2', color: '#dc2626', border: 'none', borderRadius: '4px', fontSize: '12px', cursor: 'pointer' }}>Delete</button>
                     </td>
                   </tr>
