@@ -59,13 +59,33 @@ export default function EnquiriesPage() {
   const [savingMember, setSavingMember] = useState(false);
 
   const [refreshing, setRefreshing] = useState(false);
+  const [notification, setNotification] = useState<string | null>(null);
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      fetchEnquiries();
+    }, 30000); // Auto refresh every 30 seconds
+    return () => clearInterval(interval);
+  }, []);
 
   const fetchEnquiries = () => {
     setRefreshing(true);
     fetch('/api/enquiries?_t=' + Date.now())
       .then(r => r.json())
       .then(d => {
-        setEnquiries(Array.isArray(d) ? d : []);
+        const newData = Array.isArray(d) ? d : [];
+        
+        setEnquiries(prev => {
+          if (prev.length > 0 && newData.length > prev.length) {
+            const newItems = newData.filter(newItem => !prev.some(oldItem => oldItem._id === newItem._id));
+            if (newItems.length > 0) {
+              setNotification(`New Enquiry from ${newItems[0].submittedName || 'Customer'}`);
+              setTimeout(() => setNotification(null), 5000);
+            }
+          }
+          return newData;
+        });
+        
         setLoading(false);
         setRefreshing(false);
       })
@@ -277,6 +297,12 @@ export default function EnquiriesPage() {
 
   return (
     <div>
+      {notification && (
+        <div style={{ background: '#ecfdf5', color: '#047857', padding: '12px 16px', borderRadius: '8px', marginBottom: '16px', border: '1px solid #a7f3d0', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+          <span style={{ fontWeight: '600' }}>🔔 {notification}</span>
+          <button onClick={() => setNotification(null)} style={{ background: 'none', border: 'none', color: '#047857', cursor: 'pointer', fontSize: '16px' }}>×</button>
+        </div>
+      )}
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px', flexWrap: 'wrap', gap: '12px' }}>
         <div>
           <h1 style={{ fontSize: '24px', fontWeight: '700', color: '#0f172a', margin: 0 }}>Enquiries</h1>
