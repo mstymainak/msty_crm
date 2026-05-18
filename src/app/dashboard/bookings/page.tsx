@@ -1067,8 +1067,8 @@ export default function BookingsPage() {
                       </div>
                       
                       <div style={{ textAlign: 'right', marginTop: '4px', maxWidth: '120px' }}>
-                        <div style={{ fontSize: '11px', fontWeight: '800', color: '#1e293b', textTransform: 'uppercase', lineHeight: '1.2' }}>
-                          {b.package?.name ? (b.package.name.length > 15 ? b.package.name.slice(0, 15) + '...' : b.package.name) : 'Custom Package'}
+                        <div style={{ fontSize: '11px', fontWeight: '800', color: '#1e293b', textTransform: 'uppercase', lineHeight: '1.2', wordBreak: 'break-word' }}>
+                          {b.package?.name || 'Custom Package'}
                         </div>
                         <div style={{ fontSize: '10px', color: '#64748b', marginTop: '2px', fontWeight: '600' }}>Rate: ₹{b.package?.price || 0}</div>
                       </div>
