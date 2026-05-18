@@ -497,7 +497,7 @@ export default function EnquiriesPage() {
                     }}
                   >
                     <td style={{ padding: '12px 16px' }}>
-                      <div style={{ fontSize: '14px', fontWeight: '600', color: '#0f172a' }}>{e.submittedName || e.customer?.name || 'Unknown'}</div>
+                      <div style={{ fontSize: '14px', fontWeight: '600', color: '#0f172a', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: '180px' }} title={e.submittedName || e.customer?.name || 'Unknown'}>{e.submittedName || e.customer?.name || 'Unknown'}</div>
                       <div style={{ fontSize: '12px', color: '#334155', fontWeight: '500', display: 'flex', alignItems: 'center', gap: '4px' }}>
                         {e.customer?.phone ? (
                           <>

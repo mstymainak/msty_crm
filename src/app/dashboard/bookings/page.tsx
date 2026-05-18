@@ -829,7 +829,7 @@ export default function BookingsPage() {
                   return (
                     <tr key={b._id}>
                       <td>
-                        <div style={{ fontWeight: '700', color: '#0f172a', fontSize: '15px' }}>{b.customer?.name || 'Unknown'}</div>
+                        <div style={{ fontWeight: '700', color: '#0f172a', fontSize: '15px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: '180px' }} title={b.customer?.name || 'Unknown'}>{b.customer?.name || 'Unknown'}</div>
                         <div style={{ fontSize: '12px', color: '#64748b', marginTop: '2px' }}>{b.customer?.phone || b.customer?.email}</div>
                         <div style={{ fontSize: '10px', color: '#94a3b8', marginTop: '6px', whiteSpace: 'nowrap' }}>
                           Booked: {new Date(b.createdAt).toLocaleDateString('en-GB')}, {new Date(b.createdAt).toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit', hour12: true })}
@@ -842,7 +842,7 @@ export default function BookingsPage() {
                       </td>
 
                       <td>
-                        <div style={{ fontWeight: '700', color: '#1e293b', fontSize: '14px' }}>{b.package?.name || 'Custom Package'}</div>
+                        <div style={{ fontWeight: '700', color: '#1e293b', fontSize: '14px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: '180px' }} title={b.package?.name || 'Custom Package'}>{b.package?.name || 'Custom Package'}</div>
                         <div style={{ fontSize: '11px', color: '#64748b', fontWeight: '600', marginTop: '2px' }}>Rate: ₹{b.package?.price || 0}</div>
                         {b.package?.duration && (
                           <div style={{ fontSize: '11px', color: '#475569', fontWeight: '600', marginTop: '2px' }}>⏱️ {b.package.duration}</div>
