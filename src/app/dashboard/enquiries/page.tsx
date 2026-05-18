@@ -60,8 +60,17 @@ export default function EnquiriesPage() {
 
   const [refreshing, setRefreshing] = useState(false);
   const [notification, setNotification] = useState<string | null>(null);
+  const [reminderModalEnquiry, setReminderModalEnquiry] = useState<any | null>(null);
+  const [reminderForm, setReminderForm] = useState({ dateTime: '', note: '' });
 
   useEffect(() => {
+    // Request notification permission on mount
+    if (typeof window !== 'undefined' && 'Notification' in window) {
+      if (Notification.permission === 'default') {
+        Notification.requestPermission();
+      }
+    }
+
     const interval = setInterval(() => {
       fetchEnquiries();
     }, 30000); // Auto refresh every 30 seconds
@@ -80,10 +89,49 @@ export default function EnquiriesPage() {
             const newItems = newData.filter(newItem => !prev.some(oldItem => oldItem._id === newItem._id));
             if (newItems.length > 0) {
               setNotification(`New Enquiry from ${newItems[0].submittedName || 'Customer'}`);
+              
+              // Trigger System Notification for PWA/Mobile
+              if (typeof window !== 'undefined' && 'Notification' in window) {
+                if (Notification.permission === 'granted') {
+                  new Notification('New Enquiry Received', {
+                    body: `From ${newItems[0].submittedName || 'Customer'}`,
+                    icon: '/msty_logo.png'
+                  });
+                }
+              }
+              
               setTimeout(() => setNotification(null), 5000);
             }
           }
           return newData;
+        });
+
+        // Check for reminders
+        newData.forEach((enq: any) => {
+          if (enq.reminder && enq.reminder.dateTime && !enq.reminder.isNotified) {
+            const reminderTime = new Date(enq.reminder.dateTime).getTime();
+            const now = new Date().getTime();
+            if (now >= reminderTime) {
+              // Trigger System Notification for Reminder
+              if (typeof window !== 'undefined' && 'Notification' in window) {
+                if (Notification.permission === 'granted') {
+                  new Notification(`Reminder: ${enq.submittedName || 'Customer'}`, {
+                    body: enq.reminder.note || 'Follow up reminder',
+                    icon: '/msty_logo.png'
+                  });
+                }
+              }
+              
+              // Mark as notified in background
+              fetch(`/api/enquiries/${enq._id}`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ 
+                  reminder: { ...enq.reminder, isNotified: true } 
+                })
+              }).catch(err => console.error('Failed to update reminder status', err));
+            }
+          }
         });
         
         setLoading(false);
@@ -554,6 +602,7 @@ export default function EnquiriesPage() {
                           <div style={{ position: 'absolute', top: '8px', right: '8px', display: 'flex', gap: '4px' }}>
                             <button onClick={(ev) => { ev.preventDefault(); setEditingNoteId(e._id); setTempNote(e.adminNote || ''); }} style={{ background: 'transparent', border: 'none', cursor: 'pointer', fontSize: '14px' }} title={e.adminNote ? "Edit Note" : "Add Note"}>📝</button>
                             {e.adminNote && <button onClick={(ev) => { ev.preventDefault(); deleteNote(e._id); }} style={{ background: 'transparent', border: 'none', cursor: 'pointer', fontSize: '14px' }} title="Delete Note">🗑️</button>}
+                            <button onClick={(ev) => { ev.preventDefault(); setReminderModalEnquiry(e); setReminderForm({ dateTime: e.reminder?.dateTime ? new Date(e.reminder.dateTime).toISOString().slice(0, 16) : '', note: e.reminder?.note || '' }); }} style={{ background: 'transparent', border: 'none', cursor: 'pointer', fontSize: '14px' }} title="Set Reminder">🔔</button>
                           </div>
 
                           <div style={{ whiteSpace: 'pre-wrap', marginBottom: '8px', color: '#334155', paddingRight: '45px' }}>{e.message}</div>
@@ -1180,6 +1229,66 @@ export default function EnquiriesPage() {
                 }}
               >
                 {savingMember ? 'Adding...' : 'Add Person to Enquiry'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Reminder Modal */}
+      {reminderModalEnquiry && (
+        <div style={{ position: 'fixed', top: 0, left: 0, width: '100%', height: '100%', background: 'rgba(0,0,0,0.5)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000 }}>
+          <div style={{ background: '#fff', padding: '24px', borderRadius: '16px', width: '100%', maxWidth: '400px', boxShadow: '0 20px 25px -5px rgba(0,0,0,0.1)' }}>
+            <h3 style={{ margin: '0 0 16px', fontSize: '18px', fontWeight: '700', color: '#0f172a' }}>Set Follow-up Reminder</h3>
+            
+            <div style={{ marginBottom: '16px' }}>
+              <label style={{ display: 'block', fontSize: '12px', fontWeight: '600', color: '#64748b', marginBottom: '4px' }}>DATE & TIME</label>
+              <input 
+                type="datetime-local" 
+                value={reminderForm.dateTime}
+                onChange={(e) => setReminderForm({ ...reminderForm, dateTime: e.target.value })}
+                style={{ width: '100%', padding: '10px', border: '1px solid #cbd5e1', borderRadius: '8px', fontSize: '14px' }}
+              />
+            </div>
+            
+            <div style={{ marginBottom: '20px' }}>
+              <label style={{ display: 'block', fontSize: '12px', fontWeight: '600', color: '#64748b', marginBottom: '4px' }}>NOTE</label>
+              <textarea 
+                placeholder="What to do? (e.g. Call client)"
+                value={reminderForm.note}
+                onChange={(e) => setReminderForm({ ...reminderForm, note: e.target.value })}
+                style={{ width: '100%', padding: '10px', border: '1px solid #cbd5e1', borderRadius: '8px', fontSize: '14px', minHeight: '60px' }}
+              />
+            </div>
+            
+            <div style={{ display: 'flex', gap: '12px', justifyContent: 'flex-end' }}>
+              <button 
+                onClick={() => setReminderModalEnquiry(null)} 
+                style={{ padding: '10px 16px', background: '#f1f5f9', color: '#475569', border: 'none', borderRadius: '8px', fontWeight: '600', cursor: 'pointer' }}
+              >
+                Cancel
+              </button>
+              <button 
+                onClick={async () => {
+                  const res = await fetch(`/api/enquiries/${reminderModalEnquiry._id}`, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ 
+                      reminder: { 
+                        dateTime: reminderForm.dateTime, 
+                        note: reminderForm.note, 
+                        isNotified: false 
+                      } 
+                    })
+                  });
+                  if (res.ok) {
+                    setReminderModalEnquiry(null);
+                    fetchEnquiries();
+                  }
+                }} 
+                style={{ padding: '10px 16px', background: '#f97316', color: '#fff', border: 'none', borderRadius: '8px', fontWeight: '600', cursor: 'pointer' }}
+              >
+                Save Reminder
               </button>
             </div>
           </div>

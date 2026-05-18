@@ -17,6 +17,11 @@ const EnquirySchema = new Schema({
     relation: { type: String, default: '' },
     city: { type: String, default: '' }
   }],
+  reminder: {
+    dateTime: { type: Date },
+    note: { type: String },
+    isNotified: { type: Boolean, default: false }
+  },
   isDeleted: { type: Boolean, default: false },
   deletedAt: { type: Date, default: null },
   createdAt: { type: Date, default: Date.now },
