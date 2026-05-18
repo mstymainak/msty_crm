@@ -12,6 +12,11 @@ export const metadata: Metadata = {
   title: "Mahesh Sharma Tirth Yatra CRM",
   description: "Complete CRM system for pilgrimage management",
   manifest: "/manifest.json",
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: "default",
+    title: "MSTY CRM",
+  },
 };
 
 export default function RootLayout({
