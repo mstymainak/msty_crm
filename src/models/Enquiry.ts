@@ -21,6 +21,8 @@ const EnquirySchema = new Schema({
   }],
   isDeleted: { type: Boolean, default: false },
   deletedAt: { type: Date, default: null },
+  acquiredBy: { type: Schema.Types.ObjectId, ref: 'User', default: null },
+  acquiredChangedByAdmin: { type: Boolean, default: false },
   createdAt: { type: Date, default: Date.now },
   updatedAt: { type: Date, default: Date.now },
 });

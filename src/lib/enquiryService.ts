@@ -9,12 +9,12 @@ export async function createEnquiry(data: any) {
 
 export async function getEnquiries() {
   await dbConnect();
-  return await Enquiry.find({ isDeleted: { $ne: true } }).populate('customer').sort({ createdAt: -1 });
+  return await Enquiry.find({ isDeleted: { $ne: true } }).populate('customer').populate('acquiredBy', 'name').sort({ createdAt: -1 });
 }
 
 export async function getEnquiryById(id: string) {
   await dbConnect();
-  return await Enquiry.findOne({ _id: id, isDeleted: { $ne: true } }).populate('customer');
+  return await Enquiry.findOne({ _id: id, isDeleted: { $ne: true } }).populate('customer').populate('acquiredBy', 'name');
 }
 
 export async function updateEnquiry(id: string, data: any) {
