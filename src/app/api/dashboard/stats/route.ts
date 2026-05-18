@@ -1,52 +1,36 @@
 import { NextResponse } from 'next/server';
-import mongoose from 'mongoose';
 import dbConnect from '@/lib/mongodb';
 import Customer from '@/models/Customer';
 import Enquiry from '@/models/Enquiry';
 import Booking from '@/models/Booking';
 import YatraPackage from '@/models/YatraPackage';
 
-export async function GET(request: Request) {
+export async function GET(req: Request) {
   try {
     await dbConnect();
 
-    const { searchParams } = new URL(request.url);
-    const timeline = searchParams.get('timeline') || 'this_week';
-    const userId = searchParams.get('userId');
+    const { searchParams } = new URL(req.url);
+    const startDate = searchParams.get('startDate');
+    const endDate = searchParams.get('endDate');
 
-    let startDate = new Date();
-    if (timeline === 'this_week') {
-      const day = startDate.getDay();
-      startDate.setDate(startDate.getDate() - day);
-      startDate.setHours(0,0,0,0);
-    } else if (timeline === 'last_30_days') {
-      startDate.setDate(startDate.getDate() - 30);
-    } else if (timeline === 'last_90_days') {
-      startDate.setDate(startDate.getDate() - 90);
-    } else if (timeline === 'this_year') {
-      startDate = new Date(startDate.getFullYear(), 0, 1);
+    let enquiryMatch: any = { isDeleted: { $ne: true } };
+    let customerMatch: any = { isDeleted: { $ne: true } };
+    let bookingMatch: any = {};
+    let enquiryHistoryMatch: any = { isDeleted: { $ne: true } };
+
+    if (startDate && endDate) {
+      const start = new Date(startDate);
+      const end = new Date(endDate);
+      end.setHours(23, 59, 59, 999); // Include full end day
+
+      enquiryMatch.createdAt = { $gte: start, $lte: end };
+      customerMatch.createdAt = { $gte: start, $lte: end };
+      bookingMatch.createdAt = { $gte: start, $lte: end };
+      enquiryHistoryMatch.createdAt = { $gte: start, $lte: end };
+    } else {
+      // Default to last 7 days for history if no range specified
+      enquiryHistoryMatch.createdAt = { $gte: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000) };
     }
-
-    const customerMatch: any = { isDeleted: { $ne: true } };
-    const enquiryMatch: any = { isDeleted: { $ne: true } };
-    const bookingMatch: any = { status: { $ne: 'cancelled' } };
-
-    if (timeline !== 'all') {
-      customerMatch.createdAt = { $gte: startDate };
-      enquiryMatch.createdAt = { $gte: startDate };
-      bookingMatch.createdAt = { $gte: startDate };
-    }
-
-    if (userId && userId !== 'all') {
-      const objectId = new mongoose.Types.ObjectId(userId);
-      customerMatch.createdBy = objectId;
-      bookingMatch.bookedBy = objectId;
-    }
-
-    // Convert match objects for aggregation (need to ensure ObjectId for user fields)
-    const customerAggMatch = { ...customerMatch };
-    const bookingAggMatch = { ...bookingMatch };
-    const enquiryAggMatch = { ...enquiryMatch };
 
     const [
       totalCustomers,
@@ -70,18 +54,18 @@ export async function GET(request: Request) {
       Enquiry.find(enquiryMatch).populate('customer', 'name phone').sort({ createdAt: -1 }).limit(5).lean(),
       Booking.find(bookingMatch).populate('customer', 'name phone').populate('package', 'name').sort({ createdAt: -1 }).limit(5).lean(),
       Enquiry.aggregate([
-        { $match: enquiryAggMatch },
+        { $match: enquiryMatch },
         { $group: { _id: '$status', count: { $sum: 1 } } }
       ]),
       Enquiry.aggregate([
-        { $match: enquiryAggMatch },
+        { $match: enquiryMatch },
         { $group: { _id: '$source', count: { $sum: 1 } } }
       ]),
       Booking.aggregate([
-        { $match: bookingAggMatch },
+        { $match: { ...bookingMatch, status: { $ne: 'cancelled' } } },
         { $group: { _id: '$status', count: { $sum: 1 } } }
       ]),
-      Booking.find({ ...bookingMatch, travelDate: { $gte: new Date() }, status: { $nin: ['cancelled', 'completed'] } })
+      Booking.find({ travelDate: { $gte: new Date() }, status: { $nin: ['cancelled', 'completed'] } })
         .populate('customer', 'name phone')
         .populate('package', 'name')
         .sort({ travelDate: 1 })
@@ -89,7 +73,7 @@ export async function GET(request: Request) {
         .lean(),
       // Add historical enquiries for graph
       Enquiry.aggregate([
-        { $match: enquiryAggMatch },
+        { $match: enquiryHistoryMatch },
         {
           $group: {
             _id: { $dateToString: { format: "%Y-%m-%d", date: "$createdAt" } },
@@ -101,7 +85,7 @@ export async function GET(request: Request) {
     ]);
 
     const bookingRevenue = await Booking.aggregate([
-      { $match: bookingAggMatch },
+      { $match: { ...bookingMatch, status: { $ne: 'cancelled' } } },
       { $group: { _id: null, total: { $sum: '$totalAmount' }, collected: { $sum: '$advancePaid' } } },
     ]);
 
