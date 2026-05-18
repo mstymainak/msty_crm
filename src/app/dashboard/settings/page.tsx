@@ -169,7 +169,7 @@ export default function SettingsPage() {
           <table style={{ width: '100%', borderCollapse: 'collapse' }}>
             <thead>
               <tr style={{ borderBottom: '1px solid #e2e8f0', background: '#f8fafc' }}>
-                {['Name', 'Email', 'Role', 'Status', 'Joined', currentUserRole === 'admin' ? 'Password' : null, currentUserRole === 'admin' ? 'Actions' : null].filter(Boolean).map(h => (
+                {['Name', 'Email', 'Role', 'Status', 'Joined', 'Last Login', currentUserRole === 'admin' ? 'Password' : null, currentUserRole === 'admin' ? 'Actions' : null].filter(Boolean).map(h => (
                   <th key={h as string} style={{ padding: '12px 16px', textAlign: 'left', fontSize: '12px', fontWeight: '600', color: '#64748b', textTransform: 'uppercase' }}>{h as string}</th>
                 ))}
               </tr>
@@ -188,6 +188,16 @@ export default function SettingsPage() {
                   <td style={{ padding: '12px 16px', fontSize: '13px', color: '#94a3b8' }}>
                     <div>{new Date(u.createdAt).toLocaleDateString('en-GB')}</div>
                     <div style={{ fontSize: '11px', marginTop: '2px' }}>{new Date(u.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: true })}</div>
+                  </td>
+                  <td style={{ padding: '12px 16px', fontSize: '13px', color: '#94a3b8' }}>
+                    {u.lastLogin ? (
+                      <>
+                        <div>{new Date(u.lastLogin).toLocaleDateString('en-GB')}</div>
+                        <div style={{ fontSize: '11px', marginTop: '2px' }}>{new Date(u.lastLogin).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: true })}</div>
+                      </>
+                    ) : (
+                      <span style={{ color: '#cbd5e1' }}>Never</span>
+                    )}
                   </td>
                   {currentUserRole === 'admin' && (
                     <td style={{ padding: '12px 16px' }}>
@@ -375,6 +385,13 @@ export default function SettingsPage() {
                           }}>
                             {u.isActive ? 'Active' : 'Inactive'}
                           </span>
+                        </div>
+                        
+                        {/* Last Login */}
+                        <div style={{ fontSize: '12px', color: '#94a3b8', marginTop: '6px' }}>
+                          Last Login: {u.lastLogin ? (
+                            `${new Date(u.lastLogin).toLocaleDateString('en-GB')} ${new Date(u.lastLogin).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: true })}`
+                          ) : 'Never'}
                         </div>
                       </div>
                     </div>

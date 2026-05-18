@@ -28,6 +28,9 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Account is deactivated' }, { status: 403 });
     }
 
+    user.lastLogin = new Date();
+    await user.save();
+
     const token = signToken({
       userId: user._id.toString(),
       email: user.email,

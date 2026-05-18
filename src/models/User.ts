@@ -8,6 +8,7 @@ const UserSchema = new Schema({
   role: { type: String, enum: ['admin', 'agent'], default: 'agent' },
   phone: { type: String },
   isActive: { type: Boolean, default: true },
+  lastLogin: { type: Date },
   createdAt: { type: Date, default: Date.now },
   updatedAt: { type: Date, default: Date.now },
 });
