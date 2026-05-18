@@ -20,6 +20,36 @@ export async function createBooking(data: any) {
 
 export async function getBookings() {
   await dbConnect();
+  const now = new Date();
+  
+  // Auto-update statuses based on due amount and travel end date
+  const allBookings = await Booking.find({});
+  for (const b of allBookings) {
+    let needsUpdate = false;
+    let newStatus = b.status;
+    
+    // If due is 0 or less
+    if ((b.balancePending || 0) <= 0) {
+      // If travel end date reached
+      if (b.endTravelDate && new Date(b.endTravelDate) <= now) {
+        if (b.status !== 'completed') {
+          newStatus = 'completed';
+          needsUpdate = true;
+        }
+      } else {
+        // If due is 0 but end date not reached, set to Paid (unless already completed)
+        if (b.status !== 'completed' && b.status !== 'paid') {
+          newStatus = 'paid';
+          needsUpdate = true;
+        }
+      }
+    }
+    
+    if (needsUpdate) {
+      await Booking.findByIdAndUpdate(b._id, { status: newStatus, updatedAt: now });
+    }
+  }
+
   return await Booking.find({})
     .populate('customer', 'name email phone')
     .populate('package', 'name destinations duration price groups')

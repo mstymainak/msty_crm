@@ -7,6 +7,17 @@ export default function SplashScreen() {
   const [fade, setFade] = useState(false);
 
   useEffect(() => {
+    // Check if splash has already been shown in this session
+    const hasShown = typeof window !== 'undefined' ? sessionStorage.getItem('splashShown') : null;
+    if (hasShown) {
+      setShow(false);
+      return;
+    }
+    
+    if (typeof window !== 'undefined') {
+      sessionStorage.setItem('splashShown', 'true');
+    }
+
     // Start fade out animation a bit before removing component
     const fadeTimer = setTimeout(() => {
       setFade(true);
