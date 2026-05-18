@@ -1,6 +1,12 @@
 import Link from 'next/link';
+import { getAuthUser } from '@/lib/auth';
+import { redirect } from 'next/navigation';
 
-export default function Home() {
+export default async function Home() {
+  const user = await getAuthUser();
+  if (user) {
+    redirect('/dashboard');
+  }
   return (
     <div className="bg-responsive" style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', backgroundSize: 'cover', backgroundPosition: 'center' }}>
       <style>{`
