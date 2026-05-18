@@ -1,4 +1,8 @@
 import { Schema, model, models } from 'mongoose';
+import './Customer';
+import './YatraPackage';
+import './Enquiry';
+import './User';
 
 const BookingSchema = new Schema({
   customer: { type: Schema.Types.ObjectId, ref: 'Customer', required: true },
