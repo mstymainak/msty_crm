@@ -26,7 +26,12 @@ export async function GET(req: Request) {
       enquiryMatch.createdAt = { $gte: start, $lte: end };
       customerMatch.createdAt = { $gte: start, $lte: end };
       bookingMatch.createdAt = { $gte: start, $lte: end };
-      enquiryHistoryMatch.createdAt = { $gte: start, $lte: end };
+      
+      // Graph shows last 7 days only acc to end date of timeline
+      const startForHistory = new Date(end);
+      startForHistory.setDate(startForHistory.getDate() - 6);
+      startForHistory.setHours(0, 0, 0, 0);
+      enquiryHistoryMatch.createdAt = { $gte: startForHistory, $lte: end };
     } else {
       // Default to last 7 days for history if no range specified
       enquiryHistoryMatch.createdAt = { $gte: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000) };

@@ -81,23 +81,13 @@ function DonutChart({ data, colors, size = 140 }: { data: { label: string; value
   );
 }
 
-function LineChart({ data, height = 240, startDate, endDate }: { data: { _id: string; count: number }[], height?: number, startDate: string, endDate: string }) {
-  // Fill missing days with zero for the selected range
-  const getDaysArray = (start: string, end: string) => {
-    const arr = [];
-    const dt = new Date(start);
-    const endDt = new Date(end);
-    let count = 0;
-    // Limit to safe number of days to prevent UI lockup if range is huge
-    while (dt <= endDt && count < 100) {
-      arr.push(new Date(dt).toISOString().split('T')[0]);
-      dt.setDate(dt.getDate() + 1);
-      count++;
-    }
-    return arr;
-  };
-  
-  const days = getDaysArray(startDate, endDate);
+function LineChart({ data, height = 240, endDate }: { data: { _id: string; count: number }[], height?: number, endDate: string }) {
+  // Fill missing days with zero for last 7 days ending at endDate
+  const days = Array.from({ length: 7 }, (_, i) => {
+    const d = new Date(endDate);
+    d.setDate(d.getDate() - (6 - i));
+    return d.toISOString().split('T')[0];
+  });
 
   const chartData = days.map(date => {
     const found = data.find(d => d._id === date);
@@ -329,7 +319,7 @@ export default function DashboardPage() {
             </select>
           </div>
           
-          <LineChart data={stats.enquiryHistory || []} height={180} startDate={startDate} endDate={endDate} />
+          <LineChart data={stats.enquiryHistory || []} height={180} endDate={endDate} />
 
           <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', marginTop: '20px' }}>
             {[
