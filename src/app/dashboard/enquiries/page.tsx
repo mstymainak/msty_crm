@@ -1126,26 +1126,7 @@ export default function EnquiriesPage() {
                   />
                 </div>
                 
-                <button
-                  onClick={handleAddMemberSubmit}
-                  disabled={savingMember}
-                  style={{
-                    width: '100%',
-                    padding: '14px',
-                    background: '#f97316',
-                    color: '#fff',
-                    border: 'none',
-                    borderRadius: '12px',
-                    fontWeight: '700',
-                    fontSize: '15px',
-                    cursor: 'pointer',
-                    marginTop: '20px',
-                    boxShadow: '0 4px 6px -1px rgba(249, 115, 22, 0.2)',
-                    transition: 'all 0.2s'
-                  }}
-                >
-                  {savingMember ? 'Adding...' : 'Add Person to Enquiry'}
-                </button>
+
               </div>
             </div>
             
@@ -1156,21 +1137,23 @@ export default function EnquiriesPage() {
               borderTop: '1px solid #f1f5f9'
             }}>
               <button
-                onClick={() => setMemberModalEnquiry(null)}
+                onClick={handleAddMemberSubmit}
+                disabled={savingMember}
                 style={{
                   width: '100%',
                   padding: '14px',
-                  background: '#f1f5f9',
+                  background: '#f97316',
+                  color: '#fff',
                   border: 'none',
                   borderRadius: '12px',
-                  fontSize: '15px',
-                  color: '#475569',
                   fontWeight: '700',
+                  fontSize: '15px',
                   cursor: 'pointer',
+                  boxShadow: '0 4px 6px -1px rgba(249, 115, 22, 0.2)',
                   transition: 'all 0.2s'
                 }}
               >
-                Close Dialog
+                {savingMember ? 'Adding...' : 'Add Person to Enquiry'}
               </button>
             </div>
           </div>
