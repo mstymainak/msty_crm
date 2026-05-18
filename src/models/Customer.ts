@@ -1,4 +1,5 @@
 import { Schema, model, models } from 'mongoose';
+import './User';
 
 const CustomerSchema = new Schema({
   name: { type: String, required: true },
