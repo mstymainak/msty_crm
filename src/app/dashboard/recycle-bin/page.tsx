@@ -554,27 +554,10 @@ export default function RecycleBinPage() {
                     transition: 'all 0.15s'
                   }}
                 >
-                  {/* Row 1: User icon, Name, and Delete Forever Button */}
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px' }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                      <span style={{ fontSize: '18px', color: '#64748b' }}>👤</span>
-                      <span style={{ fontSize: '16px', fontWeight: '700', color: '#0f172a' }}>{name}</span>
-                    </div>
-                    <button
-                      onClick={(ev) => { ev.stopPropagation(); handleAction(activeTab, item._id, 'delete'); }}
-                      style={{
-                        padding: '6px 12px',
-                        background: '#fef2f2',
-                        border: '1px solid #fca5a5',
-                        borderRadius: '6px',
-                        color: '#dc2626',
-                        fontSize: '12px',
-                        fontWeight: '600',
-                        cursor: 'pointer'
-                      }}
-                    >
-                      🗑️ Delete Forever
-                    </button>
+                  {/* Row 1: User icon and Name */}
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '12px' }}>
+                    <span style={{ fontSize: '18px', color: '#64748b' }}>👤</span>
+                    <span style={{ fontSize: '16px', fontWeight: '700', color: '#0f172a' }}>{name}</span>
                   </div>
 
                   {/* Row 2: Contact Details (✉️ email | WhatsApp icon + Clickable phone number) */}
@@ -616,7 +599,7 @@ export default function RecycleBinPage() {
                   <div style={{ borderTop: '1px solid #f1f5f9', marginBottom: '12px' }} />
 
                   {/* Row 3: Info Grid */}
-                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1.1fr 0.9fr', gap: '8px', alignItems: 'start' }}>
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px', alignItems: 'start' }}>
                     {/* Col 1: Deleted At */}
                     <div>
                       <div style={{ fontSize: '10px', color: '#94a3b8', fontWeight: '700', textTransform: 'uppercase', marginBottom: '4px' }}>Deleted At</div>
@@ -647,31 +630,53 @@ export default function RecycleBinPage() {
                         ⏰ {daysLeft} {daysLeft === 1 ? 'day' : 'days'} left
                       </span>
                     </div>
+                  </div>
 
-                    {/* Col 3: Actions (Restore) */}
-                    <div style={{ textAlign: 'right' }}>
-                      <div style={{ fontSize: '10px', color: '#94a3b8', fontWeight: '700', textTransform: 'uppercase', marginBottom: '4px', textAlign: 'left' }}>Actions</div>
-                      <button
-                        onClick={(ev) => { ev.stopPropagation(); handleAction(activeTab, item._id, 'restore'); }}
-                        style={{
-                          padding: '6px 10px',
-                          background: '#f0fdf4',
-                          border: '1px solid #bbf7d0',
-                          borderRadius: '6px',
-                          color: '#16a34a',
-                          fontSize: '12px',
-                          fontWeight: '600',
-                          cursor: 'pointer',
-                          display: 'inline-flex',
-                          alignItems: 'center',
-                          gap: '4px',
-                          width: '100%',
-                          justifyContent: 'center'
-                        }}
-                      >
-                        🔄 Restore
-                      </button>
-                    </div>
+                  {/* Divider Line */}
+                  <div style={{ borderTop: '1px solid #f1f5f9', marginTop: '12px', marginBottom: '12px' }} />
+
+                  {/* Row 4: Action Buttons Row */}
+                  <div style={{ display: 'flex', gap: '8px' }}>
+                    <button
+                      onClick={(ev) => { ev.stopPropagation(); handleAction(activeTab, item._id, 'restore'); }}
+                      style={{
+                        flex: 1,
+                        padding: '8px 12px',
+                        background: '#f0fdf4',
+                        border: '1px solid #bbf7d0',
+                        borderRadius: '6px',
+                        color: '#16a34a',
+                        fontSize: '12px',
+                        fontWeight: '600',
+                        cursor: 'pointer',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        gap: '4px'
+                      }}
+                    >
+                      🔄 Restore
+                    </button>
+                    <button
+                      onClick={(ev) => { ev.stopPropagation(); handleAction(activeTab, item._id, 'delete'); }}
+                      style={{
+                        flex: 1,
+                        padding: '8px 12px',
+                        background: '#fef2f2',
+                        border: '1px solid #fca5a5',
+                        borderRadius: '6px',
+                        color: '#dc2626',
+                        fontSize: '12px',
+                        fontWeight: '600',
+                        cursor: 'pointer',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        gap: '4px'
+                      }}
+                    >
+                      🗑️ Delete Forever
+                    </button>
                   </div>
                 </div>
               );
