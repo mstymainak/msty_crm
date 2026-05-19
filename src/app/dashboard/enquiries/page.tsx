@@ -1032,7 +1032,16 @@ export default function EnquiriesPage() {
                               <select
                                 value={e.acquiredBy?._id || e.acquiredBy || ''}
                                 onChange={(ev) => handleAdminChangeAcquire(e._id, ev.target.value)}
-                                style={{ padding: '4px 8px', fontSize: '12px', border: '1px solid #cbd5e1', borderRadius: '4px', background: '#fff' }}
+                                style={{ 
+                                  padding: '3px 6px', 
+                                  fontSize: '11px', 
+                                  border: '1px solid #cbd5e1', 
+                                  borderRadius: '4px', 
+                                  background: '#fff',
+                                  maxWidth: '90px',
+                                  textOverflow: 'ellipsis',
+                                  whiteSpace: 'nowrap'
+                                }}
                               >
                                 <option value="">Not acquired</option>
                                 {users.map(u => {
