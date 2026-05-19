@@ -1035,9 +1035,14 @@ export default function EnquiriesPage() {
                                 style={{ padding: '4px 8px', fontSize: '12px', border: '1px solid #cbd5e1', borderRadius: '4px', background: '#fff' }}
                               >
                                 <option value="">Not acquired</option>
-                                {users.map(u => (
-                                  <option key={u._id} value={u._id}>{u.name}</option>
-                                ))}
+                                {users.map(u => {
+                                  const isSelected = (e.acquiredBy?._id || e.acquiredBy) === u._id;
+                                  return (
+                                    <option key={u._id} value={u._id}>
+                                      {isSelected ? u.name.split(' ')[0] : u.name}
+                                    </option>
+                                  );
+                                })}
                               </select>
                               {e.acquiredChangedByAdmin && (
                                 <div style={{ fontSize: '9px', color: '#64748b', marginTop: '2px' }}>changed by admin</div>
