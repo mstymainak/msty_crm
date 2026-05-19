@@ -992,9 +992,9 @@ export default function EnquiriesPage() {
                       </details>
                     </div>
 
-                    {/* Status Select, Priority Select & Delete Button */}
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                      <div style={{ display: 'flex', gap: '6px' }}>
+                    {/* Status Select, Priority Select, Acquire & Delete Row */}
+                    <div style={{ display: 'flex', gap: '8px', alignItems: 'center', flexWrap: 'wrap', justifyContent: 'space-between', width: '100%' }}>
+                      <div style={{ display: 'flex', gap: '6px', alignItems: 'center' }}>
                         <select
                           value={e.status}
                           onChange={(ev) => updateStatus(e._id, ev.target.value)}
@@ -1018,81 +1018,83 @@ export default function EnquiriesPage() {
                         </select>
                       </div>
 
-                      {/* ACQUIRE BUTTON (MOBILE) */}
-                      {(() => {
-                        const isAcquired = !!e.acquiredBy;
-                        const acquiredByName = e.acquiredBy?.name || 'Unknown';
-                        const acquiredByFirstName = acquiredByName.split(' ')[0];
-                        const isMe = e.acquiredBy?._id === currentUser?.userId;
-                        const isAdmin = currentUser?.role === 'admin';
+                      <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+                        {/* ACQUIRE BUTTON (MOBILE) */}
+                        {(() => {
+                          const isAcquired = !!e.acquiredBy;
+                          const acquiredByName = e.acquiredBy?.name || 'Unknown';
+                          const acquiredByFirstName = acquiredByName.split(' ')[0];
+                          const isMe = e.acquiredBy?._id === currentUser?.userId;
+                          const isAdmin = currentUser?.role === 'admin';
 
-                        if (isAdmin) {
-                          return (
-                            <div>
-                              <select
-                                value={e.acquiredBy?._id || e.acquiredBy || ''}
-                                onChange={(ev) => handleAdminChangeAcquire(e._id, ev.target.value)}
-                                style={{ 
-                                  padding: '3px 6px', 
-                                  fontSize: '11px', 
-                                  border: '1px solid #cbd5e1', 
-                                  borderRadius: '4px', 
-                                  background: '#fff',
-                                  maxWidth: '90px',
-                                  textOverflow: 'ellipsis',
-                                  whiteSpace: 'nowrap'
-                                }}
+                          if (isAdmin) {
+                            return (
+                              <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>
+                                {e.acquiredChangedByAdmin && (
+                                  <div style={{ fontSize: '8px', color: '#64748b', lineHeight: 1, marginBottom: '2px', whiteSpace: 'nowrap' }}>changed by admin</div>
+                                )}
+                                <select
+                                  value={e.acquiredBy?._id || e.acquiredBy || ''}
+                                  onChange={(ev) => handleAdminChangeAcquire(e._id, ev.target.value)}
+                                  style={{ 
+                                    padding: '3px 6px', 
+                                    fontSize: '11px', 
+                                    border: '1px solid #cbd5e1', 
+                                    borderRadius: '4px', 
+                                    background: '#fff',
+                                    maxWidth: '85px',
+                                    textOverflow: 'ellipsis',
+                                    whiteSpace: 'nowrap'
+                                  }}
+                                >
+                                  <option value="">Not acquired</option>
+                                  {users.map(u => {
+                                    const isSelected = (e.acquiredBy?._id || e.acquiredBy) === u._id;
+                                    return (
+                                      <option key={u._id} value={u._id}>
+                                        {isSelected ? u.name.split(' ')[0] : u.name}
+                                      </option>
+                                    );
+                                  })}
+                                </select>
+                              </div>
+                            );
+                          }
+
+                          if (!isAcquired) {
+                            return (
+                              <button
+                                onClick={() => handleAcquire(e._id)}
+                                style={{ padding: '4px 8px', background: '#3b82f6', color: '#fff', border: 'none', borderRadius: '4px', fontSize: '11px', cursor: 'pointer', fontWeight: '600' }}
                               >
-                                <option value="">Not acquired</option>
-                                {users.map(u => {
-                                  const isSelected = (e.acquiredBy?._id || e.acquiredBy) === u._id;
-                                  return (
-                                    <option key={u._id} value={u._id}>
-                                      {isSelected ? u.name.split(' ')[0] : u.name}
-                                    </option>
-                                  );
-                                })}
-                              </select>
+                                Acquire
+                              </button>
+                            );
+                          }
+
+                          if (isMe) {
+                            return (
+                              <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>
+                                {e.acquiredChangedByAdmin && (
+                                  <div style={{ fontSize: '8px', color: '#64748b', lineHeight: 1, marginBottom: '2px', whiteSpace: 'nowrap' }}>changed by admin</div>
+                                )}
+                                <span style={{ fontSize: '12px', color: '#16a34a', fontWeight: '600' }}>Acquired</span>
+                              </div>
+                            );
+                          }
+
+                          return (
+                            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>
                               {e.acquiredChangedByAdmin && (
-                                <div style={{ fontSize: '9px', color: '#64748b', marginTop: '2px' }}>changed by admin</div>
+                                <div style={{ fontSize: '8px', color: '#64748b', lineHeight: 1, marginBottom: '2px', whiteSpace: 'nowrap' }}>changed by admin</div>
                               )}
+                              <span style={{ fontSize: '12px', color: '#0f172a', fontWeight: '600' }}>{acquiredByFirstName}</span>
                             </div>
                           );
-                        }
+                        })()}
 
-                        if (!isAcquired) {
-                          return (
-                            <button
-                              onClick={() => handleAcquire(e._id)}
-                              style={{ padding: '4px 8px', background: '#3b82f6', color: '#fff', border: 'none', borderRadius: '4px', fontSize: '12px', cursor: 'pointer', fontWeight: '600' }}
-                            >
-                              Acquire
-                            </button>
-                          );
-                        }
-
-                        if (isMe) {
-                          return (
-                            <div>
-                              <span style={{ fontSize: '12px', color: '#16a34a', fontWeight: '600' }}>Acquired</span>
-                              {e.acquiredChangedByAdmin && (
-                                <div style={{ fontSize: '9px', color: '#64748b', marginTop: '2px' }}>changed by admin</div>
-                              )}
-                            </div>
-                          );
-                        }
-
-                        return (
-                          <div>
-                            <span style={{ fontSize: '12px', color: '#0f172a', fontWeight: '600' }}>{acquiredByFirstName}</span>
-                            {e.acquiredChangedByAdmin && (
-                              <div style={{ fontSize: '9px', color: '#64748b', marginTop: '2px' }}>changed by admin</div>
-                            )}
-                          </div>
-                        );
-                      })()}
-
-                      <button onClick={() => handleDelete(e._id)} style={{ padding: '4px 10px', background: '#fef2f2', color: '#dc2626', border: 'none', borderRadius: '6px', fontSize: '12px', cursor: 'pointer', fontWeight: '600' }}>Delete</button>
+                        <button onClick={() => handleDelete(e._id)} style={{ padding: '4px 10px', background: '#fef2f2', color: '#dc2626', border: 'none', borderRadius: '6px', fontSize: '12px', cursor: 'pointer', fontWeight: '600' }}>Delete</button>
+                      </div>
                     </div>
                   </div>
                 </div>
