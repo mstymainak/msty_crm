@@ -460,7 +460,9 @@ export default function EnquiriesPage() {
             <option value="not_acquired">Not acquired</option>
             <option value="changed_by_admin">Changed by admin</option>
             {users.map(u => (
-              <option key={u._id} value={u._id}>Acquired by {u.name}</option>
+              <option key={u._id} value={u._id}>
+                {acquireFilter === u._id ? u.name : `Acquired by ${u.name}`}
+              </option>
             ))}
           </select>
         </div>
