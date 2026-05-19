@@ -643,7 +643,16 @@ export default function EnquiriesPage() {
                           <select
                             value={e.packageGroup || ''}
                             onChange={(ev) => updatePackageGroup(e._id, ev.target.value)}
-                            style={{ padding: '4px 8px', fontSize: '12px', border: '1px solid #cbd5e1', borderRadius: '4px', background: '#fff', color: e.packageGroup ? '#0f172a' : '#94a3b8' }}
+                            style={{ 
+                              padding: '4px 8px', 
+                              fontSize: '12px', 
+                              border: '1px solid #cbd5e1', 
+                              borderRadius: '4px', 
+                              background: '#fff', 
+                              color: e.packageGroup ? '#0f172a' : '#94a3b8',
+                              maxWidth: '140px',
+                              textOverflow: 'ellipsis'
+                            }}
                           >
                             <option value="">No Group Selected</option>
                             {packages.find(p => p._id === e.package)?.groups.map((g: any) => (
