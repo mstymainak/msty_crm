@@ -6,6 +6,12 @@ export async function createCustomer(data: any) {
   if (data.phone) {
     const existing = await Customer.findOne({ phone: data.phone, isDeleted: { $ne: true } });
     if (existing) {
+      existing.createdAt = new Date();
+      existing.updatedAt = new Date();
+      if (data.name) existing.name = data.name;
+      if (data.email) existing.email = data.email;
+      if (data.address) existing.address = data.address;
+      await existing.save();
       const obj = typeof existing.toObject === 'function' ? existing.toObject() : existing;
       return { ...obj, alreadyExisted: true };
     }

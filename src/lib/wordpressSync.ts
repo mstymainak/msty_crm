@@ -194,12 +194,17 @@ class WordPressSyncService {
           let existing = null;
           if (contact.phone) {
             existing = await Customer.findOne({ phone: contact.phone, isDeleted: { $ne: true } });
-          }
-
-          if (existing) {
-            console.log(`⏭️  Contact already exists: ${contact.name}`);
-            skipped++;
-            continue;
+            if (existing) {
+              existing.createdAt = contact.submittedAt || new Date();
+              existing.updatedAt = new Date();
+              if (contact.name) existing.name = contact.name;
+              if (contact.email) existing.email = contact.email;
+              if (contact.address) existing.address = contact.address;
+              await existing.save();
+              console.log(`🔄 Updated existing customer date/time during sync: ${contact.name}`);
+              skipped++;
+              continue;
+            }
           }
 
           // Create new customer

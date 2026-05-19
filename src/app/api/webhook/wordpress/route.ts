@@ -120,6 +120,15 @@ export async function POST(request: NextRequest) {
     let customer = null;
     if (phone) {
       customer = await Customer.findOne({ phone, isDeleted: { $ne: true } });
+      if (customer) {
+        customer.createdAt = new Date();
+        customer.updatedAt = new Date();
+        if (name) customer.name = name;
+        if (email) customer.email = email;
+        if (body.address) customer.address = body.address;
+        await customer.save();
+        console.log('👤 Updated existing customer date/time from WordPress:', name || email);
+      }
     }
 
     // Create new customer if not found
