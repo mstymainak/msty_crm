@@ -209,9 +209,9 @@ export default function RecycleBinPage() {
             }} 
             style={{ 
               padding: '10px 18px', 
-              background: isMultiSelect ? '#eff6ff' : '#fff', 
-              color: '#2563eb', 
-              border: '1px solid #2563eb', 
+              background: isMultiSelect ? '#fff7ed' : '#fff', 
+              color: '#f97316', 
+              border: '1px solid #f97316', 
               borderRadius: '8px', 
               fontWeight: '600', 
               cursor: 'pointer', 
@@ -290,9 +290,9 @@ export default function RecycleBinPage() {
               style={{
                 padding: '8px 14px',
                 fontSize: '12px',
-                background: '#eff6ff',
-                color: '#2563eb',
-                border: '1px solid #bfdbfe',
+                background: '#fff7ed',
+                color: '#f97316',
+                border: '1px solid #ffedd5',
                 borderRadius: '8px',
                 cursor: 'pointer',
                 fontWeight: '600',
@@ -546,7 +546,7 @@ export default function RecycleBinPage() {
                   style={{
                     background: '#fff',
                     borderRadius: '12px',
-                    border: isSelected ? '2px solid #2563eb' : '2px solid #e2e8f0', // Fixed constant 2px size to prevent layout shift jumps!
+                    border: isSelected ? '2px solid #f97316' : '2px solid #e2e8f0', // Fixed constant 2px size to prevent layout shift jumps!
                     padding: '16px',
                     boxShadow: '0 1px 3px rgba(0,0,0,0.05)',
                     position: 'relative',

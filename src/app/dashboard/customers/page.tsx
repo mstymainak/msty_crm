@@ -209,9 +209,9 @@ export default function CustomersPage() {
             }} 
             style={{ 
               padding: '10px 18px', 
-              background: isMultiSelect ? '#eff6ff' : '#fff', 
-              color: '#2563eb', 
-              border: '1px solid #2563eb', 
+              background: isMultiSelect ? '#fff7ed' : '#fff', 
+              color: '#f97316', 
+              border: '1px solid #f97316', 
               borderRadius: '8px', 
               fontWeight: '600', 
               cursor: 'pointer', 
@@ -302,9 +302,9 @@ export default function CustomersPage() {
               style={{
                 padding: '8px 12px',
                 fontSize: '12px',
-                background: '#eff6ff',
-                color: '#2563eb',
-                border: '1px solid #bfdbfe',
+                background: '#fff7ed',
+                color: '#f97316',
+                border: '1px solid #ffedd5',
                 borderRadius: '8px',
                 cursor: 'pointer',
                 fontWeight: '600',

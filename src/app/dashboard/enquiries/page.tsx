@@ -399,9 +399,9 @@ export default function EnquiriesPage() {
             }} 
             style={{ 
               padding: '10px 18px', 
-              background: isMultiSelect ? '#eff6ff' : '#fff', 
-              color: '#2563eb', 
-              border: '1px solid #2563eb', 
+              background: isMultiSelect ? '#fff7ed' : '#fff', 
+              color: '#f97316', 
+              border: '1px solid #f97316', 
               borderRadius: '8px', 
               fontWeight: '600', 
               cursor: 'pointer', 
@@ -491,9 +491,9 @@ export default function EnquiriesPage() {
               style={{
                 padding: '8px 12px',
                 fontSize: '12px',
-                background: '#eff6ff',
-                color: '#2563eb',
-                border: '1px solid #bfdbfe',
+                background: '#fff7ed',
+                color: '#f97316',
+                border: '1px solid #ffedd5',
                 borderRadius: '8px',
                 cursor: 'pointer',
                 fontWeight: '600',
@@ -822,9 +822,9 @@ export default function EnquiriesPage() {
                   }}
                   style={{
                     position: 'relative',
-                    background: isSelected ? '#f0f7ff' : pc.bg,
+                    background: isSelected ? '#fff7ed' : pc.bg,
                     borderRadius: '12px',
-                    border: isSelected ? '2px solid #3b82f6' : `1px solid ${pc.text}20`,
+                    border: isSelected ? '2px solid #f97316' : `1px solid ${pc.text}20`,
                     padding: '12px 14px',
                     boxShadow: '0 1px 3px rgba(0,0,0,0.05)',
                     cursor: isMultiSelect ? 'pointer' : 'default',
