@@ -116,6 +116,76 @@ export default function EnquiriesPage() {
       .catch(() => { setLoading(false); setRefreshing(false); });
   };
 
+  const [permissionState, setPermissionState] = useState<string>('granted');
+
+  useEffect(() => {
+    if (typeof window !== 'undefined' && 'Notification' in window) {
+      setPermissionState(Notification.permission);
+    }
+  }, []);
+
+  const handleEnableNotifications = async () => {
+    if (typeof window === 'undefined') return;
+    
+    if (!('Notification' in window) || !('serviceWorker' in navigator) || !('PushManager' in window)) {
+      alert('Push notifications are not supported on this browser/device. (iOS users: Make sure to add the app to your Home Screen first!)');
+      return;
+    }
+
+    try {
+      const permission = await Notification.requestPermission();
+      setPermissionState(permission);
+      
+      if (permission === 'granted') {
+        const registration = await navigator.serviceWorker.ready;
+        
+        const res = await fetch('/api/push-subscription?_t=' + Date.now());
+        const data = await res.json();
+        const vapidKey = data.publicKey;
+        
+        if (vapidKey) {
+          const padding = '='.repeat((4 - (vapidKey.length % 4)) % 4);
+          const base64 = (vapidKey + padding).replace(/\-/g, '+').replace(/_/g, '/');
+          const rawData = window.atob(base64);
+          const applicationServerKey = new Uint8Array(rawData.length);
+          for (let i = 0; i < rawData.length; ++i) {
+            applicationServerKey[i] = rawData.charCodeAt(i);
+          }
+
+          let subscription = await registration.pushManager.getSubscription();
+          if (!subscription) {
+            subscription = await registration.pushManager.subscribe({
+              userVisibleOnly: true,
+              applicationServerKey
+            });
+          }
+
+          const subJSON = subscription.toJSON();
+          const subscriptionData = {
+            endpoint: subscription.endpoint,
+            keys: {
+              p256dh: subJSON.keys?.p256dh || '',
+              auth: subJSON.keys?.auth || ''
+            }
+          };
+
+          await fetch('/api/push-subscription', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(subscriptionData)
+          });
+
+          setNotification('Push Notifications successfully activated!');
+        }
+      } else {
+        alert('Notification permission denied. Please allow notifications in your device settings.');
+      }
+    } catch (err: any) {
+      console.error('Subscription error:', err);
+      alert('Failed to register notifications: ' + err.message);
+    }
+  };
+
   useEffect(() => { 
     fetchEnquiries(); 
     fetch('/api/packages').then(r => r.json()).then(d => setPackages(Array.isArray(d) ? d : []));
@@ -365,6 +435,51 @@ export default function EnquiriesPage() {
           <button onClick={() => setNotification(null)} style={{ background: 'none', border: 'none', color: '#047857', cursor: 'pointer', fontSize: '16px' }}>×</button>
         </div>
       )}
+      
+      {permissionState !== 'granted' && (
+        <div style={{
+          background: 'linear-gradient(135deg, #fff7ed 0%, #ffedd5 100%)',
+          border: '1px solid #fed7aa',
+          borderRadius: '12px',
+          padding: '16px 20px',
+          marginBottom: '20px',
+          boxShadow: '0 4px 15px rgba(249, 115, 22, 0.05)',
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'center',
+          flexWrap: 'wrap',
+          gap: '16px'
+        }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+            <span style={{ fontSize: '24px' }}>🔔</span>
+            <div style={{ textAlign: 'left' }}>
+              <div style={{ fontWeight: '700', color: '#ea580c', fontSize: '15px' }}>Enable Real-time Push Notifications</div>
+              <div style={{ fontSize: '13px', color: '#7c2d12', marginTop: '2px', lineHeight: '1.4' }}>
+                Stay updated instantly on new website, Facebook, and Instagram enquiries even when the app is closed! (iOS users: Add to Home Screen first)
+              </div>
+            </div>
+          </div>
+          <button
+            onClick={handleEnableNotifications}
+            style={{
+              padding: '10px 18px',
+              background: '#f97316',
+              color: '#fff',
+              border: 'none',
+              borderRadius: '8px',
+              fontWeight: '700',
+              fontSize: '13px',
+              cursor: 'pointer',
+              boxShadow: '0 4px 12px rgba(249, 115, 22, 0.25)',
+              transition: 'all 0.2s',
+              whiteSpace: 'nowrap'
+            }}
+          >
+            Enable Now
+          </button>
+        </div>
+      )}
+
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px', flexWrap: 'wrap', gap: '12px' }}>
         <div>
           <h1 style={{ fontSize: '24px', fontWeight: '700', color: '#0f172a', margin: 0 }}>Enquiries</h1>
