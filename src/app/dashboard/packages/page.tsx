@@ -5,6 +5,7 @@ import { useState, useEffect } from 'react';
 export default function PackagesPage() {
   const [packages, setPackages] = useState<any[]>([]);
   const [enquiries, setEnquiries] = useState<any[]>([]);
+  const [bookings, setBookings] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
   const [editId, setEditId] = useState<string | null>(null);
@@ -40,9 +41,16 @@ export default function PackagesPage() {
       .then(d => setEnquiries(Array.isArray(d) ? d : []));
   };
 
+  const fetchBookings = () => {
+    fetch('/api/bookings?_t=' + Date.now())
+      .then(r => r.json())
+      .then(d => setBookings(Array.isArray(d) ? d : []));
+  };
+
   useEffect(() => { 
     fetchPackages(); 
     fetchEnquiries(); 
+    fetchBookings();
   }, []);
 
   const resetForm = () => {
@@ -146,7 +154,7 @@ export default function PackagesPage() {
             @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
           `}</style>
           <button 
-            onClick={() => { fetchPackages(); fetchEnquiries(); }} 
+            onClick={() => { fetchPackages(); fetchEnquiries(); fetchBookings(); }} 
             disabled={refreshing}
             style={{ 
               padding: '10px 18px', 
@@ -357,11 +365,15 @@ export default function PackagesPage() {
                 </div>
                 {pkg.groups?.length > 0 ? (
                   <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
-                    {pkg.groups.map((g: any, i: number) => {
-                      const pax = enquiries
-                        .filter(e => e.packageGroup === g._id)
-                        .reduce((sum, e) => sum + 1 + (e.members?.length || 0), 0);
-                      return (
+                     {pkg.groups.map((g: any, i: number) => {
+                       const enquiriesPax = enquiries
+                         .filter(e => e.packageGroup === g._id && e.status !== 'booked' && e.status !== 'lost')
+                         .reduce((sum, e) => sum + 1 + (e.members?.length || 0), 0);
+                       const bookingsPax = bookings
+                         .filter(b => b.packageGroup === g._id && b.status !== 'cancelled')
+                         .reduce((sum, b) => sum + (b.numberOfTravelers || 1), 0);
+                       const pax = enquiriesPax + bookingsPax;
+                       return (
                         <div key={i} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '12px', color: '#475569', background: '#f8fafc', padding: '4px 8px', borderRadius: '4px' }}>
                           <div><strong style={{ color: '#0f172a' }}>{g.name}</strong> - {g.date}</div>
                           <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>

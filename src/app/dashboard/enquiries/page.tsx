@@ -39,6 +39,7 @@ export default function EnquiriesPage() {
   const [sourceFilter, setSourceFilter] = useState('all');
   const [priorityFilter, setPriorityFilter] = useState('all');
   const [packageFilter, setPackageFilter] = useState('all');
+  const [acquireFilter, setAcquireFilter] = useState('all');
   const [searchQuery, setSearchQuery] = useState('');
   const [packages, setPackages] = useState<any[]>([]);
   const [editingNoteId, setEditingNoteId] = useState<string | null>(null);
@@ -154,10 +155,13 @@ export default function EnquiriesPage() {
   };
 
   const handleAdminChangeAcquire = async (id: string, userId: string) => {
+    const payload = userId 
+      ? { acquiredBy: userId, acquiredChangedByAdmin: true }
+      : { acquiredBy: null, acquiredChangedByAdmin: false };
     await fetch(`/api/enquiries/${id}`, {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ acquiredBy: userId, acquiredChangedByAdmin: true })
+      body: JSON.stringify(payload)
     });
     fetchEnquiries();
   };
@@ -274,6 +278,13 @@ export default function EnquiriesPage() {
         if (e.package) return false;
       } else {
         if (e.package !== packageFilter) return false;
+      }
+    }
+    if (acquireFilter !== 'all') {
+      if (acquireFilter === 'not_acquired') {
+        if (e.acquiredBy) return false;
+      } else {
+        if (!e.acquiredBy || (e.acquiredBy._id || e.acquiredBy) !== acquireFilter) return false;
       }
     }
     if (searchQuery) {
@@ -427,6 +438,13 @@ export default function EnquiriesPage() {
           <option value="all">All Packages</option>
           <option value="none">No Package</option>
           {packages.map(p => <option key={p._id} value={p._id}>{p.name}</option>)}
+        </select>
+        <select value={acquireFilter} onChange={e => setAcquireFilter(e.target.value)} style={selectStyle}>
+          <option value="all">All Acquisition</option>
+          <option value="not_acquired">Not acquired</option>
+          {users.map(u => (
+            <option key={u._id} value={u._id}>Acquired by {u.name}</option>
+          ))}
         </select>
       </div>
 
@@ -697,6 +715,26 @@ export default function EnquiriesPage() {
                         const isMe = e.acquiredBy?._id === currentUser?.userId;
                         const isAdmin = currentUser?.role === 'admin';
 
+                        if (isAdmin) {
+                          return (
+                            <div>
+                              <select
+                                value={e.acquiredBy?._id || e.acquiredBy || ''}
+                                onChange={(ev) => handleAdminChangeAcquire(e._id, ev.target.value)}
+                                style={{ padding: '4px 8px', fontSize: '12px', border: '1px solid #cbd5e1', borderRadius: '4px', background: '#fff' }}
+                              >
+                                <option value="">Not acquired</option>
+                                {users.map(u => (
+                                  <option key={u._id} value={u._id}>{u.name}</option>
+                                ))}
+                              </select>
+                              {e.acquiredChangedByAdmin && (
+                                <div style={{ fontSize: '9px', color: '#64748b', marginTop: '2px' }}>changed by admin</div>
+                              )}
+                            </div>
+                          );
+                        }
+
                         if (!isAcquired) {
                           return (
                             <button
@@ -712,25 +750,6 @@ export default function EnquiriesPage() {
                           return (
                             <div>
                               <span style={{ fontSize: '12px', color: '#16a34a', fontWeight: '600' }}>Acquired</span>
-                              {e.acquiredChangedByAdmin && (
-                                <div style={{ fontSize: '9px', color: '#64748b', marginTop: '2px' }}>changed by admin</div>
-                              )}
-                            </div>
-                          );
-                        }
-
-                        if (isAdmin) {
-                          return (
-                            <div>
-                              <select
-                                value={e.acquiredBy?._id || ''}
-                                onChange={(ev) => handleAdminChangeAcquire(e._id, ev.target.value)}
-                                style={{ padding: '4px 8px', fontSize: '12px', border: '1px solid #cbd5e1', borderRadius: '4px', background: '#fff' }}
-                              >
-                                {users.map(u => (
-                                  <option key={u._id} value={u._id}>{u.name}</option>
-                                ))}
-                              </select>
                               {e.acquiredChangedByAdmin && (
                                 <div style={{ fontSize: '9px', color: '#64748b', marginTop: '2px' }}>changed by admin</div>
                               )}
@@ -987,6 +1006,26 @@ export default function EnquiriesPage() {
                         const isMe = e.acquiredBy?._id === currentUser?.userId;
                         const isAdmin = currentUser?.role === 'admin';
 
+                        if (isAdmin) {
+                          return (
+                            <div>
+                              <select
+                                value={e.acquiredBy?._id || e.acquiredBy || ''}
+                                onChange={(ev) => handleAdminChangeAcquire(e._id, ev.target.value)}
+                                style={{ padding: '4px 8px', fontSize: '12px', border: '1px solid #cbd5e1', borderRadius: '4px', background: '#fff' }}
+                              >
+                                <option value="">Not acquired</option>
+                                {users.map(u => (
+                                  <option key={u._id} value={u._id}>{u.name}</option>
+                                ))}
+                              </select>
+                              {e.acquiredChangedByAdmin && (
+                                <div style={{ fontSize: '9px', color: '#64748b', marginTop: '2px' }}>changed by admin</div>
+                              )}
+                            </div>
+                          );
+                        }
+
                         if (!isAcquired) {
                           return (
                             <button
@@ -1002,25 +1041,6 @@ export default function EnquiriesPage() {
                           return (
                             <div>
                               <span style={{ fontSize: '12px', color: '#16a34a', fontWeight: '600' }}>Acquired</span>
-                              {e.acquiredChangedByAdmin && (
-                                <div style={{ fontSize: '9px', color: '#64748b', marginTop: '2px' }}>changed by admin</div>
-                              )}
-                            </div>
-                          );
-                        }
-
-                        if (isAdmin) {
-                          return (
-                            <div>
-                              <select
-                                value={e.acquiredBy?._id || ''}
-                                onChange={(ev) => handleAdminChangeAcquire(e._id, ev.target.value)}
-                                style={{ padding: '4px 8px', fontSize: '12px', border: '1px solid #cbd5e1', borderRadius: '4px', background: '#fff' }}
-                              >
-                                {users.map(u => (
-                                  <option key={u._id} value={u._id}>{u.name}</option>
-                                ))}
-                              </select>
                               {e.acquiredChangedByAdmin && (
                                 <div style={{ fontSize: '9px', color: '#64748b', marginTop: '2px' }}>changed by admin</div>
                               )}
