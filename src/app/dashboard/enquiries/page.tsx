@@ -283,6 +283,8 @@ export default function EnquiriesPage() {
     if (acquireFilter !== 'all') {
       if (acquireFilter === 'not_acquired') {
         if (e.acquiredBy) return false;
+      } else if (acquireFilter === 'changed_by_admin') {
+        if (!e.acquiredChangedByAdmin) return false;
       } else {
         if (!e.acquiredBy || (e.acquiredBy._id || e.acquiredBy) !== acquireFilter) return false;
       }
@@ -356,6 +358,19 @@ export default function EnquiriesPage() {
         <div style={{ display: 'flex', gap: '8px', alignItems: 'center', flexWrap: 'wrap' }}>
           <style>{`
             @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+            @media (max-width: 768px) {
+              .mobile-row-group {
+                display: flex !important;
+                gap: 12px !important;
+                width: 100% !important;
+                flex-basis: 100% !important;
+              }
+              .mobile-row-group select {
+                flex: 1 !important;
+                min-width: 0 !important;
+                width: 50% !important;
+              }
+            }
           `}</style>
           <button 
             onClick={fetchEnquiries} 
@@ -434,18 +449,21 @@ export default function EnquiriesPage() {
           <option value="phone">Phone</option>
           <option value="email">Email</option>
         </select>
-        <select value={packageFilter} onChange={e => setPackageFilter(e.target.value)} style={selectStyle}>
-          <option value="all">All Packages</option>
-          <option value="none">No Package</option>
-          {packages.map(p => <option key={p._id} value={p._id}>{p.name}</option>)}
-        </select>
-        <select value={acquireFilter} onChange={e => setAcquireFilter(e.target.value)} style={selectStyle}>
-          <option value="all">All Acquisition</option>
-          <option value="not_acquired">Not acquired</option>
-          {users.map(u => (
-            <option key={u._id} value={u._id}>Acquired by {u.name}</option>
-          ))}
-        </select>
+        <div className="mobile-row-group" style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
+          <select value={packageFilter} onChange={e => setPackageFilter(e.target.value)} style={selectStyle}>
+            <option value="all">All Packages</option>
+            <option value="none">No Package</option>
+            {packages.map(p => <option key={p._id} value={p._id}>{p.name}</option>)}
+          </select>
+          <select value={acquireFilter} onChange={e => setAcquireFilter(e.target.value)} style={selectStyle}>
+            <option value="all">All Acquisition</option>
+            <option value="not_acquired">Not acquired</option>
+            <option value="changed_by_admin">Changed by admin</option>
+            {users.map(u => (
+              <option key={u._id} value={u._id}>Acquired by {u.name}</option>
+            ))}
+          </select>
+        </div>
       </div>
 
       {/* Multi-select Action Banner */}
