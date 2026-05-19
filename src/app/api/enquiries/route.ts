@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createEnquiry, getEnquiries } from '@/lib/enquiryService';
+import { getAuthUser } from '@/lib/auth';
 
 export async function GET() {
   try {
@@ -12,7 +13,13 @@ export async function GET() {
 
 export async function POST(request: NextRequest) {
   try {
+    const user = await getAuthUser();
     const body = await request.json();
+    
+    if (user) {
+      body.acquiredBy = user.userId;
+    }
+    
     const enquiry = await createEnquiry(body);
     return NextResponse.json(enquiry, { status: 201 });
   } catch (error) {
