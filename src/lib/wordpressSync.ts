@@ -190,12 +190,10 @@ class WordPressSyncService {
             continue;
           }
 
-          // Check if already exists primarily by phone
+          // Check if already exists by phone to prevent duplicates
           let existing = null;
           if (contact.phone) {
             existing = await Customer.findOne({ phone: contact.phone, isDeleted: { $ne: true } });
-          } else if (contact.email) {
-            existing = await Customer.findOne({ email: contact.email, isDeleted: { $ne: true } });
           }
 
           if (existing) {
