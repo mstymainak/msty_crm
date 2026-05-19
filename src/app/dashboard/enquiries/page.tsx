@@ -437,7 +437,7 @@ export default function EnquiriesPage() {
       )}
       
       {permissionState !== 'granted' && (
-        <div style={{
+        <div className="md:hidden" style={{
           background: 'linear-gradient(135deg, #fff7ed 0%, #ffedd5 100%)',
           border: '1px solid #fed7aa',
           borderRadius: '12px',
