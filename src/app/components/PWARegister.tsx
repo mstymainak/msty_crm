@@ -27,16 +27,25 @@ export default function PWARegister() {
       return;
     }
 
-    const VAPID_PUBLIC_KEY = process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY;
-    if (!VAPID_PUBLIC_KEY) {
-      console.log('⚠️ NEXT_PUBLIC_VAPID_PUBLIC_KEY env variable is missing');
-      return;
-    }
-
     // Register Service Worker
     navigator.serviceWorker.register('/sw.js')
       .then(async (registration) => {
         console.log('✅ PWA Service Worker registered successfully:', registration.scope);
+
+        // Fetch VAPID public key dynamically at runtime
+        let vapidKey = '';
+        try {
+          const res = await fetch('/api/push-subscription?_t=' + Date.now());
+          const data = await res.json();
+          vapidKey = data.publicKey;
+        } catch (fetchErr: any) {
+          console.error('⚠️ Failed to fetch dynamic VAPID public key:', fetchErr.message);
+        }
+
+        if (!vapidKey) {
+          console.log('⚠️ VAPID public key missing or not loaded from server');
+          return;
+        }
 
         // Request notification permissions
         if ('Notification' in window) {
@@ -49,7 +58,7 @@ export default function PWARegister() {
 
         // Subscribe to Push Notifications
         try {
-          const applicationServerKey = urlBase64ToUint8Array(VAPID_PUBLIC_KEY);
+          const applicationServerKey = urlBase64ToUint8Array(vapidKey);
           
           let subscription = await registration.pushManager.getSubscription();
           

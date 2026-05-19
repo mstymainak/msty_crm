@@ -33,3 +33,14 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: 'Failed to register subscription' }, { status: 500 });
   }
 }
+
+export async function GET() {
+  try {
+    const publicKey = process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY;
+    await dbConnect();
+    const count = await PushSubscription.countDocuments({});
+    return NextResponse.json({ publicKey, activeSubscriptions: count });
+  } catch (error: any) {
+    return NextResponse.json({ error: error.message }, { status: 500 });
+  }
+}
