@@ -423,10 +423,35 @@ export default function RecycleBinPage() {
                         item.name
                       )}
                     </td>
-                    <td style={{ padding: '16px', fontSize: '13px', color: '#334155', maxWidth: '300px' }}>
+                    <td style={{ padding: '16px', fontSize: '13px', color: '#334155', maxWidth: '300px', position: 'relative' }}>
                       {activeTab === 'enquiry' ? (
-                        <div style={{ whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }} title={item.message}>
-                          {item.message}
+                        <div className="group" style={{ cursor: 'pointer' }}>
+                          <div style={{ whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                            {item.message}
+                          </div>
+                          {/* Premium Glassmorphic Hover Tooltip */}
+                          <div className="invisible group-hover:visible opacity-0 group-hover:opacity-100 transition-all duration-150" style={{
+                            position: 'absolute',
+                            left: '16px',
+                            top: '80%',
+                            zIndex: 100,
+                            width: '320px',
+                            background: 'rgba(15, 23, 42, 0.95)',
+                            backdropFilter: 'blur(4px)',
+                            color: '#fff',
+                            padding: '10px 14px',
+                            borderRadius: '8px',
+                            boxShadow: '0 10px 25px -5px rgba(0, 0, 0, 0.3), 0 8px 10px -6px rgba(0, 0, 0, 0.3)',
+                            fontSize: '12px',
+                            lineHeight: '1.5',
+                            whiteSpace: 'pre-wrap',
+                            wordBreak: 'break-word',
+                            pointerEvents: 'none',
+                            border: '1px solid rgba(255,255,255,0.1)'
+                          }}>
+                            <div style={{ fontWeight: '700', color: '#f97316', marginBottom: '4px', fontSize: '11px', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Complete Message</div>
+                            {item.message}
+                          </div>
                         </div>
                       ) : (
                         <>
