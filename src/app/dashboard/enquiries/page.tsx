@@ -540,6 +540,10 @@ export default function EnquiriesPage() {
                 const sc = statusColors[e.status] || { bg: '#f1f5f9', text: '#64748b' };
                 const pc = priorityColors[e.priority] || { bg: '#f1f5f9', text: '#64748b' };
                 const isSelected = selectedIds.includes(e._id);
+                const isAcquired = !!e.acquiredBy;
+                const isMe = e.acquiredBy?._id === currentUser?.userId || e.acquiredBy === currentUser?.userId;
+                const isAdmin = currentUser?.role === 'admin';
+                const canEdit = !isAcquired || isMe || isAdmin;
                 return (
                   <tr 
                     key={e._id} 
@@ -707,7 +711,8 @@ export default function EnquiriesPage() {
                       <select
                         value={e.status}
                         onChange={(ev) => updateStatus(e._id, ev.target.value)}
-                        style={{ padding: '4px 8px', borderRadius: '6px', fontSize: '12px', fontWeight: '600', border: 'none', background: sc.bg, color: sc.text, cursor: 'pointer' }}
+                        disabled={!canEdit}
+                        style={{ padding: '4px 8px', borderRadius: '6px', fontSize: '12px', fontWeight: '600', border: 'none', background: sc.bg, color: sc.text, cursor: canEdit ? 'pointer' : 'not-allowed', opacity: canEdit ? 1 : 0.6 }}
                       >
                         <option value="new">New</option>
                         <option value="contacted">Contacted</option>
@@ -720,7 +725,8 @@ export default function EnquiriesPage() {
                       <select
                         value={e.priority}
                         onChange={(ev) => updatePriority(e._id, ev.target.value)}
-                        style={{ padding: '4px 8px', borderRadius: '6px', fontSize: '12px', fontWeight: '600', border: 'none', background: pc.bg, color: pc.text, cursor: 'pointer' }}
+                        disabled={!canEdit}
+                        style={{ padding: '4px 8px', borderRadius: '6px', fontSize: '12px', fontWeight: '600', border: 'none', background: pc.bg, color: pc.text, cursor: canEdit ? 'pointer' : 'not-allowed', opacity: canEdit ? 1 : 0.6 }}
                       >
                         <option value="high">High</option>
                         <option value="medium">Medium</option>
@@ -792,7 +798,21 @@ export default function EnquiriesPage() {
                       <div style={{ fontSize: '10px', marginTop: '2px', color: '#475569' }}>{new Date(e.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: true })}</div>
                     </td>
                     <td style={{ padding: '12px 8px' }}>
-                      <button onClick={() => handleDelete(e._id)} style={{ padding: '4px 10px', background: '#fef2f2', color: '#dc2626', border: 'none', borderRadius: '4px', fontSize: '12px', cursor: 'pointer' }}>Delete</button>
+                      <button 
+                        onClick={() => handleDelete(e._id)} 
+                        disabled={!canEdit}
+                        style={{ 
+                          padding: '4px 10px', 
+                          background: canEdit ? '#fef2f2' : '#f1f5f9', 
+                          color: canEdit ? '#dc2626' : '#94a3b8', 
+                          border: 'none', 
+                          borderRadius: '4px', 
+                          fontSize: '12px', 
+                          cursor: canEdit ? 'pointer' : 'not-allowed'
+                        }}
+                      >
+                        Delete
+                      </button>
                     </td>
                   </tr>
                 );
@@ -811,6 +831,10 @@ export default function EnquiriesPage() {
               const sc = statusColors[e.status] || { bg: '#f1f5f9', text: '#64748b' };
               const pc = priorityColors[e.priority] || { bg: '#f1f5f9', text: '#64748b' };
               const isSelected = selectedIds.includes(e._id);
+              const isAcquired = !!e.acquiredBy;
+              const isMe = e.acquiredBy?._id === currentUser?.userId || e.acquiredBy === currentUser?.userId;
+              const isAdmin = currentUser?.role === 'admin';
+              const canEdit = !isAcquired || isMe || isAdmin;
               return (
                 <div 
                   key={e._id} 
@@ -997,7 +1021,8 @@ export default function EnquiriesPage() {
                       <select
                         value={e.status}
                         onChange={(ev) => updateStatus(e._id, ev.target.value)}
-                        style={{ padding: '4px 6px', borderRadius: '6px', fontSize: '11px', fontWeight: '700', border: 'none', background: sc.bg, color: sc.text, cursor: 'pointer', maxWidth: '85px' }}
+                        disabled={!canEdit}
+                        style={{ padding: '4px 6px', borderRadius: '6px', fontSize: '11px', fontWeight: '700', border: 'none', background: sc.bg, color: sc.text, cursor: canEdit ? 'pointer' : 'not-allowed', maxWidth: '85px', opacity: canEdit ? 1 : 0.6 }}
                       >
                         <option value="new">New</option>
                         <option value="contacted">Contacted</option>
@@ -1009,7 +1034,8 @@ export default function EnquiriesPage() {
                       <select
                         value={e.priority}
                         onChange={(ev) => updatePriority(e._id, ev.target.value)}
-                        style={{ padding: '4px 6px', borderRadius: '6px', fontSize: '11px', fontWeight: '700', border: 'none', background: pc.bg, color: pc.text, cursor: 'pointer', maxWidth: '65px' }}
+                        disabled={!canEdit}
+                        style={{ padding: '4px 6px', borderRadius: '6px', fontSize: '11px', fontWeight: '700', border: 'none', background: pc.bg, color: pc.text, cursor: canEdit ? 'pointer' : 'not-allowed', maxWidth: '65px', opacity: canEdit ? 1 : 0.6 }}
                       >
                         <option value="high">High</option>
                         <option value="medium">Medium</option>
@@ -1091,7 +1117,22 @@ export default function EnquiriesPage() {
                         );
                       })()}
 
-                      <button onClick={() => handleDelete(e._id)} style={{ padding: '4px 8px', background: '#fef2f2', color: '#dc2626', border: 'none', borderRadius: '6px', fontSize: '11px', cursor: 'pointer', fontWeight: '700' }}>Delete</button>
+                      <button 
+                        onClick={() => handleDelete(e._id)} 
+                        disabled={!canEdit}
+                        style={{ 
+                          padding: '4px 8px', 
+                          background: canEdit ? '#fef2f2' : '#f1f5f9', 
+                          color: canEdit ? '#dc2626' : '#94a3b8', 
+                          border: 'none', 
+                          borderRadius: '6px', 
+                          fontSize: '11px', 
+                          cursor: canEdit ? 'pointer' : 'not-allowed',
+                          fontWeight: '700'
+                        }}
+                      >
+                        Delete
+                      </button>
                     </div>
                   </div>
                 </div>
