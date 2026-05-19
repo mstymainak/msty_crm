@@ -167,6 +167,20 @@ export default function CustomersPage() {
         <div style={{ display: 'flex', gap: '8px', alignItems: 'center', flexWrap: 'wrap' }}>
           <style>{`
             @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+            @media (max-width: 768px) {
+              .mobile-row-group {
+                display: flex !important;
+                gap: 8px !important;
+                width: 100% !important;
+                flex-basis: 100% !important;
+              }
+              .mobile-row-group button, .mobile-row-group select {
+                flex: 1 !important;
+                min-width: 0 !important;
+                width: 50% !important;
+                box-sizing: border-box !important;
+              }
+            }
           `}</style>
           <button 
             onClick={fetchCustomers} 
@@ -208,9 +222,21 @@ export default function CustomersPage() {
             {isMultiSelect ? 'Disable Select' : 'Multi Select'}
           </button>
           
-          <button onClick={() => setShowAdd(true)} style={{ padding: '10px 20px', background: '#f97316', color: '#fff', border: 'none', borderRadius: '8px', fontWeight: '600', cursor: 'pointer', fontSize: '14px' }}>
-            + Add Customer
-          </button>
+          <div className="mobile-row-group" style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+            <button onClick={() => setShowAdd(true)} style={{ padding: '10px 20px', background: '#f97316', color: '#fff', border: 'none', borderRadius: '8px', fontWeight: '600', cursor: 'pointer', fontSize: '14px' }}>
+              + Add Customer
+            </button>
+            <select 
+              value={userFilter} 
+              onChange={e => setUserFilter(e.target.value)}
+              style={{ padding: '10px 14px', border: '1px solid #e2e8f0', borderRadius: '8px', fontSize: '14px', background: '#fff', color: '#475569', outline: 'none' }}
+            >
+              <option value="all">All Users</option>
+              {users.map(u => (
+                <option key={u._id} value={u._id}>{u.name}</option>
+              ))}
+            </select>
+          </div>
         </div>
       </div>
 
@@ -222,16 +248,6 @@ export default function CustomersPage() {
           onChange={(e) => setSearchQuery(e.target.value)}
           style={{ flex: 1, minWidth: '250px', padding: '10px 16px', border: '1px solid #e2e8f0', borderRadius: '8px', fontSize: '14px', boxSizing: 'border-box', outline: 'none' }}
         />
-        <select 
-          value={userFilter} 
-          onChange={e => setUserFilter(e.target.value)}
-          style={{ padding: '10px 14px', border: '1px solid #e2e8f0', borderRadius: '8px', fontSize: '14px', background: '#fff', color: '#475569', outline: 'none' }}
-        >
-          <option value="all">All Users</option>
-          {users.map(u => (
-            <option key={u._id} value={u._id}>{u.name}</option>
-          ))}
-        </select>
       </div>
 
       {showAdd && (
