@@ -83,11 +83,27 @@ export default function EnquiriesPage() {
             const newItems = newData.filter(newItem => !prev.some(oldItem => oldItem._id === newItem._id));
             if (newItems.length > 0) {
               // Trigger local notification if permission is granted
-              if ('Notification' in window && Notification.permission === 'granted') {
-                new Notification(`New Enquiry from ${newItems[0].submittedName || 'Customer'}`, {
-                  body: `Phone: ${newItems[0].phone || 'N/A'}`,
-                  icon: '/msty_logo.png'
-                });
+              try {
+                if ('Notification' in window && Notification.permission === 'granted') {
+                  const title = `New Enquiry from ${newItems[0].customer?.name || 'Customer'}`;
+                  const options = {
+                    body: `Phone: ${newItems[0].customer?.phone || 'N/A'}`,
+                    icon: '/icon.png',
+                    badge: '/icon.png'
+                  };
+
+                  if (navigator.serviceWorker && 'serviceWorker' in navigator) {
+                    navigator.serviceWorker.ready.then(registration => {
+                      registration.showNotification(title, options);
+                    }).catch(() => {
+                      new Notification(title, options);
+                    });
+                  } else {
+                    new Notification(title, options);
+                  }
+                }
+              } catch (err) {
+                console.warn('Notification construction failed gracefully:', err);
               }
             }
           }
