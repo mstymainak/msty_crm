@@ -72,12 +72,31 @@ export default function PWARegister() {
             console.log('🔔 Found existing Push Subscription:', subscription);
           }
 
+          // Crucial: PushSubscription object doesn't serialize properties directly with JSON.stringify on many browsers!
+          // We must serialize it explicitly using toJSON() or manual property mapping.
+          const subJSON = subscription.toJSON();
+          const subscriptionData = {
+            endpoint: subscription.endpoint,
+            keys: {
+              p256dh: subJSON.keys?.p256dh || '',
+              auth: subJSON.keys?.auth || ''
+            }
+          };
+
+          console.log('📡 Sending subscription payload to backend:', subscriptionData);
+
           // Send subscription to backend
-          await fetch('/api/push-subscription', {
+          const postRes = await fetch('/api/push-subscription', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(subscription)
+            body: JSON.stringify(subscriptionData)
           });
+          
+          if (!postRes.ok) {
+            const errData = await postRes.json();
+            throw new Error(errData.error || `Server responded with status ${postRes.status}`);
+          }
+          
           console.log('✅ Push Subscription registered successfully on backend');
         } catch (subErr: any) {
           console.error('❌ Failed to subscribe user to Push notifications:', subErr.message);
