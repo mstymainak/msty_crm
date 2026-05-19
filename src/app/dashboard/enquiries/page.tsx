@@ -419,13 +419,49 @@ export default function EnquiriesPage() {
       </div>
 
       <div style={{ display: 'flex', gap: '12px', marginBottom: '16px', flexWrap: 'wrap', alignItems: 'center' }}>
-        <input 
-          type="text" 
-          placeholder="Search name, phone, email..." 
-          value={searchQuery}
-          onChange={(e) => setSearchQuery(e.target.value)}
-          style={{ padding: '8px 12px', border: '1px solid #e2e8f0', borderRadius: '6px', fontSize: '13px', width: '250px' }}
-        />
+        <div className="mobile-search-row" style={{ display: 'flex', gap: '8px', alignItems: 'center', width: '100%', maxWidth: '370px' }}>
+          <input 
+            type="text" 
+            placeholder="Search name, phone, email..." 
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            style={{ padding: '8px 12px', border: '1px solid #e2e8f0', borderRadius: '6px', fontSize: '13px', flex: 1, minWidth: '150px' }}
+          />
+          <button
+            onClick={() => {
+              setSearchQuery('');
+              setStatusFilter('all');
+              setPriorityFilter('all');
+              setSourceFilter('all');
+              setPackageFilter('all');
+              setAcquireFilter('all');
+            }}
+            style={{
+              padding: '8px 12px',
+              fontSize: '12px',
+              background: '#f1f5f9',
+              color: '#475569',
+              border: '1px solid #cbd5e1',
+              borderRadius: '8px',
+              cursor: 'pointer',
+              fontWeight: '600',
+              transition: 'all 0.2s',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              gap: '4px',
+              whiteSpace: 'nowrap',
+              width: '110px',
+              minWidth: '110px',
+              height: '37px',
+              boxSizing: 'border-box'
+            }}
+            title="Reset all filters"
+          >
+            🧹 Clear
+          </button>
+        </div>
+
         <select value={statusFilter} onChange={e => setStatusFilter(e.target.value)} style={selectStyle}>
           <option value="all">All Status</option>
           <option value="new">New</option>
@@ -466,34 +502,6 @@ export default function EnquiriesPage() {
             ))}
           </select>
         </div>
-
-        <button
-          onClick={() => {
-            setSearchQuery('');
-            setStatusFilter('all');
-            setPriorityFilter('all');
-            setSourceFilter('all');
-            setPackageFilter('all');
-            setAcquireFilter('all');
-          }}
-          style={{
-            padding: '8px 14px',
-            fontSize: '13px',
-            background: '#f1f5f9',
-            color: '#475569',
-            border: '1px solid #cbd5e1',
-            borderRadius: '8px',
-            cursor: 'pointer',
-            fontWeight: '600',
-            transition: 'all 0.2s',
-            display: 'flex',
-            alignItems: 'center',
-            gap: '4px'
-          }}
-          title="Reset all filters"
-        >
-          🧹 Clear Filters
-        </button>
       </div>
 
       {/* Multi-select Action Banner */}
