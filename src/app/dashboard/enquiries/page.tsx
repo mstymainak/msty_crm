@@ -493,7 +493,7 @@ export default function EnquiriesPage() {
             <thead>
               <tr style={{ borderBottom: '1px solid #e2e8f0', background: '#f8fafc' }}>
                 {['Customer', 'Message', 'Package', 'Source', 'Status', 'Priority', 'Acquired', 'Date', 'Actions'].map(h => (
-                  <th key={h} style={{ padding: '12px 8px', textAlign: 'left', fontSize: '12px', fontWeight: '600', color: '#64748b', textTransform: 'uppercase' }}>{h}</th>
+                  <th key={h} style={{ padding: '12px 8px', textAlign: 'left', fontSize: h === 'Date' ? '10px' : '12px', fontWeight: '600', color: '#64748b', textTransform: 'uppercase' }}>{h}</th>
                 ))}
               </tr>
             </thead>
@@ -577,7 +577,7 @@ export default function EnquiriesPage() {
                         </button>
                       </div>
                     </td>
-                    <td style={{ padding: '12px 8px', fontSize: '13px', color: '#1e293b', maxWidth: '180px' }}>
+                    <td style={{ padding: '12px 8px', fontSize: '13px', color: '#1e293b', maxWidth: '280px' }}>
                       <details style={{ cursor: 'pointer' }}>
                         <summary style={{ outline: 'none', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', fontWeight: '500' }}>
                           {e.message.split('\n')[0] || 'View message'}
@@ -663,7 +663,7 @@ export default function EnquiriesPage() {
                       </div>
                     </td>
                     <td style={{ padding: '12px 8px' }}>
-                      <span style={{ padding: '3px 10px', borderRadius: '10px', fontSize: '11px', fontWeight: '600', background: '#f1f5f9', color: '#475569', textTransform: 'capitalize' }}>{e.source}</span>
+                      <span style={{ padding: '3px 10px', borderRadius: '10px', fontSize: '12px', fontWeight: '600', background: '#f1f5f9', color: '#475569', textTransform: 'capitalize' }}>{e.source}</span>
                     </td>
                     <td style={{ padding: '12px 8px' }}>
                       <select
@@ -748,9 +748,9 @@ export default function EnquiriesPage() {
                         );
                       })()}
                     </td>
-                    <td style={{ padding: '12px 8px', fontSize: '13px', color: '#334155', fontWeight: '500' }}>
+                    <td style={{ padding: '12px 8px', fontSize: '11px', color: '#334155', fontWeight: '500' }}>
                       <div>{new Date(e.createdAt).toLocaleDateString('en-GB')}</div>
-                      <div style={{ fontSize: '11px', marginTop: '2px', color: '#475569' }}>{new Date(e.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: true })}</div>
+                      <div style={{ fontSize: '10px', marginTop: '2px', color: '#475569' }}>{new Date(e.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: true })}</div>
                     </td>
                     <td style={{ padding: '12px 8px' }}>
                       <button onClick={() => handleDelete(e._id)} style={{ padding: '4px 10px', background: '#fef2f2', color: '#dc2626', border: 'none', borderRadius: '4px', fontSize: '12px', cursor: 'pointer' }}>Delete</button>
