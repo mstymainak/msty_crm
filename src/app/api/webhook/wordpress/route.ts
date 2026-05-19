@@ -153,6 +153,19 @@ export async function POST(request: NextRequest) {
 
     console.log('📩 New website enquiry created:', enquiry._id);
 
+    // Trigger mobile push notification to all subscribers (PWA) even if the app is closed
+    try {
+      const { sendPushNotification } = await import('@/lib/pushService');
+      const cleanMessage = finalMessage.length > 100 ? `${finalMessage.substring(0, 97)}...` : finalMessage;
+      await sendPushNotification(
+        `New Website Enquiry! 🌟`,
+        `From: ${customer.name || 'Customer'}\nMessage: ${cleanMessage}`,
+        '/dashboard/enquiries'
+      );
+    } catch (pushErr: any) {
+      console.error('⚠️ Failed to send WordPress webhook push notification:', pushErr.message);
+    }
+
     return NextResponse.json({
       status: 'ok',
       customerId: customer._id,

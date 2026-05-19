@@ -65,7 +65,7 @@ export async function POST(request: NextRequest) {
       }
 
       // Create enquiry
-      await Enquiry.create({
+      const enquiry = await Enquiry.create({
         customer: customer._id,
         source: msg.platform,
         message: msg.message,
@@ -74,6 +74,20 @@ export async function POST(request: NextRequest) {
       });
 
       console.log(`📩 New ${msg.platform} enquiry from`, msg.senderId);
+
+      // Trigger mobile push notification to all subscribers (PWA) even if the app is closed
+      try {
+        const { sendPushNotification } = await import('@/lib/pushService');
+        const platformName = msg.platform === 'instagram' ? 'Instagram' : 'Facebook';
+        const cleanMessage = msg.message.length > 100 ? `${msg.message.substring(0, 97)}...` : msg.message;
+        await sendPushNotification(
+          `New ${platformName} Enquiry! 💬`,
+          `From: ${customer.name || 'Chat User'}\nMessage: ${cleanMessage}`,
+          '/dashboard/enquiries'
+        );
+      } catch (pushErr: any) {
+        console.error('⚠️ Failed to send Meta webhook push notification:', pushErr.message);
+      }
     }
 
     // Meta requires 200 within 20 seconds
