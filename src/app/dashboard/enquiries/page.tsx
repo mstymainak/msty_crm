@@ -466,6 +466,34 @@ export default function EnquiriesPage() {
             ))}
           </select>
         </div>
+
+        <button
+          onClick={() => {
+            setSearchQuery('');
+            setStatusFilter('all');
+            setPriorityFilter('all');
+            setSourceFilter('all');
+            setPackageFilter('all');
+            setAcquireFilter('all');
+          }}
+          style={{
+            padding: '8px 14px',
+            fontSize: '13px',
+            background: '#f1f5f9',
+            color: '#475569',
+            border: '1px solid #cbd5e1',
+            borderRadius: '8px',
+            cursor: 'pointer',
+            fontWeight: '600',
+            transition: 'all 0.2s',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '4px'
+          }}
+          title="Reset all filters"
+        >
+          🧹 Clear Filters
+        </button>
       </div>
 
       {/* Multi-select Action Banner */}
@@ -1053,9 +1081,6 @@ export default function EnquiriesPage() {
                         if (isAdmin) {
                           return (
                             <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-                              {e.acquiredChangedByAdmin && (
-                                <div style={{ fontSize: '8px', color: '#64748b', marginBottom: '2px', whiteSpace: 'nowrap', lineHeight: '1' }}>changed by admin</div>
-                              )}
                               <select
                                 value={e.acquiredBy?._id || e.acquiredBy || ''}
                                 onChange={(ev) => handleAdminChangeAcquire(e._id, ev.target.value)}
@@ -1081,6 +1106,9 @@ export default function EnquiriesPage() {
                                   );
                                 })}
                               </select>
+                              {e.acquiredChangedByAdmin && (
+                                <div style={{ fontSize: '8px', color: '#64748b', marginTop: '2px', whiteSpace: 'nowrap', lineHeight: '1' }}>changed by admin</div>
+                              )}
                             </div>
                           );
                         }
@@ -1099,20 +1127,20 @@ export default function EnquiriesPage() {
                         if (isMe) {
                           return (
                             <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-                              {e.acquiredChangedByAdmin && (
-                                <div style={{ fontSize: '8px', color: '#64748b', marginBottom: '2px', whiteSpace: 'nowrap', lineHeight: '1' }}>changed by admin</div>
-                              )}
                               <span style={{ fontSize: '11px', color: '#16a34a', fontWeight: '700' }}>Acquired</span>
+                              {e.acquiredChangedByAdmin && (
+                                <div style={{ fontSize: '8px', color: '#64748b', marginTop: '2px', whiteSpace: 'nowrap', lineHeight: '1' }}>changed by admin</div>
+                              )}
                             </div>
                           );
                         }
 
                         return (
                           <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-                            {e.acquiredChangedByAdmin && (
-                              <div style={{ fontSize: '8px', color: '#64748b', marginBottom: '2px', whiteSpace: 'nowrap', lineHeight: '1' }}>changed by admin</div>
-                            )}
                             <span style={{ fontSize: '11px', color: '#0f172a', fontWeight: '700' }}>{acquiredByFirstName}</span>
+                            {e.acquiredChangedByAdmin && (
+                              <div style={{ fontSize: '8px', color: '#64748b', marginTop: '2px', whiteSpace: 'nowrap', lineHeight: '1' }}>changed by admin</div>
+                            )}
                           </div>
                         );
                       })()}
