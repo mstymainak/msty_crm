@@ -236,6 +236,18 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
           main { margin-left: 0 !important; }
           .main-content-padding { padding: 20px 16px !important; }
         }
+        @media print {
+          aside, .sidebar-desktop, .mobile-topbar, .bottom-nav,
+          .itin-form-pane, .itin-no-print { display: none !important; }
+          main { margin-left: 0 !important; padding-bottom: 0 !important; }
+          .main-content-padding { padding: 0 !important; }
+          .itin-split { display: block !important; border: none !important; box-shadow: none !important; border-radius: 0 !important; }
+          .itin-preview-pane { width: 100% !important; overflow: visible !important; background: #fff !important; }
+          .itin-preview-pane > div { padding: 0 !important; }
+          .itin-preview-pane > div > div { border: none !important; box-shadow: none !important; border-radius: 0 !important; }
+          body, html { background: #fff !important; }
+          * { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
+        }
       `}</style>
     </div>
   );
