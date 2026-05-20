@@ -12,6 +12,7 @@ const menuItems = [
   { label: 'Bookings', href: '/dashboard/bookings', icon: '📋' },
   { label: 'Staff', href: '/dashboard/settings', icon: '⚙️' },
   { label: 'Recycle Bin', href: '/dashboard/recycle-bin', icon: '🗑️' },
+  { label: 'Itinerary', href: '/dashboard/itinerary', icon: '🗺️' },
 ];
 
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
@@ -19,7 +20,6 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   const router = useRouter();
   const [user, setUser] = useState<any>(null);
   const [sidebarOpen, setSidebarOpen] = useState(false);
-  const [itineraryDropdownOpen, setItineraryDropdownOpen] = useState(false);
 
   useEffect(() => {
     fetch('/api/auth/me').then(res => {
@@ -177,50 +177,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
           </div>
           
           <div style={{ display: 'flex', alignItems: 'center', gap: '12px', position: 'relative' }} className="no-print">
-            <button
-              onClick={() => setItineraryDropdownOpen(!itineraryDropdownOpen)}
-              style={{ fontSize: '22px', background: 'none', border: 'none', cursor: 'pointer', color: '#1e293b' }}
-            >
-              ☰
-            </button>
-            {itineraryDropdownOpen && (
-              <>
-                <div 
-                  onClick={() => setItineraryDropdownOpen(false)}
-                  style={{ position: 'fixed', inset: 0, zIndex: 90 }} 
-                />
-                <div style={{
-                  position: 'absolute',
-                  top: '100%',
-                  right: 0,
-                  width: '220px',
-                  background: '#fff',
-                  borderRadius: '8px',
-                  boxShadow: '0 10px 25px -5px rgba(0,0,0,0.1), 0 8px 10px -6px rgba(0,0,0,0.1)',
-                  border: '1px solid #e2e8f0',
-                  padding: '6px',
-                  zIndex: 100,
-                }}>
-                  <Link
-                    href="/dashboard/itinerary"
-                    onClick={() => setItineraryDropdownOpen(false)}
-                    style={{
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: '10px',
-                      padding: '10px 12px',
-                      borderRadius: '6px',
-                      fontSize: '13px',
-                      fontWeight: '600',
-                      color: '#1e293b',
-                      textDecoration: 'none',
-                    }}
-                  >
-                    <span>🗺️</span> Custom Itinerary Builder
-                  </Link>
-                </div>
-              </>
-            )}
+            {/* Bell and Profile removed as per request */}
           </div>
         </div>
 
@@ -243,67 +200,6 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
             Mahesh Sharma Tirth Yatra CRM
           </div>
           <div style={{ position: 'relative' }}>
-            <button
-              onClick={() => setItineraryDropdownOpen(!itineraryDropdownOpen)}
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: '8px',
-                padding: '8px 14px',
-                background: '#f8fafc',
-                border: '1px solid #cbd5e1',
-                borderRadius: '8px',
-                color: '#1e293b',
-                fontWeight: '600',
-                fontSize: '13px',
-                cursor: 'pointer',
-                transition: 'all 0.2s',
-                outline: 'none',
-              }}
-            >
-              <span style={{ fontSize: '15px' }}>☰</span> Menu
-            </button>
-            {itineraryDropdownOpen && (
-              <>
-                <div 
-                  onClick={() => setItineraryDropdownOpen(false)}
-                  style={{ position: 'fixed', inset: 0, zIndex: 90 }} 
-                />
-                <div style={{
-                  position: 'absolute',
-                  top: 'calc(100% + 8px)',
-                  right: 0,
-                  width: '220px',
-                  background: '#fff',
-                  borderRadius: '8px',
-                  boxShadow: '0 10px 25px -5px rgba(0,0,0,0.1), 0 8px 10px -6px rgba(0,0,0,0.1)',
-                  border: '1px solid #e2e8f0',
-                  padding: '6px',
-                  zIndex: 100,
-                }}>
-                  <Link
-                    href="/dashboard/itinerary"
-                    onClick={() => setItineraryDropdownOpen(false)}
-                    style={{
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: '10px',
-                      padding: '10px 12px',
-                      borderRadius: '6px',
-                      fontSize: '13px',
-                      fontWeight: '600',
-                      color: '#1e293b',
-                      textDecoration: 'none',
-                      transition: 'background 0.2s',
-                    }}
-                    onMouseEnter={(e) => e.currentTarget.style.background = '#f1f5f9'}
-                    onMouseLeave={(e) => e.currentTarget.style.background = 'transparent'}
-                  >
-                    <span>🗺️</span> Custom Itinerary Builder
-                  </Link>
-                </div>
-              </>
-            )}
           </div>
         </div>
 

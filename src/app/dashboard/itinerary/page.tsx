@@ -17,7 +17,7 @@ export default function ItineraryBuilder() {
   const [startLocation, setStartLocation] = useState('');
   const [endLocation, setEndLocation] = useState('');
   const [startDate, setStartDate] = useState('');
-  const [template, setTemplate] = useState('pamphlet-standard');
+  const [headerImage, setHeaderImage] = useState('/style1.png');
   const [language, setLanguage] = useState('hi');
   
   const [timeline, setTimeline] = useState<TimelineDay[]>([
@@ -48,6 +48,18 @@ export default function ItineraryBuilder() {
 
   const handlePrintPdf = () => {
     window.print();
+  };
+
+  const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files[0]) {
+      const reader = new FileReader();
+      reader.onload = (event) => {
+        if (event.target?.result) {
+          setHeaderImage(event.target.result as string);
+        }
+      };
+      reader.readAsDataURL(e.target.files[0]);
+    }
   };
 
   const addDay = () => {
@@ -86,7 +98,11 @@ export default function ItineraryBuilder() {
           <h1 style={{ fontSize: '24px', fontWeight: 'bold', color: '#0f172a', marginBottom: '20px' }}>🗺️ Custom Itinerary Builder</h1>
           
           <div style={{ background: '#f1f5f9', padding: '16px', borderRadius: '8px', marginBottom: '20px' }}>
-            <h2 style={{ fontSize: '16px', fontWeight: '600', marginBottom: '12px' }}>Tour Details</h2>
+            <h2 style={{ fontSize: '16px', fontWeight: '600', marginBottom: '12px' }}>Tour Details & Header</h2>
+            <div style={{ marginBottom: '12px' }}>
+              <label style={{ display: 'block', fontSize: '12px', color: '#64748b', marginBottom: '4px' }}>Custom Header Image (Optional)</label>
+              <input type="file" accept="image/*" onChange={handleImageUpload} style={{ width: '100%', fontSize: '12px' }} />
+            </div>
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
               <div>
                 <label style={{ display: 'block', fontSize: '12px', color: '#64748b' }}>Tour Name</label>
@@ -166,11 +182,6 @@ export default function ItineraryBuilder() {
         {/* Right Pane - Live Preview */}
         <div style={{ width: '50%', overflowY: 'auto', padding: '24px', background: '#94a3b8', position: 'relative' }}>
           <div className="no-print" style={{ position: 'sticky', top: 0, display: 'flex', justifyContent: 'flex-end', gap: '8px', marginBottom: '16px', zIndex: 10 }}>
-            <select value={template} onChange={e => setTemplate(e.target.value)} style={{ padding: '8px 12px', borderRadius: '6px', border: '1px solid #cbd5e1', background: '#fff', fontSize: '14px', cursor: 'pointer' }}>
-              <option value="pamphlet-standard">Template 1: Pamphlet Standard</option>
-              <option value="royal-deluxe">Template 2: Royal Deluxe</option>
-              <option value="spiritual-adventure">Template 3: Spiritual Adventure</option>
-            </select>
             <select value={language} onChange={e => setLanguage(e.target.value)} style={{ padding: '8px 12px', borderRadius: '6px', border: '1px solid #cbd5e1', background: '#fff', fontSize: '14px', cursor: 'pointer' }}>
               <option value="hi">Hindi (hi)</option>
               <option value="en">English (en)</option>
@@ -180,50 +191,9 @@ export default function ItineraryBuilder() {
           </div>
           
           <div ref={previewRef} className="printable-area" style={{ width: '210mm', minHeight: '297mm', background: '#fff', margin: '0 auto', boxShadow: '0 10px 25px rgba(0,0,0,0.2)', fontFamily: 'sans-serif', paddingBottom: '20px' }}>
-            {/* GLOBAL HEADER (Matches itinearary1.png) */}
-            <div style={{ position: 'relative', width: '100%', height: '220px', background: 'linear-gradient(to right, #fff 0%, #fff 40%, #ea580c 40%, #991b1b 100%)', overflow: 'hidden' }}>
-              {/* Left Side (White area) */}
-              <div style={{ position: 'absolute', top: '10px', left: '10px', display: 'flex', gap: '8px', zIndex: 2 }}>
-                <div style={{ background: 'linear-gradient(to right, #ea580c, #dc2626)', color: '#fff', padding: '4px 12px', borderRadius: '12px 0 12px 0', fontSize: '10px', fontWeight: 'bold' }}>
-                  SINCE 1999 | GST- 08AAUCM0755D1ZA
-                </div>
-              </div>
-              <div style={{ position: 'absolute', top: '10px', right: '40%', marginRight: '10px', zIndex: 2 }}>
-                <div style={{ background: '#1e293b', color: '#fff', padding: '4px 16px', borderRadius: '20px', fontSize: '11px', fontWeight: 'bold' }}>
-                  वरिष्ठ नागरिकों को समर्पित कंपनी
-                </div>
-              </div>
-
-              <div style={{ position: 'absolute', top: '40px', left: '20px', zIndex: 2 }}>
-                <h1 style={{ color: '#dc2626', fontSize: '32px', fontWeight: '900', margin: 0, textShadow: '1px 1px 0px rgba(0,0,0,0.1)', fontFamily: '"Tiro Devanagari Hindi", serif' }}>महेश शर्मा तीर्थ यात्रा</h1>
-                <p style={{ color: '#0f172a', fontSize: '14px', fontWeight: 'bold', margin: '4px 0 8px 0' }}>प्रा. लि. कम्पनी, जोधपुर(राज.)</p>
-                <div style={{ fontSize: '10px', color: '#475569', lineHeight: '1.4' }}>
-                  🌐 www.maheshsharmatirthyatra.com<br/>
-                  ✉️ maheshsharmayatra@gmail.com
-                </div>
-                <div style={{ color: '#ea580c', fontSize: '16px', fontWeight: 'bold', marginTop: '8px' }}>
-                  📞 9314013412 <span style={{ color: '#475569' }}>|</span> 📞 9414141636
-                </div>
-              </div>
-
-              {/* Center Temple Logo */}
-              <div style={{ position: 'absolute', top: '50px', left: '32%', width: '120px', height: '120px', background: '#f59e0b', borderRadius: '50%', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', boxShadow: '0 4px 10px rgba(0,0,0,0.2)', zIndex: 3, border: '4px solid #fff' }}>
-                <div style={{ fontSize: '24px' }}>🏛️</div>
-                <div style={{ textAlign: 'center', fontWeight: 'bold', fontSize: '14px', color: '#78350f', lineHeight: '1.1', marginTop: '4px' }}>महेश शर्मा<br/>तीर्थ यात्रा</div>
-                <div style={{ fontSize: '8px', color: '#78350f', marginTop: '2px' }}>(प्रा. लि. कम्पनी)</div>
-              </div>
-
-              {/* Right Side (Gradient area) */}
-              <div style={{ position: 'absolute', top: '40px', right: '20px', width: '30%', zIndex: 2, textAlign: 'center' }}>
-                <div style={{ color: '#fef08a', fontSize: '14px', fontWeight: 'bold', marginBottom: '4px' }}>हमारे यहाँ सभी प्रकार की धार्मिक यात्राएँ उपलब्ध</div>
-                <div style={{ color: '#fff', fontSize: '10px', lineHeight: '1.3', textAlign: 'center' }}>
-                  यमुनोत्री, गंगोत्री, केदारनाथ, बद्रीनाथ, रामेश्वरम,<br/>
-                  जगन्नाथ पुरी, तिरुपति, 12 ज्योतिर्लिंग, सोमनाथ,<br/>
-                  काठमांडू (नेपाल), भूटान आदि<br/>
-                  धार्मिक यात्राओं का सफल आयोजन रेल,<br/>
-                  बस व हवाई सेवाओं द्वारा करवाया जाता है
-                </div>
-              </div>
+            {/* GLOBAL HEADER (User Uploaded or Default) */}
+            <div style={{ width: '100%', overflow: 'hidden', borderBottom: '2px solid #ea580c' }}>
+              {headerImage && <img src={headerImage} alt="Header" style={{ width: '100%', height: 'auto', display: 'block' }} />}
             </div>
 
             {/* Tour Meta Info */}
@@ -252,15 +222,15 @@ export default function ItineraryBuilder() {
                 <div key={idx} style={{ 
                   display: 'flex', 
                   marginBottom: '16px', 
-                  border: template === 'royal-deluxe' ? '2px solid #1e3a8a' : template === 'spiritual-adventure' ? '1px solid #10b981' : '1px solid #fed7aa',
-                  borderRadius: template === 'royal-deluxe' || template === 'spiritual-adventure' ? '8px' : '4px',
+                  border: '1px solid #fed7aa',
+                  borderRadius: '4px',
                   overflow: 'hidden',
-                  background: template === 'royal-deluxe' ? '#f8fafc' : '#fff'
+                  background: '#fff'
                 }}>
                   {/* Left Badge */}
                   <div style={{ 
                     width: '80px', 
-                    background: template === 'royal-deluxe' ? '#1e3a8a' : template === 'spiritual-adventure' ? '#10b981' : (idx % 2 === 0 ? '#ea580c' : '#d97706'), 
+                    background: idx % 2 === 0 ? '#ea580c' : '#d97706', 
                     color: '#fff', 
                     display: 'flex', 
                     flexDirection: 'column', 
@@ -271,7 +241,7 @@ export default function ItineraryBuilder() {
                     <div style={{ fontSize: '11px', fontWeight: 'bold', letterSpacing: '1px' }}>DAY</div>
                     <div style={{ fontSize: '28px', fontWeight: '900', lineHeight: '1' }}>{day.dayNumber.toString().padStart(2, '0')}</div>
                   </div>
-                  <div style={{ width: '80px', background: template === 'pamphlet-standard' ? '#fffbf5' : '#fff', borderRight: '1px solid #e2e8f0', borderTop: 'none', borderBottom: 'none', display: 'flex', flexDirection: 'column', alignItems: 'center', padding: '8px 0', marginLeft: '-80px', marginTop: '60px' }}>
+                  <div style={{ width: '80px', background: '#fffbf5', borderRight: '1px solid #e2e8f0', borderTop: 'none', borderBottom: 'none', display: 'flex', flexDirection: 'column', alignItems: 'center', padding: '8px 0', marginLeft: '-80px', marginTop: '60px' }}>
                     <div style={{ fontSize: '10px', color: '#64748b', fontWeight: 'bold' }}>{language === 'hi' ? 'दिनांक' : 'Date'}</div>
                     <div style={{ fontSize: '11px', color: '#0f172a', borderBottom: '1px dotted #94a3b8', width: '60px', textAlign: 'center', paddingBottom: '2px' }}>{day.dateString || '___/___'}</div>
                   </div>
@@ -279,25 +249,25 @@ export default function ItineraryBuilder() {
                   {/* Right Content */}
                   <div style={{ flex: 1, padding: '12px 16px', display: 'grid', gridTemplateColumns: '1fr 2fr 1fr 1fr', gap: '16px', marginLeft: '80px' }}>
                     <div>
-                      <div style={{ color: template === 'royal-deluxe' ? '#1e3a8a' : '#ea580c', fontSize: '12px', fontWeight: 'bold', display: 'flex', alignItems: 'center', gap: '4px', marginBottom: '4px' }}>
+                      <div style={{ color: '#ea580c', fontSize: '12px', fontWeight: 'bold', display: 'flex', alignItems: 'center', gap: '4px', marginBottom: '4px' }}>
                         📍 {language === 'hi' ? 'स्थान' : 'Location'}
                       </div>
                       <div style={{ fontSize: '12px', color: '#334155', fontWeight: '600' }}>{day.location}</div>
                     </div>
                     <div>
-                      <div style={{ color: template === 'royal-deluxe' ? '#1e3a8a' : '#ea580c', fontSize: '12px', fontWeight: 'bold', display: 'flex', alignItems: 'center', gap: '4px', marginBottom: '4px' }}>
+                      <div style={{ color: '#ea580c', fontSize: '12px', fontWeight: 'bold', display: 'flex', alignItems: 'center', gap: '4px', marginBottom: '4px' }}>
                         🗓️ {language === 'hi' ? 'कार्यक्रम विवरण' : 'Program'}
                       </div>
                       <div style={{ fontSize: '11px', color: '#475569', whiteSpace: 'pre-wrap' }}>{day.activities}</div>
                     </div>
                     <div>
-                      <div style={{ color: template === 'royal-deluxe' ? '#1e3a8a' : '#ea580c', fontSize: '12px', fontWeight: 'bold', display: 'flex', alignItems: 'center', gap: '4px', marginBottom: '4px' }}>
+                      <div style={{ color: '#ea580c', fontSize: '12px', fontWeight: 'bold', display: 'flex', alignItems: 'center', gap: '4px', marginBottom: '4px' }}>
                         🍽️ {language === 'hi' ? 'भोजन' : 'Meals'}
                       </div>
                       <div style={{ fontSize: '11px', color: '#475569' }}>{day.meals}</div>
                     </div>
                     <div>
-                      <div style={{ color: template === 'royal-deluxe' ? '#1e3a8a' : '#ea580c', fontSize: '12px', fontWeight: 'bold', display: 'flex', alignItems: 'center', gap: '4px', marginBottom: '4px' }}>
+                      <div style={{ color: '#ea580c', fontSize: '12px', fontWeight: 'bold', display: 'flex', alignItems: 'center', gap: '4px', marginBottom: '4px' }}>
                         🏨 {language === 'hi' ? 'रात्रि विश्राम' : 'Stay'}
                       </div>
                       <div style={{ fontSize: '11px', color: '#475569' }}>{day.accommodation}</div>
