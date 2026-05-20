@@ -181,8 +181,8 @@ export default function ItineraryBuilder() {
         
         {/* Right Pane - Live Preview */}
         <div style={{ width: '50%', overflowY: 'auto', padding: '24px', background: '#94a3b8', position: 'relative' }}>
-          <div className="no-print" style={{ position: 'sticky', top: 0, display: 'flex', justifyContent: 'flex-end', gap: '8px', marginBottom: '16px', zIndex: 10 }}>
-            <select value={language} onChange={e => setLanguage(e.target.value)} style={{ padding: '8px 12px', borderRadius: '6px', border: '1px solid #cbd5e1', background: '#fff', fontSize: '14px', cursor: 'pointer' }}>
+          <div className="no-print" style={{ position: 'absolute', top: '24px', right: '24px', display: 'flex', gap: '8px', zIndex: 10 }}>
+            <select value={language} onChange={e => setLanguage(e.target.value)} style={{ padding: '8px 12px', borderRadius: '6px', border: '1px solid #cbd5e1', background: '#fff', fontSize: '14px', cursor: 'pointer', boxShadow: '0 2px 4px rgba(0,0,0,0.1)' }}>
               <option value="hi">Hindi (hi)</option>
               <option value="en">English (en)</option>
             </select>
@@ -190,7 +190,8 @@ export default function ItineraryBuilder() {
             <button onClick={handlePrintPdf} style={{ background: '#10b981', color: '#fff', padding: '8px 16px', borderRadius: '6px', border: 'none', cursor: 'pointer', fontWeight: 'bold', boxShadow: '0 2px 4px rgba(0,0,0,0.1)' }}>🖨️ PDF</button>
           </div>
           
-          <div ref={previewRef} className="printable-area" style={{ width: '210mm', minHeight: '297mm', background: '#fff', margin: '0 auto', boxShadow: '0 10px 25px rgba(0,0,0,0.2)', fontFamily: 'sans-serif', paddingBottom: '20px' }}>
+          <div style={{ transform: 'scale(0.85)', transformOrigin: 'top center', paddingBottom: '100px' }}>
+            <div ref={previewRef} className="printable-area" style={{ width: '210mm', minHeight: '297mm', background: '#fff', margin: '0 auto', boxShadow: '0 10px 25px rgba(0,0,0,0.2)', fontFamily: 'sans-serif', display: 'flex', flexDirection: 'column' }}>
             {/* GLOBAL HEADER (User Uploaded or Default) */}
             <div style={{ width: '100%', overflow: 'hidden', borderBottom: '2px solid #ea580c' }}>
               {headerImage && <img src={headerImage} alt="Header" style={{ width: '100%', height: 'auto', display: 'block' }} />}
@@ -217,7 +218,7 @@ export default function ItineraryBuilder() {
             </div>
 
             {/* Day by Day Body */}
-            <div style={{ padding: '20px 40px' }}>
+            <div style={{ padding: '20px 40px', flex: 1 }}>
               {timeline.map((day, idx) => (
                 <div key={idx} style={{ 
                   display: 'flex', 
@@ -225,7 +226,8 @@ export default function ItineraryBuilder() {
                   border: '1px solid #fed7aa',
                   borderRadius: '4px',
                   overflow: 'hidden',
-                  background: '#fff'
+                  background: '#fff',
+                  pageBreakInside: 'avoid'
                 }}>
                   {/* Left Badge */}
                   <div style={{ 
@@ -281,8 +283,9 @@ export default function ItineraryBuilder() {
               </div>
             </div>
 
-            {/* Footer Cards */}
-            <div style={{ padding: '0 40px', display: 'grid', gridTemplateColumns: '1.5fr 1fr 1fr', gap: '16px' }}>
+            <div style={{ marginTop: 'auto', pageBreakInside: 'avoid' }}>
+              {/* Footer Cards */}
+              <div style={{ padding: '0 40px', display: 'grid', gridTemplateColumns: '1.5fr 1fr 1fr', gap: '16px' }}>
               <div style={{ border: '1px solid #fed7aa', borderRadius: '4px', background: '#fffbf5', overflow: 'hidden' }}>
                 <div style={{ background: '#ea580c', color: '#fff', padding: '6px 12px', fontSize: '12px', fontWeight: 'bold', display: 'flex', alignItems: 'center', gap: '6px' }}>
                   💡 {language === 'hi' ? 'महत्वपूर्ण निर्देश' : 'Instructions'}
@@ -312,14 +315,16 @@ export default function ItineraryBuilder() {
               </div>
             </div>
 
-            {/* Bottom Bar */}
-            <div style={{ background: 'linear-gradient(to right, #ea580c, #dc2626)', marginTop: '24px', padding: '12px 40px', display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
-               <h2 style={{ color: '#fff', fontSize: '20px', fontWeight: 'bold', margin: 0 }}>
-                 🌸 {language === 'hi' ? 'शुभ यात्रा ! मंगल यात्रा !' : 'Happy & Auspicious Journey !'} 🌸
-               </h2>
+              {/* Bottom Bar */}
+              <div style={{ background: 'linear-gradient(to right, #ea580c, #dc2626)', marginTop: '24px', padding: '12px 40px', display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
+                 <h2 style={{ color: '#fff', fontSize: '20px', fontWeight: 'bold', margin: 0 }}>
+                   🌸 {language === 'hi' ? 'शुभ यात्रा ! मंगल यात्रा !' : 'Happy & Auspicious Journey !'} 🌸
+                 </h2>
+              </div>
             </div>
           </div>
         </div>
+      </div>
       </div>
     </>
   );
