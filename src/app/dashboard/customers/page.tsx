@@ -37,6 +37,49 @@ export default function CustomersPage() {
   const [deletingBulk, setDeletingBulk] = useState(false);
 
   const [refreshing, setRefreshing] = useState(false);
+  const [showExport, setShowExport] = useState(false);
+  const [exportYear, setExportYear] = useState<string>('all');
+
+  const getAvailableYears = () => {
+    const years = new Set<string>();
+    customers.forEach(c => {
+      const yr = c.createdAt ? new Date(c.createdAt).getFullYear().toString() : null;
+      if (yr) years.add(yr);
+    });
+    return Array.from(years).sort((a, b) => Number(b) - Number(a));
+  };
+
+  const handleExport = () => {
+    const toExport = exportYear === 'all'
+      ? customers
+      : customers.filter(c => {
+          if (!c.createdAt) return false;
+          return new Date(c.createdAt).getFullYear().toString() === exportYear;
+        });
+
+    const headers = ['Name', 'Email', 'Phone', 'Source', 'Created At'];
+    const rows = toExport.map(c => [
+      c.name || '',
+      c.email || '',
+      c.phone || '',
+      c.source || '',
+      c.createdAt ? new Date(c.createdAt).toLocaleDateString('en-IN') : ''
+    ]);
+
+    const csvContent = [headers, ...rows]
+      .map(row => row.map(cell => `"${String(cell).replace(/"/g, '""')}"`).join(','))
+      .join('\n');
+
+    const BOM = '\uFEFF'; // UTF-8 BOM for Excel Hindi support
+    const blob = new Blob([BOM + csvContent], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `Customers_${exportYear === 'all' ? 'AllTime' : exportYear}.csv`;
+    link.click();
+    URL.revokeObjectURL(url);
+    setShowExport(false);
+  };
 
   const fetchCustomers = () => {
     setRefreshing(true);
@@ -221,6 +264,103 @@ export default function CustomersPage() {
           >
             {isMultiSelect ? 'Disable Select' : 'Multi Select'}
           </button>
+          
+          {/* Export Button */}
+          <div style={{ position: 'relative' }}>
+            <button
+              onClick={() => setShowExport(v => !v)}
+              style={{
+                padding: '10px 18px',
+                background: '#f0fdf4',
+                color: '#16a34a',
+                border: '1px solid #16a34a',
+                borderRadius: '8px',
+                fontWeight: '600',
+                cursor: 'pointer',
+                fontSize: '14px',
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '6px',
+                transition: 'all 0.2s'
+              }}
+            >
+              📥 Export
+            </button>
+            {showExport && (
+              <div style={{
+                position: 'absolute',
+                top: '110%',
+                right: 0,
+                background: '#fff',
+                border: '1px solid #e2e8f0',
+                borderRadius: '10px',
+                boxShadow: '0 8px 24px rgba(0,0,0,0.12)',
+                padding: '12px',
+                zIndex: 100,
+                minWidth: '200px'
+              }}>
+                <p style={{ margin: '0 0 8px', fontSize: '12px', fontWeight: '700', color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Export Year</p>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '4px', maxHeight: '200px', overflowY: 'auto' }}>
+                  <button
+                    onClick={() => setExportYear('all')}
+                    style={{
+                      padding: '7px 12px',
+                      background: exportYear === 'all' ? '#f0fdf4' : 'transparent',
+                      border: exportYear === 'all' ? '1px solid #16a34a' : '1px solid transparent',
+                      borderRadius: '6px',
+                      textAlign: 'left',
+                      cursor: 'pointer',
+                      fontSize: '13px',
+                      fontWeight: exportYear === 'all' ? '700' : '500',
+                      color: exportYear === 'all' ? '#16a34a' : '#334155'
+                    }}
+                  >
+                    📋 All Time ({customers.length})
+                  </button>
+                  {getAvailableYears().map(yr => {
+                    const count = customers.filter(c => c.createdAt && new Date(c.createdAt).getFullYear().toString() === yr).length;
+                    return (
+                      <button
+                        key={yr}
+                        onClick={() => setExportYear(yr)}
+                        style={{
+                          padding: '7px 12px',
+                          background: exportYear === yr ? '#f0fdf4' : 'transparent',
+                          border: exportYear === yr ? '1px solid #16a34a' : '1px solid transparent',
+                          borderRadius: '6px',
+                          textAlign: 'left',
+                          cursor: 'pointer',
+                          fontSize: '13px',
+                          fontWeight: exportYear === yr ? '700' : '500',
+                          color: exportYear === yr ? '#16a34a' : '#334155'
+                        }}
+                      >
+                        📅 {yr} ({count})
+                      </button>
+                    );
+                  })}
+                </div>
+                <div style={{ borderTop: '1px solid #e2e8f0', marginTop: '10px', paddingTop: '10px' }}>
+                  <button
+                    onClick={handleExport}
+                    style={{
+                      width: '100%',
+                      padding: '9px',
+                      background: '#16a34a',
+                      color: '#fff',
+                      border: 'none',
+                      borderRadius: '7px',
+                      fontWeight: '700',
+                      cursor: 'pointer',
+                      fontSize: '13px'
+                    }}
+                  >
+                    ⬇️ Download Excel (.csv)
+                  </button>
+                </div>
+              </div>
+            )}
+          </div>
           
           <div className="mobile-row-group" style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
             <button onClick={() => setShowAdd(true)} style={{ padding: '10px 20px', background: '#f97316', color: '#fff', border: 'none', borderRadius: '8px', fontWeight: '600', cursor: 'pointer', fontSize: '14px' }}>
