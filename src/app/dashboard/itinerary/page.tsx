@@ -1,577 +1,352 @@
 'use client';
 
-import { useState, useRef, useCallback } from 'react';
-import { toPng } from 'html-to-image';
+import { useState, useRef } from 'react';
+import html2canvas from 'html2canvas';
 
-// ─── Types ────────────────────────────────────────────────────────────────────
-interface DayEntry {
-  id: string;
+type TimelineDay = {
   dayNumber: number;
-  date: string;
-  overNightStay: number;
-  mealPlan: string;
-  details: string;
-}
-
-interface ItineraryData {
-  tourName: string;
-  customerName: string;
-  quotationNo: string;
-  adults: string;
-  startDate: string;
-  endDate: string;
-  totalCost: string;
-  days: DayEntry[];
-  inclusions: string[];
-  exclusions: string[];
-  notes: string;
-}
-
-const uid = () => Math.random().toString(36).substr(2, 9);
-
-const ORANGE = '#f97316';
-const DARK = '#1e293b';
-const LIGHT_ORANGE = '#fff7ed';
-const BORDER = '#fed7aa';
-
-// ─── Default data ─────────────────────────────────────────────────────────────
-const defaultDay = (n: number): DayEntry => ({
-  id: uid(),
-  dayNumber: n,
-  date: '',
-  overNightStay: 1,
-  mealPlan: 'Breakfast and Dinner',
-  details: '',
-});
-
-const defaultData: ItineraryData = {
-  tourName: '',
-  customerName: '',
-  quotationNo: '',
-  adults: '2',
-  startDate: '',
-  endDate: '',
-  totalCost: '',
-  days: [defaultDay(1), defaultDay(2), defaultDay(3)],
-  inclusions: ['', '', ''],
-  exclusions: ['', '', ''],
-  notes: '',
+  dateString: string;
+  location: string;
+  activities: string;
+  meals: string;
+  accommodation: string;
 };
 
-// ─── Shared input styles ──────────────────────────────────────────────────────
-const inp: React.CSSProperties = {
-  width: '100%', padding: '8px 10px', border: '1px solid #e2e8f0',
-  borderRadius: '6px', fontSize: '12px', outline: 'none',
-  boxSizing: 'border-box', background: '#fff', fontFamily: 'inherit',
-};
-const lbl: React.CSSProperties = {
-  display: 'block', fontSize: '10px', fontWeight: '700',
-  color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: '4px',
-};
-
-// ─── Main Component ───────────────────────────────────────────────────────────
-export default function ItineraryPage() {
-  const [data, setData] = useState<ItineraryData>(defaultData);
-  const [headerImage, setHeaderImage] = useState<string | null>(null);
-  const [footerImage, setFooterImage] = useState<string | null>(null);
-  const [downloading, setDownloading] = useState(false);
-  const [activeTab, setActiveTab] = useState<'edit' | 'preview'>('edit');
+export default function ItineraryBuilder() {
+  const [title, setTitle] = useState('');
+  const [startLocation, setStartLocation] = useState('');
+  const [endLocation, setEndLocation] = useState('');
+  const [startDate, setStartDate] = useState('');
+  const [template, setTemplate] = useState('pamphlet-standard');
+  const [language, setLanguage] = useState('hi');
+  
+  const [timeline, setTimeline] = useState<TimelineDay[]>([
+    { dayNumber: 1, dateString: '', location: '', activities: '', meals: '', accommodation: '' }
+  ]);
+  
+  const [importantInstructions, setImportantInstructions] = useState(
+    'यात्रा समय पर निर्धारित स्थान पर उपस्थित हों।\nयात्रा के दौरान स्वच्छता एवं अनुशासन बनाए रखें।\nकीमती सामान की स्वयं सुरक्षा करें।\nकिसी भी प्रकार की सहायता हेतु टूर मैनेजर से संपर्क करें।'
+  );
+  
+  const [tourManager, setTourManager] = useState('');
+  const [mobile, setMobile] = useState('');
+  const [officeContact, setOfficeContact] = useState('');
+  const [doctorContact, setDoctorContact] = useState('');
+  const [agentNotes, setAgentNotes] = useState('');
 
   const previewRef = useRef<HTMLDivElement>(null);
-  const headerRef = useRef<HTMLInputElement>(null);
-  const footerRef = useRef<HTMLInputElement>(null);
 
-  const set = (field: keyof ItineraryData, value: any) =>
-    setData(p => ({ ...p, [field]: value }));
-
-  const setDay = (id: string, field: keyof DayEntry, value: any) =>
-    setData(p => ({ ...p, days: p.days.map(d => d.id === id ? { ...d, [field]: value } : d) }));
-
-  const addDay = () => setData(p => ({
-    ...p, days: [...p.days, defaultDay(p.days.length + 1)]
-  }));
-
-  const removeDay = (id: string) => setData(p => ({
-    ...p, days: p.days.filter(d => d.id !== id).map((d, i) => ({ ...d, dayNumber: i + 1 }))
-  }));
-
-  const setListItem = (key: 'inclusions' | 'exclusions', i: number, val: string) =>
-    setData(p => { const a = [...p[key]]; a[i] = val; return { ...p, [key]: a }; });
-
-  const addListItem = (key: 'inclusions' | 'exclusions') =>
-    setData(p => ({ ...p, [key]: [...p[key], ''] }));
-
-  const removeListItem = (key: 'inclusions' | 'exclusions', i: number) =>
-    setData(p => ({ ...p, [key]: p[key].filter((_, idx) => idx !== i) }));
-
-  const loadImage = (e: React.ChangeEvent<HTMLInputElement>, fn: (s: string) => void) => {
-    const f = e.target.files?.[0]; if (!f) return;
-    const r = new FileReader(); r.onload = ev => fn(ev.target!.result as string); r.readAsDataURL(f);
+  const handleDownloadImage = async () => {
+    if (previewRef.current) {
+      const canvas = await html2canvas(previewRef.current, { scale: 2 });
+      const link = document.createElement('a');
+      link.download = 'Itinerary.png';
+      link.href = canvas.toDataURL('image/png');
+      link.click();
+    }
   };
 
-  const downloadPNG = useCallback(async () => {
-    if (!previewRef.current) return;
-    setDownloading(true);
-    try {
-      // Ensure full height capture
-      const el = previewRef.current;
-      const dataUrl = await toPng(el, {
-        cacheBust: true,
-        pixelRatio: 2,
-        width: el.scrollWidth,
-        height: el.scrollHeight,
-        style: { overflow: 'visible' },
-      });
-      const a = document.createElement('a');
-      a.download = `${data.tourName || 'Itinerary'}_${data.customerName || 'Customer'}.png`;
-      a.href = dataUrl;
-      a.click();
-    } catch (err) {
-      console.error(err);
-      alert('PNG generation failed. Try Print → Save as PDF instead.');
-    } finally { setDownloading(false); }
-  }, [data.tourName, data.customerName]);
-
-  // ─── Form Panel ──────────────────────────────────────────────────────────────
-  const FormPanel = () => (
-    <div style={{ padding: '16px', overflowY: 'auto', height: '100%', boxSizing: 'border-box' }}>
-
-      {/* Header Image */}
-      <div style={{ marginBottom: '16px' }}>
-        <label style={lbl}>Header Image</label>
-        <div onClick={() => headerRef.current?.click()} style={{
-          border: '2px dashed #fed7aa', borderRadius: '8px', padding: '10px',
-          textAlign: 'center', cursor: 'pointer', background: LIGHT_ORANGE,
-        }}>
-          {headerImage
-            ? <img src={headerImage} alt="hdr" style={{ maxHeight: '60px', maxWidth: '100%', objectFit: 'contain' }} />
-            : <span style={{ fontSize: '12px', color: '#9a3412' }}>📷 Upload Header Image</span>}
-        </div>
-        <input ref={headerRef} type="file" accept="image/*" style={{ display: 'none' }}
-          onChange={e => loadImage(e, setHeaderImage)} />
-        {headerImage && <button onClick={() => setHeaderImage(null)}
-          style={{ fontSize: '10px', color: '#ef4444', background: 'none', border: 'none', cursor: 'pointer', marginTop: '4px' }}>✕ Remove</button>}
-      </div>
-
-      {/* Tour + Customer Info */}
-      <div style={{ marginBottom: '16px' }}>
-        <label style={lbl}>Tour Details</label>
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
-          <input placeholder="Tour Name (e.g. AYODHYA YATRA)" value={data.tourName}
-            onChange={e => set('tourName', e.target.value)} style={inp} />
-          <input placeholder="Customer Name (e.g. Mr. C L Kalani)" value={data.customerName}
-            onChange={e => set('customerName', e.target.value)} style={inp} />
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '6px' }}>
-            <input placeholder="Quotation No (e.g. #QT000081)" value={data.quotationNo}
-              onChange={e => set('quotationNo', e.target.value)} style={inp} />
-            <input placeholder="Adults (e.g. 4)" type="number" value={data.adults}
-              onChange={e => set('adults', e.target.value)} style={inp} />
-          </div>
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '6px' }}>
-            <div>
-              <label style={{ ...lbl, marginBottom: '2px' }}>Start Date</label>
-              <input type="date" value={data.startDate} onChange={e => set('startDate', e.target.value)} style={inp} />
-            </div>
-            <div>
-              <label style={{ ...lbl, marginBottom: '2px' }}>End Date</label>
-              <input type="date" value={data.endDate} onChange={e => set('endDate', e.target.value)} style={inp} />
-            </div>
-          </div>
-          <input placeholder="Total Package Cost (e.g. 87960)" value={data.totalCost}
-            onChange={e => set('totalCost', e.target.value)} style={inp} />
-        </div>
-      </div>
-
-      {/* Days */}
-      <div style={{ marginBottom: '16px' }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
-          <label style={{ ...lbl, marginBottom: 0 }}>Day-by-Day Plan ({data.days.length} Days)</label>
-          <button onClick={addDay} style={{
-            padding: '4px 10px', background: ORANGE, color: '#fff',
-            border: 'none', borderRadius: '6px', fontWeight: '700', fontSize: '11px', cursor: 'pointer',
-          }}>+ Day</button>
-        </div>
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-          {data.days.map(day => (
-            <div key={day.id} style={{
-              background: '#f8fafc', border: `1px solid ${BORDER}`,
-              borderRadius: '8px', padding: '10px',
-            }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px' }}>
-                <span style={{ fontWeight: '800', fontSize: '12px', color: ORANGE }}>DAY {day.dayNumber}</span>
-                {data.days.length > 1 && (
-                  <button onClick={() => removeDay(day.id)}
-                    style={{ background: 'none', border: 'none', color: '#ef4444', cursor: 'pointer', fontSize: '13px' }}>✕</button>
-                )}
-              </div>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '5px' }}>
-                <input type="date" value={day.date} onChange={e => setDay(day.id, 'date', e.target.value)} style={inp} />
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '5px' }}>
-                  <div>
-                    <label style={{ ...lbl, marginBottom: '2px' }}>Overnight Stays</label>
-                    <input type="number" min={0} value={day.overNightStay}
-                      onChange={e => setDay(day.id, 'overNightStay', parseInt(e.target.value) || 0)} style={inp} />
-                  </div>
-                  <div>
-                    <label style={{ ...lbl, marginBottom: '2px' }}>Meal Plan</label>
-                    <input placeholder="e.g. Breakfast and Dinner" value={day.mealPlan}
-                      onChange={e => setDay(day.id, 'mealPlan', e.target.value)} style={inp} />
-                  </div>
-                </div>
-                <textarea placeholder="Details / Activities description..." value={day.details}
-                  onChange={e => setDay(day.id, 'details', e.target.value)} rows={2}
-                  style={{ ...inp, resize: 'vertical' }} />
-              </div>
-            </div>
-          ))}
-        </div>
-      </div>
-
-      {/* Inclusions */}
-      <div style={{ marginBottom: '16px' }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px' }}>
-          <label style={{ ...lbl, marginBottom: 0 }}>Inclusions</label>
-          <button onClick={() => addListItem('inclusions')} style={{
-            padding: '4px 10px', background: '#16a34a', color: '#fff',
-            border: 'none', borderRadius: '6px', fontWeight: '700', fontSize: '11px', cursor: 'pointer',
-          }}>+</button>
-        </div>
-        {data.inclusions.map((inc, i) => (
-          <div key={i} style={{ display: 'flex', gap: '5px', marginBottom: '5px', alignItems: 'center' }}>
-            <input value={inc} onChange={e => setListItem('inclusions', i, e.target.value)}
-              placeholder={`Inclusion ${i + 1}`} style={{ ...inp, flex: 1 }} />
-            <button onClick={() => removeListItem('inclusions', i)}
-              style={{ background: 'none', border: 'none', color: '#ef4444', cursor: 'pointer', flexShrink: 0 }}>✕</button>
-          </div>
-        ))}
-      </div>
-
-      {/* Exclusions */}
-      <div style={{ marginBottom: '16px' }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px' }}>
-          <label style={{ ...lbl, marginBottom: 0 }}>Exclusions</label>
-          <button onClick={() => addListItem('exclusions')} style={{
-            padding: '4px 10px', background: '#dc2626', color: '#fff',
-            border: 'none', borderRadius: '6px', fontWeight: '700', fontSize: '11px', cursor: 'pointer',
-          }}>+</button>
-        </div>
-        {data.exclusions.map((exc, i) => (
-          <div key={i} style={{ display: 'flex', gap: '5px', marginBottom: '5px', alignItems: 'center' }}>
-            <input value={exc} onChange={e => setListItem('exclusions', i, e.target.value)}
-              placeholder={`Exclusion ${i + 1}`} style={{ ...inp, flex: 1 }} />
-            <button onClick={() => removeListItem('exclusions', i)}
-              style={{ background: 'none', border: 'none', color: '#ef4444', cursor: 'pointer', flexShrink: 0 }}>✕</button>
-          </div>
-        ))}
-      </div>
-
-      {/* Notes */}
-      <div style={{ marginBottom: '16px' }}>
-        <label style={lbl}>Additional Notes</label>
-        <textarea value={data.notes} onChange={e => set('notes', e.target.value)}
-          rows={2} placeholder="Any extra notes..." style={{ ...inp, resize: 'vertical' }} />
-      </div>
-
-      {/* Footer Image */}
-      <div style={{ marginBottom: '8px' }}>
-        <label style={lbl}>Footer Image</label>
-        <div onClick={() => footerRef.current?.click()} style={{
-          border: '2px dashed #fed7aa', borderRadius: '8px', padding: '10px',
-          textAlign: 'center', cursor: 'pointer', background: LIGHT_ORANGE,
-        }}>
-          {footerImage
-            ? <img src={footerImage} alt="ftr" style={{ maxHeight: '40px', maxWidth: '100%', objectFit: 'contain' }} />
-            : <span style={{ fontSize: '12px', color: '#9a3412' }}>📷 Upload Footer Image</span>}
-        </div>
-        <input ref={footerRef} type="file" accept="image/*" style={{ display: 'none' }}
-          onChange={e => loadImage(e, setFooterImage)} />
-        {footerImage && <button onClick={() => setFooterImage(null)}
-          style={{ fontSize: '10px', color: '#ef4444', background: 'none', border: 'none', cursor: 'pointer', marginTop: '4px' }}>✕ Remove</button>}
-      </div>
-    </div>
-  );
-
-  // ─── Preview / Output ────────────────────────────────────────────────────────
-  const fmtDate = (iso: string) => {
-    if (!iso) return '';
-    const d = new Date(iso);
-    return d.toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' });
+  const handlePrintPdf = () => {
+    window.print();
   };
 
-  const fmtDateShort = (iso: string) => {
-    if (!iso) return '';
-    const d = new Date(iso);
-    return d.toLocaleDateString('en-GB').replace(/\//g, '/');
+  const addDay = () => {
+    setTimeline(prev => [
+      ...prev,
+      { dayNumber: prev.length + 1, dateString: '', location: '', activities: '', meals: '', accommodation: '' }
+    ]);
   };
 
-  const nights = Math.max(0, data.days.length - 1);
-  const durLabel = `${nights} Night${nights !== 1 ? 's' : ''} & ${data.days.length} Day${data.days.length !== 1 ? 's' : ''}`;
+  const updateDay = (index: number, field: keyof TimelineDay, value: string) => {
+    const newTimeline = [...timeline];
+    newTimeline[index] = { ...newTimeline[index], [field]: value };
+    setTimeline(newTimeline);
+  };
 
-  const PreviewPanel = () => (
-    <div ref={previewRef} style={{
-      background: '#fff', fontFamily: "'Segoe UI', Arial, sans-serif",
-      color: '#1e293b', width: '100%', fontSize: '13px',
-    }}>
+  const removeDay = (index: number) => {
+    const newTimeline = timeline.filter((_, i) => i !== index).map((day, i) => ({ ...day, dayNumber: i + 1 }));
+    setTimeline(newTimeline);
+  };
 
-      {/* ── Header Image ────────────────────────────────── */}
-      {headerImage ? (
-        <img src={headerImage} alt="header"
-          style={{ width: '100%', display: 'block', maxHeight: '180px', objectFit: 'cover' }} />
-      ) : (
-        <img src="/style1.png" alt="header"
-          style={{ width: '100%', display: 'block', maxHeight: '180px', objectFit: 'cover' }} />
-      )}
-
-      {/* ── Info Bar ────────────────────────────────────── */}
-      <div style={{
-        background: DARK, color: '#fff', padding: '10px 20px',
-        display: 'grid', gridTemplateColumns: 'auto 1fr auto', gap: '16px', alignItems: 'center',
-      }}>
-        <div>
-          <div style={{ fontSize: '16px', fontWeight: '900', color: ORANGE, textTransform: 'uppercase', letterSpacing: '1px' }}>
-            {data.tourName || 'TOUR NAME'}
-          </div>
-          <div style={{ fontSize: '11px', color: '#94a3b8', marginTop: '2px' }}>
-            {data.quotationNo && `Quotation No.: ${data.quotationNo}`}
-          </div>
-          {data.adults && <div style={{ fontSize: '11px', color: '#94a3b8' }}>Adult(s): {data.adults}</div>}
-        </div>
-        <div style={{ textAlign: 'center' }}>
-          {data.customerName && (
-            <div style={{ fontSize: '13px', fontWeight: '700', color: '#f1f5f9' }}>
-              For : {data.customerName}
-            </div>
-          )}
-        </div>
-        <div style={{ textAlign: 'right' }}>
-          <div style={{ fontSize: '13px', fontWeight: '800', color: ORANGE }}>{durLabel}</div>
-          {(data.startDate || data.endDate) && (
-            <div style={{ fontSize: '11px', color: '#94a3b8', marginTop: '2px' }}>
-              {fmtDate(data.startDate)}{data.startDate && data.endDate ? ' to ' : ''}{fmtDate(data.endDate)}
-            </div>
-          )}
-        </div>
-      </div>
-
-      {/* ── Section header ──────────────────────────────── */}
-      <div style={{
-        background: LIGHT_ORANGE, borderLeft: `4px solid ${ORANGE}`,
-        padding: '10px 20px', margin: '0',
-        fontSize: '13px', fontWeight: '800', color: '#7c2d12', textTransform: 'uppercase', letterSpacing: '1px',
-      }}>
-        Presenting the Detailed Itinerary
-      </div>
-
-      {/* ── Days ────────────────────────────────────────── */}
-      <div style={{ padding: '0 20px' }}>
-        {data.days.map(day => (
-          <div key={day.id} style={{ borderBottom: `1px solid #f1f5f9`, padding: '14px 0' }}>
-
-            {/* Day badge row */}
-            <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '8px' }}>
-              <div style={{
-                background: DARK, color: '#fff', borderRadius: '6px',
-                padding: '4px 12px', fontSize: '12px', fontWeight: '800',
-                display: 'inline-flex', alignItems: 'center', gap: '6px',
-              }}>
-                ▶ DAY {String(day.dayNumber).padStart(2, '0')}
-              </div>
-              {day.date && (
-                <div style={{
-                  background: '#dcfce7', color: '#166534', borderRadius: '6px',
-                  padding: '4px 10px', fontSize: '12px', fontWeight: '700',
-                  display: 'inline-flex', alignItems: 'center', gap: '4px',
-                }}>
-                  ✓ {fmtDateShort(day.date)}
-                </div>
-              )}
-            </div>
-
-            {/* Day details */}
-            <div style={{ paddingLeft: '8px' }}>
-              <div style={{ display: 'flex', gap: '24px', flexWrap: 'wrap', marginBottom: '6px' }}>
-                <div style={{ fontSize: '12px', color: '#475569' }}>
-                  <strong style={{ color: DARK }}>Over Night Stay:</strong> {day.overNightStay}
-                </div>
-                <div style={{ fontSize: '12px', color: '#475569' }}>
-                  <strong style={{ color: DARK }}>Meal Plan:</strong> {day.mealPlan || '—'}
-                </div>
-              </div>
-              {day.details && (
-                <div style={{ fontSize: '12px', color: '#334155', lineHeight: '1.6' }}>
-                  <strong style={{ color: DARK }}>Details:</strong> {day.details}
-                </div>
-              )}
-            </div>
-          </div>
-        ))}
-      </div>
-
-      {/* ── Total Cost ──────────────────────────────────── */}
-      {data.totalCost && (
-        <div style={{ padding: '16px 20px' }}>
-          <div style={{
-            background: DARK, borderRadius: '10px', padding: '16px 24px', textAlign: 'center',
-          }}>
-            <div style={{ fontSize: '11px', fontWeight: '700', color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '2px', marginBottom: '4px' }}>
-              Total Package Cost
-            </div>
-            <div style={{ fontSize: '20px', fontWeight: '900', color: ORANGE }}>
-              INR {parseFloat(data.totalCost).toLocaleString('en-IN', { minimumFractionDigits: 2 })}
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* ── Inclusions ──────────────────────────────────── */}
-      {data.inclusions.some(i => i.trim()) && (
-        <div style={{ padding: '0 20px 16px' }}>
-          <div style={{
-            fontSize: '14px', fontWeight: '900', color: ORANGE,
-            textTransform: 'uppercase', letterSpacing: '1px', marginBottom: '10px',
-            borderBottom: `2px solid ${ORANGE}`, paddingBottom: '4px',
-          }}>
-            Inclusions
-          </div>
-          {data.inclusions.filter(i => i.trim()).map((inc, i) => (
-            <div key={i} style={{ display: 'flex', gap: '8px', alignItems: 'flex-start', marginBottom: '6px' }}>
-              <span style={{ color: '#16a34a', fontSize: '14px', marginTop: '1px', flexShrink: 0 }}>✅</span>
-              <span style={{ fontSize: '12px', color: '#334155', lineHeight: '1.5' }}>{inc}</span>
-            </div>
-          ))}
-        </div>
-      )}
-
-      {/* ── Exclusions ──────────────────────────────────── */}
-      {data.exclusions.some(e => e.trim()) && (
-        <div style={{ padding: '0 20px 16px' }}>
-          <div style={{
-            fontSize: '14px', fontWeight: '900', color: '#dc2626',
-            textTransform: 'uppercase', letterSpacing: '1px', marginBottom: '10px',
-            borderBottom: '2px solid #dc2626', paddingBottom: '4px',
-          }}>
-            Exclusions
-          </div>
-          {data.exclusions.filter(e => e.trim()).map((exc, i) => (
-            <div key={i} style={{ display: 'flex', gap: '8px', alignItems: 'flex-start', marginBottom: '6px' }}>
-              <span style={{ color: '#dc2626', fontSize: '14px', marginTop: '1px', flexShrink: 0 }}>☒</span>
-              <span style={{ fontSize: '12px', color: '#334155', lineHeight: '1.5' }}>{exc}</span>
-            </div>
-          ))}
-        </div>
-      )}
-
-      {/* ── Notes ───────────────────────────────────────── */}
-      {data.notes.trim() && (
-        <div style={{ padding: '0 20px 16px' }}>
-          <div style={{ fontSize: '11px', fontWeight: '700', color: '#64748b', textTransform: 'uppercase', marginBottom: '6px' }}>Notes</div>
-          <p style={{ fontSize: '12px', color: '#475569', lineHeight: '1.6', margin: 0 }}>{data.notes}</p>
-        </div>
-      )}
-
-      {/* ── Footer Image ─────────────────────────────────── */}
-      {footerImage ? (
-        <img src={footerImage} alt="footer"
-          style={{ width: '100%', display: 'block', maxHeight: '70px', objectFit: 'cover', marginTop: '8px' }} />
-      ) : (
-        <div style={{
-          background: DARK, color: ORANGE, textAlign: 'center',
-          padding: '10px', fontSize: '13px', fontWeight: '800', letterSpacing: '1px',
-        }}>
-          Mahesh Sharma Tirth Yatra — शुभ यात्रा ! मंगल यात्रा !
-        </div>
-      )}
-    </div>
-  );
-
-  // ─── Page layout ─────────────────────────────────────────────────────────────
   return (
     <>
-      <style>{`
-        @media (max-width: 768px) {
-          .itin-split { flex-direction: column !important; height: auto !important; }
-          .itin-form-pane { width: 100% !important; height: auto !important; border-right: none !important; border-bottom: 1px solid #e2e8f0; }
-          .itin-preview-pane { width: 100% !important; }
-          .itin-tab-mobile { display: flex !important; }
-          .itin-form-pane-wrap { display: ${activeTab === 'edit' ? 'flex' : 'none'} !important; }
-          .itin-preview-pane-wrap { display: ${activeTab === 'preview' ? 'flex' : 'none'} !important; }
+      <style dangerouslySetInnerHTML={{__html: `
+        @media print {
+          body * { visibility: hidden; }
+          .printable-area, .printable-area * { visibility: visible; }
+          .printable-area { position: absolute; left: 0; top: 0; width: 100%; box-shadow: none !important; margin: 0 !important; }
+          .no-print { display: none !important; }
+          /* Fix background colors for print */
+          * { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
         }
-      `}</style>
-
-      <div style={{ display: 'flex', flexDirection: 'column', height: 'calc(100vh - 40px)' }}>
-
-        {/* ── Header bar ────────────────────────────────── */}
-        <div className="itin-no-print" style={{
-          display: 'flex', justifyContent: 'space-between', alignItems: 'center',
-          marginBottom: '12px', flexWrap: 'wrap', gap: '10px',
-        }}>
-          <div>
-            <h1 style={{ fontSize: '20px', fontWeight: '800', color: '#0f172a', margin: 0 }}>🗺️ Itinerary Builder</h1>
-            <p style={{ color: '#64748b', margin: '2px 0 0', fontSize: '12px' }}>Build → Preview → Download — zero database storage</p>
+      `}} />
+      <div style={{ display: 'flex', height: '100vh', background: '#f8fafc', overflow: 'hidden' }}>
+        {/* Left Pane - Form Editor */}
+        <div className="no-print" style={{ width: '50%', overflowY: 'auto', padding: '24px', borderRight: '1px solid #e2e8f0', background: '#fff' }}>
+          <h1 style={{ fontSize: '24px', fontWeight: 'bold', color: '#0f172a', marginBottom: '20px' }}>🗺️ Custom Itinerary Builder</h1>
+          
+          <div style={{ background: '#f1f5f9', padding: '16px', borderRadius: '8px', marginBottom: '20px' }}>
+            <h2 style={{ fontSize: '16px', fontWeight: '600', marginBottom: '12px' }}>Tour Details</h2>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
+              <div>
+                <label style={{ display: 'block', fontSize: '12px', color: '#64748b' }}>Tour Name</label>
+                <input type="text" value={title} onChange={e => setTitle(e.target.value)} style={{ width: '100%', padding: '8px', borderRadius: '4px', border: '1px solid #cbd5e1' }} />
+              </div>
+              <div>
+                <label style={{ display: 'block', fontSize: '12px', color: '#64748b' }}>Date</label>
+                <input type="text" value={startDate} onChange={e => setStartDate(e.target.value)} style={{ width: '100%', padding: '8px', borderRadius: '4px', border: '1px solid #cbd5e1' }} />
+              </div>
+              <div>
+                <label style={{ display: 'block', fontSize: '12px', color: '#64748b' }}>Start Location</label>
+                <input type="text" value={startLocation} onChange={e => setStartLocation(e.target.value)} style={{ width: '100%', padding: '8px', borderRadius: '4px', border: '1px solid #cbd5e1' }} />
+              </div>
+              <div>
+                <label style={{ display: 'block', fontSize: '12px', color: '#64748b' }}>End Location</label>
+                <input type="text" value={endLocation} onChange={e => setEndLocation(e.target.value)} style={{ width: '100%', padding: '8px', borderRadius: '4px', border: '1px solid #cbd5e1' }} />
+              </div>
+            </div>
           </div>
 
-          <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', alignItems: 'center' }}>
-            {/* Mobile tab toggles */}
-            <div className="itin-tab-mobile" style={{
-              display: 'none', gap: '6px',
-            }}>
-              {(['edit', 'preview'] as const).map(t => (
-                <button key={t} onClick={() => setActiveTab(t)} style={{
-                  padding: '7px 14px', borderRadius: '7px', border: `2px solid`,
-                  borderColor: activeTab === t ? ORANGE : '#e2e8f0',
-                  background: activeTab === t ? ORANGE : '#fff',
-                  color: activeTab === t ? '#fff' : '#475569',
-                  fontWeight: '700', fontSize: '12px', cursor: 'pointer',
-                }}>
-                  {t === 'edit' ? '✏️ Edit' : '👁️ Preview'}
-                </button>
-              ))}
+          <div style={{ background: '#f1f5f9', padding: '16px', borderRadius: '8px', marginBottom: '20px' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px' }}>
+              <h2 style={{ fontSize: '16px', fontWeight: '600' }}>Day-by-Day Itinerary</h2>
+              <button onClick={addDay} style={{ background: '#ea580c', color: '#fff', padding: '4px 12px', borderRadius: '4px', fontSize: '12px', cursor: 'pointer', border: 'none' }}>+ Add Day</button>
             </div>
+            
+            {timeline.map((day, idx) => (
+              <div key={idx} style={{ background: '#fff', padding: '12px', borderRadius: '6px', border: '1px solid #e2e8f0', marginBottom: '12px' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px' }}>
+                  <strong style={{ fontSize: '14px', color: '#f97316' }}>Day {day.dayNumber}</strong>
+                  {timeline.length > 1 && (
+                    <button onClick={() => removeDay(idx)} style={{ color: '#ef4444', background: 'none', border: 'none', cursor: 'pointer', fontSize: '12px' }}>Remove</button>
+                  )}
+                </div>
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px', marginBottom: '8px' }}>
+                  <input placeholder="Date (e.g. 12/05/2026)" value={day.dateString} onChange={e => updateDay(idx, 'dateString', e.target.value)} style={{ width: '100%', padding: '6px', borderRadius: '4px', border: '1px solid #cbd5e1', fontSize: '12px' }} />
+                  <input placeholder="Location" value={day.location} onChange={e => updateDay(idx, 'location', e.target.value)} style={{ width: '100%', padding: '6px', borderRadius: '4px', border: '1px solid #cbd5e1', fontSize: '12px' }} />
+                </div>
+                <textarea placeholder="Activities Description" value={day.activities} onChange={e => updateDay(idx, 'activities', e.target.value)} style={{ width: '100%', padding: '6px', borderRadius: '4px', border: '1px solid #cbd5e1', fontSize: '12px', minHeight: '60px', marginBottom: '8px' }} />
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px' }}>
+                  <input placeholder="Meals (e.g. Breakfast & Dinner)" value={day.meals} onChange={e => updateDay(idx, 'meals', e.target.value)} style={{ width: '100%', padding: '6px', borderRadius: '4px', border: '1px solid #cbd5e1', fontSize: '12px' }} />
+                  <input placeholder="Accommodation (Hotel Name)" value={day.accommodation} onChange={e => updateDay(idx, 'accommodation', e.target.value)} style={{ width: '100%', padding: '6px', borderRadius: '4px', border: '1px solid #cbd5e1', fontSize: '12px' }} />
+                </div>
+              </div>
+            ))}
+          </div>
 
-            <button onClick={downloadPNG} disabled={downloading} style={{
-              padding: '8px 14px', background: '#7c3aed', color: '#fff', border: 'none',
-              borderRadius: '8px', fontWeight: '700', cursor: downloading ? 'wait' : 'pointer',
-              fontSize: '12px', display: 'flex', alignItems: 'center', gap: '5px',
-            }}>
-              {downloading ? '⏳...' : '🖼️ Save PNG'}
-            </button>
-            <button onClick={() => window.print()} style={{
-              padding: '8px 14px', background: DARK, color: '#fff', border: 'none',
-              borderRadius: '8px', fontWeight: '700', cursor: 'pointer',
-              fontSize: '12px', display: 'flex', alignItems: 'center', gap: '5px',
-            }}>
-              📄 Print / PDF
-            </button>
+          <div style={{ background: '#f1f5f9', padding: '16px', borderRadius: '8px', marginBottom: '20px' }}>
+            <h2 style={{ fontSize: '16px', fontWeight: '600', marginBottom: '12px' }}>Footer Details</h2>
+            <label style={{ display: 'block', fontSize: '12px', color: '#64748b', marginBottom: '4px' }}>Important Instructions</label>
+            <textarea value={importantInstructions} onChange={e => setImportantInstructions(e.target.value)} style={{ width: '100%', padding: '8px', borderRadius: '4px', border: '1px solid #cbd5e1', fontSize: '12px', minHeight: '80px', marginBottom: '12px' }} />
+            
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
+              <div>
+                <label style={{ display: 'block', fontSize: '12px', color: '#64748b' }}>Tour Manager</label>
+                <input type="text" value={tourManager} onChange={e => setTourManager(e.target.value)} style={{ width: '100%', padding: '8px', borderRadius: '4px', border: '1px solid #cbd5e1', fontSize: '12px' }} />
+              </div>
+              <div>
+                <label style={{ display: 'block', fontSize: '12px', color: '#64748b' }}>Mobile</label>
+                <input type="text" value={mobile} onChange={e => setMobile(e.target.value)} style={{ width: '100%', padding: '8px', borderRadius: '4px', border: '1px solid #cbd5e1', fontSize: '12px' }} />
+              </div>
+              <div>
+                <label style={{ display: 'block', fontSize: '12px', color: '#64748b' }}>Office Contact</label>
+                <input type="text" value={officeContact} onChange={e => setOfficeContact(e.target.value)} style={{ width: '100%', padding: '8px', borderRadius: '4px', border: '1px solid #cbd5e1', fontSize: '12px' }} />
+              </div>
+              <div>
+                <label style={{ display: 'block', fontSize: '12px', color: '#64748b' }}>Doctor Contact</label>
+                <input type="text" value={doctorContact} onChange={e => setDoctorContact(e.target.value)} style={{ width: '100%', padding: '8px', borderRadius: '4px', border: '1px solid #cbd5e1', fontSize: '12px' }} />
+              </div>
+            </div>
+            
+            <label style={{ display: 'block', fontSize: '12px', color: '#64748b', marginTop: '12px', marginBottom: '4px' }}>Custom Notes</label>
+            <textarea value={agentNotes} onChange={e => setAgentNotes(e.target.value)} style={{ width: '100%', padding: '8px', borderRadius: '4px', border: '1px solid #cbd5e1', fontSize: '12px', minHeight: '60px' }} />
           </div>
         </div>
-
-        {/* ── Split pane ────────────────────────────────── */}
-        <div className="itin-split" style={{
-          display: 'flex', flex: 1, background: '#fff', borderRadius: '12px',
-          border: '1px solid #e2e8f0', boxShadow: '0 1px 3px rgba(0,0,0,0.08)',
-          overflow: 'hidden', minHeight: 0,
-        }}>
-          {/* Left: 60% Form */}
-          <div className="itin-form-pane itin-no-print" style={{
-            width: '60%', borderRight: '1px solid #e2e8f0',
-            overflowY: 'auto', flexShrink: 0,
-          }}>
-            <FormPanel />
+        
+        {/* Right Pane - Live Preview */}
+        <div style={{ width: '50%', overflowY: 'auto', padding: '24px', background: '#94a3b8', position: 'relative' }}>
+          <div className="no-print" style={{ position: 'sticky', top: 0, display: 'flex', justifyContent: 'flex-end', gap: '8px', marginBottom: '16px', zIndex: 10 }}>
+            <select value={template} onChange={e => setTemplate(e.target.value)} style={{ padding: '8px 12px', borderRadius: '6px', border: '1px solid #cbd5e1', background: '#fff', fontSize: '14px', cursor: 'pointer' }}>
+              <option value="pamphlet-standard">Template 1: Pamphlet Standard</option>
+              <option value="royal-deluxe">Template 2: Royal Deluxe</option>
+              <option value="spiritual-adventure">Template 3: Spiritual Adventure</option>
+            </select>
+            <select value={language} onChange={e => setLanguage(e.target.value)} style={{ padding: '8px 12px', borderRadius: '6px', border: '1px solid #cbd5e1', background: '#fff', fontSize: '14px', cursor: 'pointer' }}>
+              <option value="hi">Hindi (hi)</option>
+              <option value="en">English (en)</option>
+            </select>
+            <button onClick={handleDownloadImage} style={{ background: '#f59e0b', color: '#fff', padding: '8px 16px', borderRadius: '6px', border: 'none', cursor: 'pointer', fontWeight: 'bold', boxShadow: '0 2px 4px rgba(0,0,0,0.1)' }}>⬇️ Image</button>
+            <button onClick={handlePrintPdf} style={{ background: '#10b981', color: '#fff', padding: '8px 16px', borderRadius: '6px', border: 'none', cursor: 'pointer', fontWeight: 'bold', boxShadow: '0 2px 4px rgba(0,0,0,0.1)' }}>🖨️ PDF</button>
           </div>
-
-          {/* Right: 40% Preview */}
-          <div className="itin-preview-pane" style={{
-            flex: 1, overflowY: 'auto', background: '#f8fafc',
-          }}>
-            <div style={{ padding: '12px', minHeight: '100%' }}>
-              <div style={{
-                background: '#fff', borderRadius: '8px',
-                border: '1px solid #e2e8f0',
-                boxShadow: '0 4px 12px rgba(0,0,0,0.06)',
-                overflow: 'hidden',
-              }}>
-                <PreviewPanel />
+          
+          <div ref={previewRef} className="printable-area" style={{ width: '210mm', minHeight: '297mm', background: '#fff', margin: '0 auto', boxShadow: '0 10px 25px rgba(0,0,0,0.2)', fontFamily: 'sans-serif', paddingBottom: '20px' }}>
+            {/* GLOBAL HEADER (Matches itinearary1.png) */}
+            <div style={{ position: 'relative', width: '100%', height: '220px', background: 'linear-gradient(to right, #fff 0%, #fff 40%, #ea580c 40%, #991b1b 100%)', overflow: 'hidden' }}>
+              {/* Left Side (White area) */}
+              <div style={{ position: 'absolute', top: '10px', left: '10px', display: 'flex', gap: '8px', zIndex: 2 }}>
+                <div style={{ background: 'linear-gradient(to right, #ea580c, #dc2626)', color: '#fff', padding: '4px 12px', borderRadius: '12px 0 12px 0', fontSize: '10px', fontWeight: 'bold' }}>
+                  SINCE 1999 | GST- 08AAUCM0755D1ZA
+                </div>
               </div>
+              <div style={{ position: 'absolute', top: '10px', right: '40%', marginRight: '10px', zIndex: 2 }}>
+                <div style={{ background: '#1e293b', color: '#fff', padding: '4px 16px', borderRadius: '20px', fontSize: '11px', fontWeight: 'bold' }}>
+                  वरिष्ठ नागरिकों को समर्पित कंपनी
+                </div>
+              </div>
+
+              <div style={{ position: 'absolute', top: '40px', left: '20px', zIndex: 2 }}>
+                <h1 style={{ color: '#dc2626', fontSize: '32px', fontWeight: '900', margin: 0, textShadow: '1px 1px 0px rgba(0,0,0,0.1)', fontFamily: '"Tiro Devanagari Hindi", serif' }}>महेश शर्मा तीर्थ यात्रा</h1>
+                <p style={{ color: '#0f172a', fontSize: '14px', fontWeight: 'bold', margin: '4px 0 8px 0' }}>प्रा. लि. कम्पनी, जोधपुर(राज.)</p>
+                <div style={{ fontSize: '10px', color: '#475569', lineHeight: '1.4' }}>
+                  🌐 www.maheshsharmatirthyatra.com<br/>
+                  ✉️ maheshsharmayatra@gmail.com
+                </div>
+                <div style={{ color: '#ea580c', fontSize: '16px', fontWeight: 'bold', marginTop: '8px' }}>
+                  📞 9314013412 <span style={{ color: '#475569' }}>|</span> 📞 9414141636
+                </div>
+              </div>
+
+              {/* Center Temple Logo */}
+              <div style={{ position: 'absolute', top: '50px', left: '32%', width: '120px', height: '120px', background: '#f59e0b', borderRadius: '50%', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', boxShadow: '0 4px 10px rgba(0,0,0,0.2)', zIndex: 3, border: '4px solid #fff' }}>
+                <div style={{ fontSize: '24px' }}>🏛️</div>
+                <div style={{ textAlign: 'center', fontWeight: 'bold', fontSize: '14px', color: '#78350f', lineHeight: '1.1', marginTop: '4px' }}>महेश शर्मा<br/>तीर्थ यात्रा</div>
+                <div style={{ fontSize: '8px', color: '#78350f', marginTop: '2px' }}>(प्रा. लि. कम्पनी)</div>
+              </div>
+
+              {/* Right Side (Gradient area) */}
+              <div style={{ position: 'absolute', top: '40px', right: '20px', width: '30%', zIndex: 2, textAlign: 'center' }}>
+                <div style={{ color: '#fef08a', fontSize: '14px', fontWeight: 'bold', marginBottom: '4px' }}>हमारे यहाँ सभी प्रकार की धार्मिक यात्राएँ उपलब्ध</div>
+                <div style={{ color: '#fff', fontSize: '10px', lineHeight: '1.3', textAlign: 'center' }}>
+                  यमुनोत्री, गंगोत्री, केदारनाथ, बद्रीनाथ, रामेश्वरम,<br/>
+                  जगन्नाथ पुरी, तिरुपति, 12 ज्योतिर्लिंग, सोमनाथ,<br/>
+                  काठमांडू (नेपाल), भूटान आदि<br/>
+                  धार्मिक यात्राओं का सफल आयोजन रेल,<br/>
+                  बस व हवाई सेवाओं द्वारा करवाया जाता है
+                </div>
+              </div>
+            </div>
+
+            {/* Tour Meta Info */}
+            <div style={{ padding: '20px 40px', display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px 40px', fontSize: '13px', borderBottom: '1px solid #f1f5f9' }}>
+              <div style={{ display: 'flex', borderBottom: '1px dotted #94a3b8', paddingBottom: '4px' }}>
+                <span style={{ fontWeight: '600', width: '120px' }}>{language === 'hi' ? 'यात्रा का नाम :' : 'Tour Name :'}</span>
+                <span style={{ color: '#ea580c', fontWeight: 'bold' }}>{title}</span>
+              </div>
+              <div style={{ display: 'flex', borderBottom: '1px dotted #94a3b8', paddingBottom: '4px' }}>
+                <span style={{ fontWeight: '600', width: '140px' }}>{language === 'hi' ? 'यात्रा प्रारंभ स्थान :' : 'Start Location :'}</span>
+                <span style={{ color: '#334155' }}>{startLocation}</span>
+              </div>
+              <div style={{ display: 'flex', borderBottom: '1px dotted #94a3b8', paddingBottom: '4px' }}>
+                <span style={{ fontWeight: '600', width: '120px' }}>{language === 'hi' ? 'यात्रा तिथि :' : 'Tour Date :'}</span>
+                <span style={{ color: '#334155' }}>{startDate}</span>
+              </div>
+              <div style={{ display: 'flex', borderBottom: '1px dotted #94a3b8', paddingBottom: '4px' }}>
+                <span style={{ fontWeight: '600', width: '140px' }}>{language === 'hi' ? 'यात्रा समाप्ति स्थान :' : 'End Location :'}</span>
+                <span style={{ color: '#334155' }}>{endLocation}</span>
+              </div>
+            </div>
+
+            {/* Day by Day Body */}
+            <div style={{ padding: '20px 40px' }}>
+              {timeline.map((day, idx) => (
+                <div key={idx} style={{ 
+                  display: 'flex', 
+                  marginBottom: '16px', 
+                  border: template === 'royal-deluxe' ? '2px solid #1e3a8a' : template === 'spiritual-adventure' ? '1px solid #10b981' : '1px solid #fed7aa',
+                  borderRadius: template === 'royal-deluxe' || template === 'spiritual-adventure' ? '8px' : '4px',
+                  overflow: 'hidden',
+                  background: template === 'royal-deluxe' ? '#f8fafc' : '#fff'
+                }}>
+                  {/* Left Badge */}
+                  <div style={{ 
+                    width: '80px', 
+                    background: template === 'royal-deluxe' ? '#1e3a8a' : template === 'spiritual-adventure' ? '#10b981' : (idx % 2 === 0 ? '#ea580c' : '#d97706'), 
+                    color: '#fff', 
+                    display: 'flex', 
+                    flexDirection: 'column', 
+                    alignItems: 'center', 
+                    justifyContent: 'center',
+                    padding: '12px 0'
+                  }}>
+                    <div style={{ fontSize: '11px', fontWeight: 'bold', letterSpacing: '1px' }}>DAY</div>
+                    <div style={{ fontSize: '28px', fontWeight: '900', lineHeight: '1' }}>{day.dayNumber.toString().padStart(2, '0')}</div>
+                  </div>
+                  <div style={{ width: '80px', background: template === 'pamphlet-standard' ? '#fffbf5' : '#fff', borderRight: '1px solid #e2e8f0', borderTop: 'none', borderBottom: 'none', display: 'flex', flexDirection: 'column', alignItems: 'center', padding: '8px 0', marginLeft: '-80px', marginTop: '60px' }}>
+                    <div style={{ fontSize: '10px', color: '#64748b', fontWeight: 'bold' }}>{language === 'hi' ? 'दिनांक' : 'Date'}</div>
+                    <div style={{ fontSize: '11px', color: '#0f172a', borderBottom: '1px dotted #94a3b8', width: '60px', textAlign: 'center', paddingBottom: '2px' }}>{day.dateString || '___/___'}</div>
+                  </div>
+                  
+                  {/* Right Content */}
+                  <div style={{ flex: 1, padding: '12px 16px', display: 'grid', gridTemplateColumns: '1fr 2fr 1fr 1fr', gap: '16px', marginLeft: '80px' }}>
+                    <div>
+                      <div style={{ color: template === 'royal-deluxe' ? '#1e3a8a' : '#ea580c', fontSize: '12px', fontWeight: 'bold', display: 'flex', alignItems: 'center', gap: '4px', marginBottom: '4px' }}>
+                        📍 {language === 'hi' ? 'स्थान' : 'Location'}
+                      </div>
+                      <div style={{ fontSize: '12px', color: '#334155', fontWeight: '600' }}>{day.location}</div>
+                    </div>
+                    <div>
+                      <div style={{ color: template === 'royal-deluxe' ? '#1e3a8a' : '#ea580c', fontSize: '12px', fontWeight: 'bold', display: 'flex', alignItems: 'center', gap: '4px', marginBottom: '4px' }}>
+                        🗓️ {language === 'hi' ? 'कार्यक्रम विवरण' : 'Program'}
+                      </div>
+                      <div style={{ fontSize: '11px', color: '#475569', whiteSpace: 'pre-wrap' }}>{day.activities}</div>
+                    </div>
+                    <div>
+                      <div style={{ color: template === 'royal-deluxe' ? '#1e3a8a' : '#ea580c', fontSize: '12px', fontWeight: 'bold', display: 'flex', alignItems: 'center', gap: '4px', marginBottom: '4px' }}>
+                        🍽️ {language === 'hi' ? 'भोजन' : 'Meals'}
+                      </div>
+                      <div style={{ fontSize: '11px', color: '#475569' }}>{day.meals}</div>
+                    </div>
+                    <div>
+                      <div style={{ color: template === 'royal-deluxe' ? '#1e3a8a' : '#ea580c', fontSize: '12px', fontWeight: 'bold', display: 'flex', alignItems: 'center', gap: '4px', marginBottom: '4px' }}>
+                        🏨 {language === 'hi' ? 'रात्रि विश्राम' : 'Stay'}
+                      </div>
+                      <div style={{ fontSize: '11px', color: '#475569' }}>{day.accommodation}</div>
+                    </div>
+                  </div>
+                </div>
+              ))}
+              
+              <div style={{ textAlign: 'center', margin: '20px 0', color: '#ea580c', fontSize: '12px', fontWeight: 'bold' }}>
+                --- {language === 'hi' ? 'इसी प्रकार आगे...' : 'And so on...'} ---
+              </div>
+            </div>
+
+            {/* Footer Cards */}
+            <div style={{ padding: '0 40px', display: 'grid', gridTemplateColumns: '1.5fr 1fr 1fr', gap: '16px' }}>
+              <div style={{ border: '1px solid #fed7aa', borderRadius: '4px', background: '#fffbf5', overflow: 'hidden' }}>
+                <div style={{ background: '#ea580c', color: '#fff', padding: '6px 12px', fontSize: '12px', fontWeight: 'bold', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                  💡 {language === 'hi' ? 'महत्वपूर्ण निर्देश' : 'Instructions'}
+                </div>
+                <ul style={{ margin: 0, padding: '12px 12px 12px 24px', fontSize: '10px', color: '#475569', lineHeight: '1.6' }}>
+                  {importantInstructions.split('\n').filter(Boolean).map((line, i) => <li key={i}>{line}</li>)}
+                </ul>
+              </div>
+              <div style={{ border: '1px solid #fed7aa', borderRadius: '4px', background: '#fffbf5', overflow: 'hidden' }}>
+                <div style={{ background: '#ea580c', color: '#fff', padding: '6px 12px', fontSize: '12px', fontWeight: 'bold', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                  📞 {language === 'hi' ? 'संपर्क सूत्र' : 'Contacts'}
+                </div>
+                <div style={{ padding: '12px', fontSize: '10px', color: '#475569', display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between' }}><span>{language === 'hi' ? 'टूर मैनेजर' : 'Tour Mgr'} :</span> <strong>{tourManager}</strong></div>
+                  <div style={{ display: 'flex', justifyContent: 'space-between' }}><span>{language === 'hi' ? 'मोबाइल' : 'Mobile'} :</span> <strong>{mobile}</strong></div>
+                  <div style={{ display: 'flex', justifyContent: 'space-between' }}><span>{language === 'hi' ? 'ऑफिस संपर्क' : 'Office'} :</span> <strong>{officeContact}</strong></div>
+                  <div style={{ display: 'flex', justifyContent: 'space-between' }}><span>{language === 'hi' ? 'चिकित्सक' : 'Doctor'} :</span> <strong>{doctorContact}</strong></div>
+                </div>
+              </div>
+              <div style={{ border: '1px solid #fed7aa', borderRadius: '4px', background: '#fffbf5', overflow: 'hidden' }}>
+                <div style={{ background: '#ea580c', color: '#fff', padding: '6px 12px', fontSize: '12px', fontWeight: 'bold', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                  🖊️ {language === 'hi' ? 'नोट' : 'Note'}
+                </div>
+                <div style={{ padding: '12px', fontSize: '11px', color: '#475569', whiteSpace: 'pre-wrap', lineHeight: '1.8', background: 'repeating-linear-gradient(transparent, transparent 19px, #e2e8f0 20px)' }}>
+                  {agentNotes || '\n\n\n\n'}
+                </div>
+              </div>
+            </div>
+
+            {/* Bottom Bar */}
+            <div style={{ background: 'linear-gradient(to right, #ea580c, #dc2626)', marginTop: '24px', padding: '12px 40px', display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
+               <h2 style={{ color: '#fff', fontSize: '20px', fontWeight: 'bold', margin: 0 }}>
+                 🌸 {language === 'hi' ? 'शुभ यात्रा ! मंगल यात्रा !' : 'Happy & Auspicious Journey !'} 🌸
+               </h2>
             </div>
           </div>
         </div>
