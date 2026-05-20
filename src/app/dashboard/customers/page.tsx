@@ -1,7 +1,8 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
+import * as XLSX from 'xlsx';
 
 const WhatsAppIcon = () => (
   <img 
@@ -37,6 +38,53 @@ export default function CustomersPage() {
   const [deletingBulk, setDeletingBulk] = useState(false);
 
   const [refreshing, setRefreshing] = useState(false);
+  const [excelDropdownOpen, setExcelDropdownOpen] = useState(false);
+  const [selectedYear, setSelectedYear] = useState<string>('all');
+  const excelDropRef = useRef<HTMLDivElement>(null);
+
+  // Close excel dropdown on outside click
+  useEffect(() => {
+    const handler = (e: MouseEvent) => {
+      if (excelDropRef.current && !excelDropRef.current.contains(e.target as Node)) {
+        setExcelDropdownOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handler);
+    return () => document.removeEventListener('mousedown', handler);
+  }, []);
+
+  const getAvailableYears = () => {
+    const years = new Set<string>();
+    customers.forEach(c => {
+      if (c.createdAt) {
+        years.add(new Date(c.createdAt).getFullYear().toString());
+      }
+    });
+    return Array.from(years).sort((a, b) => parseInt(b) - parseInt(a));
+  };
+
+  const downloadExcel = (yearFilter: string) => {
+    const data = customers.filter(c => {
+      if (yearFilter === 'all') return true;
+      return c.createdAt && new Date(c.createdAt).getFullYear().toString() === yearFilter;
+    });
+
+    const rows = data.map(c => ({
+      'Name': c.name || '',
+      'Phone': c.phone || '',
+      'Email': c.email || '',
+      'Source': c.source || '',
+      'Added By': c.createdBy?.name || '',
+      'Date Added': c.createdAt ? new Date(c.createdAt).toLocaleDateString('en-IN') : ''
+    }));
+
+    const ws = XLSX.utils.json_to_sheet(rows);
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, 'Customers');
+    const fileName = yearFilter === 'all' ? 'Customers_All_Time.xlsx' : `Customers_${yearFilter}.xlsx`;
+    XLSX.writeFile(wb, fileName);
+    setExcelDropdownOpen(false);
+  };
 
   const fetchCustomers = () => {
     setRefreshing(true);
@@ -201,6 +249,68 @@ export default function CustomersPage() {
           >
             <span style={{ display: 'inline-block', animation: refreshing ? 'spin 1s linear infinite' : 'none' }}>↻</span> Refresh
           </button>
+
+          {/* Excel Download Dropdown */}
+          <div ref={excelDropRef} style={{ position: 'relative' }}>
+            <button
+              onClick={() => setExcelDropdownOpen(!excelDropdownOpen)}
+              style={{
+                padding: '10px 18px',
+                background: '#16a34a',
+                color: '#fff',
+                border: 'none',
+                borderRadius: '8px',
+                fontWeight: '600',
+                cursor: 'pointer',
+                fontSize: '14px',
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '6px'
+              }}
+            >
+              📥 Export Excel ▾
+            </button>
+            {excelDropdownOpen && (
+              <div style={{
+                position: 'absolute',
+                top: 'calc(100% + 6px)',
+                left: 0,
+                background: '#fff',
+                border: '1px solid #e2e8f0',
+                borderRadius: '10px',
+                boxShadow: '0 10px 25px -5px rgba(0,0,0,0.12)',
+                padding: '8px',
+                zIndex: 100,
+                minWidth: '200px'
+              }}>
+                <div style={{ padding: '6px 10px 4px', fontSize: '11px', fontWeight: '700', color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Download Options</div>
+                <button
+                  onClick={() => downloadExcel('all')}
+                  style={{ display: 'flex', alignItems: 'center', gap: '8px', width: '100%', padding: '9px 12px', background: 'none', border: 'none', borderRadius: '6px', fontSize: '13px', fontWeight: '600', color: '#0f172a', cursor: 'pointer', textAlign: 'left' }}
+                  onMouseEnter={e => (e.currentTarget.style.background = '#f1f5f9')}
+                  onMouseLeave={e => (e.currentTarget.style.background = 'none')}
+                >
+                  🗂️ All Time Data
+                </button>
+                <div style={{ height: '1px', background: '#e2e8f0', margin: '4px 0' }} />
+                <div style={{ padding: '4px 10px 2px', fontSize: '11px', fontWeight: '700', color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.5px' }}>By Year</div>
+                {getAvailableYears().length === 0 && (
+                  <div style={{ padding: '8px 12px', fontSize: '12px', color: '#94a3b8' }}>No data available</div>
+                )}
+                {getAvailableYears().map(year => (
+                  <button
+                    key={year}
+                    onClick={() => downloadExcel(year)}
+                    style={{ display: 'flex', alignItems: 'center', gap: '8px', width: '100%', padding: '9px 12px', background: 'none', border: 'none', borderRadius: '6px', fontSize: '13px', fontWeight: '600', color: '#0f172a', cursor: 'pointer', textAlign: 'left' }}
+                    onMouseEnter={e => (e.currentTarget.style.background = '#f1f5f9')}
+                    onMouseLeave={e => (e.currentTarget.style.background = 'none')}
+                  >
+                    📅 {year}
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
 
           <button 
             onClick={() => {
