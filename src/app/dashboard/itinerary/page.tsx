@@ -180,8 +180,8 @@ export default function ItineraryBuilder() {
         </div>
         
         {/* Right Pane - Live Preview */}
-        <div style={{ width: '50%', overflowY: 'auto', padding: '24px', background: '#94a3b8', position: 'relative' }}>
-          <div className="no-print" style={{ position: 'absolute', top: '24px', right: '24px', display: 'flex', gap: '8px', zIndex: 10 }}>
+        <div style={{ width: '50%', overflowY: 'auto', background: '#e2e8f0', display: 'flex', flexDirection: 'column', position: 'relative' }}>
+          <div className="no-print" style={{ position: 'sticky', top: 0, padding: '16px 24px', background: 'rgba(203, 213, 225, 0.9)', backdropFilter: 'blur(4px)', display: 'flex', justifyContent: 'flex-end', gap: '8px', zIndex: 50, borderBottom: '1px solid #94a3b8' }}>
             <select value={language} onChange={e => setLanguage(e.target.value)} style={{ padding: '8px 12px', borderRadius: '6px', border: '1px solid #cbd5e1', background: '#fff', fontSize: '14px', cursor: 'pointer', boxShadow: '0 2px 4px rgba(0,0,0,0.1)' }}>
               <option value="hi">Hindi (hi)</option>
               <option value="en">English (en)</option>
@@ -190,30 +190,31 @@ export default function ItineraryBuilder() {
             <button onClick={handlePrintPdf} style={{ background: '#10b981', color: '#fff', padding: '8px 16px', borderRadius: '6px', border: 'none', cursor: 'pointer', fontWeight: 'bold', boxShadow: '0 2px 4px rgba(0,0,0,0.1)' }}>🖨️ PDF</button>
           </div>
           
-          <div style={{ transform: 'scale(0.85)', transformOrigin: 'top center', paddingBottom: '100px' }}>
-            <div ref={previewRef} className="printable-area" style={{ width: '210mm', minHeight: '297mm', background: '#fff', margin: '0 auto', boxShadow: '0 10px 25px rgba(0,0,0,0.2)', fontFamily: 'sans-serif', display: 'flex', flexDirection: 'column' }}>
+          <div style={{ padding: '32px 24px', display: 'flex', justifyContent: 'center' }}>
+            <div style={{ transform: 'scale(0.85)', transformOrigin: 'top center', paddingBottom: '100px' }}>
+              <div ref={previewRef} className="printable-area" style={{ width: '210mm', minHeight: '297mm', background: '#fff', margin: '0 auto', boxShadow: '0 10px 25px rgba(0,0,0,0.2)', fontFamily: 'sans-serif', display: 'flex', flexDirection: 'column' }}>
             {/* GLOBAL HEADER (User Uploaded or Default) */}
             <div style={{ width: '100%', overflow: 'hidden', borderBottom: '2px solid #ea580c' }}>
               {headerImage && <img src={headerImage} alt="Header" style={{ width: '100%', height: 'auto', display: 'block' }} />}
             </div>
 
             {/* Tour Meta Info */}
-            <div style={{ padding: '20px 40px', display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px 40px', fontSize: '13px', borderBottom: '1px solid #f1f5f9' }}>
-              <div style={{ display: 'flex', borderBottom: '1px dotted #94a3b8', paddingBottom: '4px' }}>
-                <span style={{ fontWeight: '600', width: '120px' }}>{language === 'hi' ? 'यात्रा का नाम :' : 'Tour Name :'}</span>
-                <span style={{ color: '#ea580c', fontWeight: 'bold' }}>{title}</span>
+            <div style={{ padding: '24px 40px', display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px 40px', fontSize: '13px' }}>
+              <div style={{ display: 'flex', alignItems: 'flex-end', borderBottom: '1px dotted #94a3b8', paddingBottom: '4px' }}>
+                <span style={{ fontWeight: '600', marginRight: '8px', whiteSpace: 'nowrap' }}>{language === 'hi' ? 'यात्रा का नाम :' : 'Tour Name :'}</span>
+                <span style={{ color: '#ea580c', fontWeight: 'bold', flex: 1 }}>{title}</span>
               </div>
-              <div style={{ display: 'flex', borderBottom: '1px dotted #94a3b8', paddingBottom: '4px' }}>
-                <span style={{ fontWeight: '600', width: '140px' }}>{language === 'hi' ? 'यात्रा प्रारंभ स्थान :' : 'Start Location :'}</span>
-                <span style={{ color: '#334155' }}>{startLocation}</span>
+              <div style={{ display: 'flex', alignItems: 'flex-end', borderBottom: '1px dotted #94a3b8', paddingBottom: '4px' }}>
+                <span style={{ fontWeight: '600', marginRight: '8px', whiteSpace: 'nowrap' }}>{language === 'hi' ? 'यात्रा प्रारंभ स्थान :' : 'Start Location :'}</span>
+                <span style={{ color: '#334155', flex: 1 }}>{startLocation}</span>
               </div>
-              <div style={{ display: 'flex', borderBottom: '1px dotted #94a3b8', paddingBottom: '4px' }}>
-                <span style={{ fontWeight: '600', width: '120px' }}>{language === 'hi' ? 'यात्रा तिथि :' : 'Tour Date :'}</span>
-                <span style={{ color: '#334155' }}>{startDate}</span>
+              <div style={{ display: 'flex', alignItems: 'flex-end', borderBottom: '1px dotted #94a3b8', paddingBottom: '4px' }}>
+                <span style={{ fontWeight: '600', marginRight: '8px', whiteSpace: 'nowrap' }}>{language === 'hi' ? 'यात्रा तिथि :' : 'Tour Date :'}</span>
+                <span style={{ color: '#334155', flex: 1 }}>{startDate}</span>
               </div>
-              <div style={{ display: 'flex', borderBottom: '1px dotted #94a3b8', paddingBottom: '4px' }}>
-                <span style={{ fontWeight: '600', width: '140px' }}>{language === 'hi' ? 'यात्रा समाप्ति स्थान :' : 'End Location :'}</span>
-                <span style={{ color: '#334155' }}>{endLocation}</span>
+              <div style={{ display: 'flex', alignItems: 'flex-end', borderBottom: '1px dotted #94a3b8', paddingBottom: '4px' }}>
+                <span style={{ fontWeight: '600', marginRight: '8px', whiteSpace: 'nowrap' }}>{language === 'hi' ? 'यात्रा समाप्ति स्थान :' : 'End Location :'}</span>
+                <span style={{ color: '#334155', flex: 1 }}>{endLocation}</span>
               </div>
             </div>
 
@@ -249,7 +250,7 @@ export default function ItineraryBuilder() {
                   </div>
                   
                   {/* Right Content */}
-                  <div style={{ flex: 1, padding: '12px 16px', display: 'grid', gridTemplateColumns: '1fr 2fr 1fr 1fr', gap: '16px', marginLeft: '80px' }}>
+                  <div style={{ flex: 1, padding: '12px 16px', display: 'grid', gridTemplateColumns: '1fr 2fr 1fr 1fr', gap: '16px' }}>
                     <div>
                       <div style={{ color: '#ea580c', fontSize: '12px', fontWeight: 'bold', display: 'flex', alignItems: 'center', gap: '4px', marginBottom: '4px' }}>
                         📍 {language === 'hi' ? 'स्थान' : 'Location'}
@@ -323,8 +324,9 @@ export default function ItineraryBuilder() {
               </div>
             </div>
           </div>
+            </div>
+          </div>
         </div>
-      </div>
       </div>
     </>
   );
