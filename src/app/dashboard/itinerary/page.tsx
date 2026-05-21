@@ -1254,21 +1254,33 @@ export default function ItineraryBuilder() {
           .itin-header-bar h1 {
             font-size: 17px !important;
           }
-          .itin-header-actions {
-            display: grid !important;
-            grid-template-columns: 1fr 1fr !important;
-            gap: 8px !important;
-            width: 100% !important;
-          }
-          .itin-header-actions > * {
-            width: 100% !important;
-            height: 40px !important; /* Equal heights */
-            margin: 0 !important;
-            font-size: 13px !important;
+
+          /* PREVIEW TOOLBAR FIX */
+          .itin-header-actions, .preview-toolbar {
             display: flex !important;
-            align-items: center !important;
-            justify-content: center !important;
-            box-sizing: border-box !important;
+            gap: 10px !important;
+            overflow-x: auto !important;
+            white-space: nowrap !important;
+            padding-bottom: 6px !important;
+            width: 100% !important;
+            -webkit-overflow-scrolling: touch !important;
+            grid-template-columns: none !important;
+          }
+          .itin-header-actions::-webkit-scrollbar, .preview-toolbar::-webkit-scrollbar {
+            display: none !important; /* Hide scrollbar aesthetically */
+          }
+          .itin-header-actions > *, .preview-toolbar > * {
+            flex-shrink: 0 !important;
+            width: auto !important;
+            margin: 0 !important;
+          }
+
+          /* BUTTON & SELECT SIZE FIX */
+          .itin-btn, .itin-select {
+            height: 40px !important;
+            padding: 0 14px !important;
+            font-size: 13px !important;
+            border-radius: 10px !important;
           }
           
           /* Custom Select Arrow Styling on mobile */
@@ -1284,8 +1296,11 @@ export default function ItineraryBuilder() {
             padding-right: 32px !important;
           }
           
-          .itin-body-columns {
+          /* MAIN LAYOUT FIX */
+          .itin-body-columns, .itinerary-layout {
+            display: flex !important;
             flex-direction: column !important;
+            gap: 16px !important;
             height: auto !important;
             overflow: visible !important;
           }
@@ -1295,29 +1310,51 @@ export default function ItineraryBuilder() {
             padding: 16px !important;
             overflow: visible !important;
           }
+
+          /* DAY CARD & EDITOR CARD FIX */
           .itin-editor-card {
             padding: 16px !important;
             margin-bottom: 16px !important;
           }
-          .itin-day-editor-card {
+          .itin-day-editor-card, .day-card {
             padding: 14px !important;
+            border-radius: 14px !important;
             margin-bottom: 12px !important;
+            gap: 8px !important;
           }
-          .itin-form-grid {
+          .day-card label, .day-card input, .day-card textarea {
+            font-size: 12px !important;
+          }
+
+          /* FORM GRID FIX */
+          .itin-form-grid, .form-grid {
             grid-template-columns: 1fr !important;
             gap: 12px !important;
           }
-          .itin-right-pane {
+
+          /* PREVIEW PANEL HIDDEN BY DEFAULT ON MOBILE */
+          .itin-right-pane, .preview-panel {
+            display: none !important; /* Hidden on mobile to improve performance massively */
             width: 100% !important;
-            padding: 16px !important;
-            overflow: visible !important;
+            overflow: hidden !important;
+            border-radius: 16px !important;
           }
-          .itin-section-header {
-            cursor: pointer !important;
-            user-select: none !important;
+
+          /* PREVIEW SCROLL FIX */
+          .preview-scroll {
+            overflow-x: auto !important;
+            overflow-y: hidden !important;
+            -webkit-overflow-scrolling: touch !important;
+            padding-bottom: 8px !important;
           }
-          .itin-section-chevron {
-            display: inline-flex !important;
+
+          /* PREVIEW HEADER/ZOOM TOPBAR FIX */
+          .itin-zoom-controls-bar, .preview-topbar {
+            display: flex !important;
+            align-items: center !important;
+            justify-content: space-between !important;
+            gap: 10px !important;
+            flex-wrap: wrap !important;
           }
           .itin-zoom-controls-bar {
             display: none !important; /* Hide zoom controls bar on main page */
@@ -1329,48 +1366,38 @@ export default function ItineraryBuilder() {
             display: none !important;
           }
 
-          .itin-preview-scroll {
-            max-height: 280px !important; /* Elegant thumbnail size */
-            overflow: hidden !important;
-            position: relative !important;
+          /* FULLSCREEN MOBILE PREVIEW */
+          .itin-fullscreen-modal {
+            position: fixed !important;
+            inset: 0 !important;
+            z-index: 9999 !important;
+            background: #f3f4f6 !important;
+            overflow: auto !important;
             display: flex !important;
-            justify-content: center !important;
-            align-items: center !important;
-            background: #cbd5e1 !important;
-            border-radius: 12px !important;
-            border: 2px dashed #94a3b8 !important;
-            padding: 16px !important;
-            box-shadow: inset 0 2px 4px rgba(0,0,0,0.06) !important;
-            cursor: pointer !important;
+            flex-direction: column !important;
           }
-          .itin-preview-scroll::after {
-            content: "👁️ Tap to View Full Preview" !important;
-            position: absolute !important;
-            bottom: 12px !important;
-            background: rgba(15, 23, 42, 0.8) !important;
-            color: #fff !important;
-            padding: 6px 14px !important;
-            border-radius: 20px !important;
-            font-size: 12px !important;
-            font-weight: bold !important;
-            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1) !important;
-            backdrop-filter: blur(4px) !important;
+          .itin-fullscreen-scroll-x {
+            background: #f3f4f6 !important;
           }
-          .itin-preview-scroll .itin-scale-wrapper {
-            width: calc(210mm * 0.24) !important;
-            height: 240px !important;
-            overflow: hidden !important;
-            pointer-events: none !important;
-          }
-          .itin-preview-scroll .pdf-pages-container-wrapper {
-            transform: scale(0.24) !important;
+
+          /* A4 PAGE MOBILE SCALING */
+          .page-scale-wrapper .itinerary-page {
+            transform: scale(0.42) !important;
             transform-origin: top left !important;
-            width: 210mm !important;
-            pointer-events: none !important;
-            position: absolute !important;
-            top: 0 !important;
-            left: 0 !important;
           }
+          .itin-scale-wrapper {
+            transform: none !important;
+            width: 794px !important;
+            height: 1123px !important;
+          }
+          .itin-page-snap-wrapper, .page-scale-wrapper {
+            height: 520px !important;
+            overflow: hidden !important;
+            display: flex !important;
+            justify-content: flex-start !important;
+            align-items: flex-start !important;
+          }
+
           .itin-day-card-mobile {
             cursor: pointer;
           }
@@ -1461,7 +1488,7 @@ export default function ItineraryBuilder() {
             🗺️ {language === 'hi' ? 'कस्टम यात्रा कार्यक्रम निर्माता' : 'Custom Itinerary Builder'}
           </h1>
 
-          <div className="itin-header-actions" style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+          <div className="itin-header-actions preview-toolbar" style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
             {/* Language Selector */}
             <select
               className="itin-select"
@@ -1542,7 +1569,7 @@ export default function ItineraryBuilder() {
         </div>
 
         {/* Two Columns Body */}
-        <div className="itin-body-columns" style={{ display: 'flex', flex: 1, overflow: 'hidden' }}>
+        <div className="itin-body-columns itinerary-layout" style={{ display: 'flex', flex: 1, overflow: 'hidden' }}>
 
           {/* Left Pane - Form Editor */}
           <div
@@ -1611,7 +1638,7 @@ export default function ItineraryBuilder() {
                 </div>
               </div>
 
-              <div className="itin-form-grid" style={{ marginBottom: '12px' }}>
+              <div className="itin-form-grid form-grid" style={{ marginBottom: '12px' }}>
                 <div>
                   <label className="itin-label">
                     {language === 'hi' ? 'यात्रा का नाम' : 'Tour Name'}
@@ -1641,7 +1668,7 @@ export default function ItineraryBuilder() {
                 </div>
               </div>
 
-              <div className="itin-form-grid">
+              <div className="itin-form-grid form-grid">
                 <div>
                   <label className="itin-label">
                     {language === 'hi' ? 'प्रस्थान स्थान' : 'Start Location'}
@@ -1672,7 +1699,7 @@ export default function ItineraryBuilder() {
                 </div>
               </div>
 
-              <div className="itin-form-grid" style={{ marginTop: '16px' }}>
+              <div className="itin-form-grid form-grid" style={{ marginTop: '16px' }}>
                 {showRateField ? (
                   <div style={{ background: '#fff', padding: '12px', borderRadius: '6px', border: '1px solid #cbd5e1' }}>
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
@@ -1771,7 +1798,7 @@ export default function ItineraryBuilder() {
               {timeline.map((day, idx) => {
                 const isDayOpen = dayAccordion[idx] !== false;
                 return (
-                <div key={idx} className="itin-day-editor-card">
+                <div key={idx} className="itin-day-editor-card day-card">
                   <div
                     className="itin-day-card-mobile"
                     onClick={() => toggleDayAccordion(idx)}
@@ -1792,7 +1819,7 @@ export default function ItineraryBuilder() {
                   </div>
 
                   <div className="itin-day-collapsible" style={{ display: isDayOpen ? 'block' : 'none' }}>
-                  <div className="itin-form-grid" style={{ marginBottom: '12px' }}>
+                  <div className="itin-form-grid form-grid" style={{ marginBottom: '12px' }}>
                     <div>
                       <label className="itin-label">
                         {language === 'hi' ? 'दिनांक' : 'Date'}
@@ -1840,7 +1867,7 @@ export default function ItineraryBuilder() {
                     />
                   </div>
 
-                  <div className="itin-form-grid">
+                  <div className="itin-form-grid form-grid">
                     <div>
                       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px' }}>
                         <label className="itin-label" style={{ marginBottom: 0 }}>
@@ -2027,7 +2054,7 @@ export default function ItineraryBuilder() {
 
           {/* Right Pane - Live Preview */}
           <div
-            className="itin-right-pane"
+            className="itin-right-pane preview-panel"
             style={{
               width: '55%',
               overflow: 'hidden',
@@ -2044,15 +2071,17 @@ export default function ItineraryBuilder() {
             </div>
 
             {/* Zoom Controls Header */}
-            <div className="no-print itin-zoom-controls-bar">
+            <div className="no-print itin-zoom-controls-bar preview-topbar">
               <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                 <span style={{ fontSize: '14px', fontWeight: 'bold', color: '#334155' }}>
                   📄 {language === 'hi' ? 'पूर्वावलोकन :' : 'Preview :'}
                 </span>
                 <span style={{ fontSize: '12px', fontWeight: '600', background: '#fee2e2', color: '#ef4444', padding: '2px 8px', borderRadius: '12px' }}>
-                  {language === 'hi'
-                    ? `पेज ${embeddedPage} / ${pages.length}`
-                    : `Viewing Page ${embeddedPage} / ${pages.length}`}
+                  {isMobile ? `${pages.length} ${language === 'hi' ? 'पेज' : 'Pages'}` : (
+                    language === 'hi'
+                      ? `पेज ${embeddedPage} / ${pages.length}`
+                      : `Viewing Page ${embeddedPage} / ${pages.length}`
+                  )}
                 </span>
               </div>
 
@@ -2114,7 +2143,7 @@ export default function ItineraryBuilder() {
             {isMobile ? (
               <div
                 ref={embeddedScrollRef}
-                className="itin-preview-scroll"
+                className="itin-preview-scroll preview-scroll"
                 onClick={() => {
                   // Fit zoom for mobile fullscreen modal
                   const availableWidth = window.innerWidth - 32;
@@ -2171,7 +2200,7 @@ export default function ItineraryBuilder() {
                 <div
                   ref={embeddedScrollRef}
                   onScroll={() => handleScroll(false)}
-                  className="itin-preview-scroll-x"
+                  className="itin-preview-scroll-x preview-scroll"
                   style={{
                     flex: 1,
                     overflowY: 'auto',
@@ -2192,7 +2221,7 @@ export default function ItineraryBuilder() {
                   {pages.map((page, pageIdx) => (
                     <div
                       key={pageIdx}
-                      className="itin-page-snap-wrapper"
+                      className="itin-page-snap-wrapper page-scale-wrapper"
                       style={{
                         width: '100%',
                         height: `calc(1123px * ${zoom})`,
@@ -2316,7 +2345,7 @@ export default function ItineraryBuilder() {
           color: '#fff'
         }}>
           {/* Modal Header/Toolbar */}
-          <div style={{
+          <div className="preview-topbar" style={{
             background: '#1e293b',
             padding: '12px 16px',
             borderBottom: '1px solid #334155',
@@ -2331,9 +2360,11 @@ export default function ItineraryBuilder() {
                   📄 {language === 'hi' ? 'यात्रा कार्यक्रम पूर्वावलोकन' : 'Itinerary Preview'}
                 </span>
                 <span style={{ fontSize: '12px', fontWeight: '600', background: '#fee2e2', color: '#ef4444', padding: '2px 8px', borderRadius: '12px', marginLeft: '12px' }}>
-                  {language === 'hi'
-                    ? `पेज ${fullscreenPage} / ${pages.length}`
-                    : `Viewing Page ${fullscreenPage} / ${pages.length}`}
+                  {isMobile ? `${pages.length} ${language === 'hi' ? 'पेज' : 'Pages'}` : (
+                    language === 'hi'
+                      ? `पेज ${fullscreenPage} / ${pages.length}`
+                      : `Viewing Page ${fullscreenPage} / ${pages.length}`
+                  )}
                 </span>
               </div>
               <button
@@ -2419,7 +2450,7 @@ export default function ItineraryBuilder() {
             <div
               ref={fullscreenScrollRef}
               onScroll={() => handleScroll(true)}
-              className="itin-fullscreen-scroll-x"
+              className="itin-fullscreen-scroll-x preview-scroll"
               style={{
                 flex: 1,
                 overflowY: 'auto',
@@ -2441,7 +2472,7 @@ export default function ItineraryBuilder() {
               {pages.map((page, pageIdx) => (
                 <div
                   key={pageIdx}
-                  className="itin-page-snap-wrapper"
+                  className="itin-page-snap-wrapper page-scale-wrapper"
                   style={{
                     width: '100%',
                     height: `calc(1123px * ${zoom})`,
