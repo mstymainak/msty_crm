@@ -2,13 +2,30 @@
 
 import { useState, useEffect } from 'react';
 
+type StaffUser = {
+  _id: string;
+  name: string;
+  email: string;
+  role: 'admin' | 'agent';
+  isActive: boolean;
+  createdAt: string;
+  lastLogin?: string;
+  visiblePassword?: string;
+};
+
+type AuthResponse = {
+  user?: {
+    role?: 'admin' | 'agent';
+  };
+};
+
 export default function SettingsPage() {
-  const [users, setUsers] = useState<any[]>([]);
+  const [users, setUsers] = useState<StaffUser[]>([]);
   const [loading, setLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
   const [form, setForm] = useState({ name: '', email: '', password: '', role: 'agent', phone: '' });
   const [msg, setMsg] = useState('');
-  const [currentUserRole, setCurrentUserRole] = useState('agent');
+  const [currentUserRole, setCurrentUserRole] = useState<'admin' | 'agent'>('agent');
   const [showPasswords, setShowPasswords] = useState<Record<string, boolean>>({});
   
   // Track open 3-dots action menu by User ID
@@ -21,28 +38,38 @@ export default function SettingsPage() {
     fetch('/api/users?_t=' + Date.now())
       .then(r => r.json())
       .then(d => {
-        setUsers(Array.isArray(d) ? d : []);
+        setUsers(Array.isArray(d) ? d as StaffUser[] : []);
         setLoading(false);
         setRefreshing(false);
       })
       .catch(() => { setLoading(false); setRefreshing(false); });
   };
 
-  useEffect(() => { 
-    fetchUsers(); 
-    fetch('/api/auth/me')
-      .then(r => r.json())
-      .then(d => {
-        if(d?.user) setCurrentUserRole(d.user.role);
-      });
-
+  useEffect(() => {
     // Close 3-dots menu on window click
     const handleCloseMenus = () => setActiveMenuId(null);
     window.addEventListener('click', handleCloseMenus);
-    return () => window.removeEventListener('click', handleCloseMenus);
+
+    const timer = window.setTimeout(() => {
+      fetchUsers();
+      fetch('/api/auth/me')
+        .then(r => r.json())
+        .then((d: AuthResponse) => {
+          if (d?.user?.role) setCurrentUserRole(d.user.role);
+        });
+    }, 0);
+
+    return () => {
+      window.clearTimeout(timer);
+      window.removeEventListener('click', handleCloseMenus);
+    };
   }, []);
 
   const handleDelete = async (id: string) => {
+    if (currentUserRole !== 'admin') {
+      alert('Only admin can delete staff members');
+      return;
+    }
     if (!confirm('Are you sure you want to delete this staff member?')) return;
     await fetch(`/api/users/${id}`, { method: 'DELETE' });
     fetchUsers();
@@ -397,88 +424,90 @@ export default function SettingsPage() {
                     </div>
 
                     {/* Three Dots Icon with dropdown on Mobile */}
-                    <div style={{ position: 'relative' }}>
-                      <button 
-                        onClick={(ev) => { ev.stopPropagation(); setActiveMenuId(activeMenuId === u._id ? null : u._id); }}
-                        style={{ background: 'none', border: 'none', fontSize: '20px', color: '#94a3b8', cursor: 'pointer', padding: '4px' }}
-                      >
-                        ⋮
-                      </button>
-
-                      {activeMenuId === u._id && (
-                        <div 
-                          onClick={(ev) => ev.stopPropagation()}
-                          style={{
-                            position: 'absolute',
-                            right: '0',
-                            top: '30px',
-                            background: '#fff',
-                            border: '1px solid #e2e8f0',
-                            borderRadius: '8px',
-                            boxShadow: '0 4px 6px -1px rgba(0,0,0,0.1), 0 2px 4px -1px rgba(0,0,0,0.06)',
-                            zIndex: 100,
-                            display: 'flex',
-                            flexDirection: 'column',
-                            padding: '4px',
-                            minWidth: '140px'
-                          }}
+                    {currentUserRole === 'admin' && (
+                      <div style={{ position: 'relative' }}>
+                        <button
+                          onClick={(ev) => { ev.stopPropagation(); setActiveMenuId(activeMenuId === u._id ? null : u._id); }}
+                          style={{ background: 'none', border: 'none', fontSize: '20px', color: '#94a3b8', cursor: 'pointer', padding: '4px' }}
                         >
-                          {/* Toggle Active/Inactive */}
-                          <button
-                            onClick={() => handleToggleStatus(u._id, !u.isActive)}
-                            style={{
-                              padding: '8px 12px',
-                              textAlign: 'left',
-                              background: 'none',
-                              border: 'none',
-                              fontSize: '12px',
-                              fontWeight: '600',
-                              color: u.isActive ? '#d97706' : '#16a34a',
-                              cursor: 'pointer',
-                              borderRadius: '4px'
-                            }}
-                          >
-                            {u.isActive ? '⚠️ Inactive (Temp)' : '🟢 Active User'}
-                          </button>
-                          
-                          {/* Change password */}
-                          <button
-                            onClick={() => { handleChangePassword(u._id); setActiveMenuId(null); }}
-                            style={{
-                              padding: '8px 12px',
-                              textAlign: 'left',
-                              background: 'none',
-                              border: 'none',
-                              fontSize: '12px',
-                              fontWeight: '600',
-                              color: '#475569',
-                              cursor: 'pointer',
-                              borderRadius: '4px'
-                            }}
-                          >
-                            🔒 Change Pass
-                          </button>
+                          ⋮
+                        </button>
 
-                          {/* Delete */}
-                          <button
-                            onClick={() => { handleDelete(u._id); setActiveMenuId(null); }}
+                        {activeMenuId === u._id && (
+                          <div
+                            onClick={(ev) => ev.stopPropagation()}
                             style={{
-                              padding: '8px 12px',
-                              textAlign: 'left',
-                              background: 'none',
-                              border: 'none',
-                              fontSize: '12px',
-                              fontWeight: '600',
-                              color: '#dc2626',
-                              cursor: 'pointer',
-                              borderRadius: '4px'
+                              position: 'absolute',
+                              right: '0',
+                              top: '30px',
+                              background: '#fff',
+                              border: '1px solid #e2e8f0',
+                              borderRadius: '8px',
+                              boxShadow: '0 4px 6px -1px rgba(0,0,0,0.1), 0 2px 4px -1px rgba(0,0,0,0.06)',
+                              zIndex: 100,
+                              display: 'flex',
+                              flexDirection: 'column',
+                              padding: '4px',
+                              minWidth: '140px'
                             }}
                           >
-                            🗑️ Delete Staff
-                          </button>
-                        </div>
-                      )}
-                    </div>
+                            {/* Toggle Active/Inactive */}
+                            <button
+                              onClick={() => handleToggleStatus(u._id, !u.isActive)}
+                              style={{
+                                padding: '8px 12px',
+                                textAlign: 'left',
+                                background: 'none',
+                                border: 'none',
+                                fontSize: '12px',
+                                fontWeight: '600',
+                                color: u.isActive ? '#d97706' : '#16a34a',
+                                cursor: 'pointer',
+                                borderRadius: '4px'
+                              }}
+                            >
+                              {u.isActive ? '⚠️ Inactive (Temp)' : '🟢 Active User'}
+                            </button>
+
+                            {/* Change password */}
+                            <button
+                              onClick={() => { handleChangePassword(u._id); setActiveMenuId(null); }}
+                              style={{
+                                padding: '8px 12px',
+                                textAlign: 'left',
+                                background: 'none',
+                                border: 'none',
+                                fontSize: '12px',
+                                fontWeight: '600',
+                                color: '#475569',
+                                cursor: 'pointer',
+                                borderRadius: '4px'
+                              }}
+                            >
+                              🔒 Change Pass
+                            </button>
+
+                            {/* Delete */}
+                            <button
+                              onClick={() => { handleDelete(u._id); setActiveMenuId(null); }}
+                              style={{
+                                padding: '8px 12px',
+                                textAlign: 'left',
+                                background: 'none',
+                                border: 'none',
+                                fontSize: '12px',
+                                fontWeight: '600',
+                                color: '#dc2626',
+                                cursor: 'pointer',
+                                borderRadius: '4px'
+                              }}
+                            >
+                              🗑️ Delete Staff
+                            </button>
+                          </div>
+                        )}
+                      </div>
+                    )}
                   </div>
 
                   {/* Divider */}
@@ -530,7 +559,9 @@ export default function SettingsPage() {
                         Actions
                       </div>
                       <div style={{ fontSize: '12px', fontWeight: '600', color: u.isActive ? '#16a34a' : '#ef4444' }}>
-                        {u.isActive ? '🟢 Click ⋮ to Inactive' : '🔴 Click ⋮ to Active'}
+                        {currentUserRole === 'admin'
+                          ? (u.isActive ? '🟢 Click ⋮ to Inactive' : '🔴 Click ⋮ to Active')
+                          : 'Admin only'}
                       </div>
                     </div>
                   </div>
@@ -541,10 +572,6 @@ export default function SettingsPage() {
         )}
       </div>
 
-      <div style={{ background: '#fff', borderRadius: '12px', padding: '24px', marginTop: '24px', boxShadow: '0 1px 3px rgba(0,0,0,0.08)' }}>
-        <h3 style={{ margin: '0 0 8px', fontSize: '16px', fontWeight: '600' }}>Default Login</h3>
-        <p style={{ margin: 0, fontSize: '14px', color: '#64748b' }}>Email: <code>admin@mstycrm.com</code> | Password: <code>admin123</code></p>
-      </div>
     </div>
   );
 }

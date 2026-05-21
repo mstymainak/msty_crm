@@ -41,6 +41,15 @@ type SavedItinerary = {
   extraFieldValue: string;
 };
 
+type FooterBlock = 'includes' | 'details' | 'custom' | 'banner';
+
+type ItineraryPdfPage = {
+  days: TimelineDay[];
+  showHeader: boolean;
+  showMeta: boolean;
+  footerBlocks: FooterBlock[];
+};
+
 
 export default function ItineraryBuilder() {
   const [title, setTitle] = useState('');
@@ -122,7 +131,7 @@ export default function ItineraryBuilder() {
   const [doctorContact, setDoctorContact] = useState('');
   const [agentNotes, setAgentNotes] = useState('');
   const [notesTitle, setNotesTitle] = useState('Note');
-  const [customFooterTitle, setCustomFooterTitle] = useState('Custom Details');
+  const [customFooterTitle, setCustomFooterTitle] = useState('Payment Details');
   const [customFooterContent, setCustomFooterContent] = useState('');
   const [showRateField, setShowRateField] = useState(true);
   const [rateLabel, setRateLabel] = useState('Rate');
@@ -215,7 +224,7 @@ export default function ItineraryBuilder() {
     setImportantInstructions(data.importantInstructions || '');
     setAgentNotes(data.agentNotes || '');
     setNotesTitle(data.notesTitle || 'Note');
-    setCustomFooterTitle(data.customFooterTitle || 'Custom Details');
+    setCustomFooterTitle(data.customFooterTitle || 'Payment Details');
     setCustomFooterContent(data.customFooterContent || '');
     setShowRateField(data.showRateField !== undefined ? data.showRateField : true);
     setRateLabel(data.rateLabel || 'Rate');
@@ -364,9 +373,9 @@ export default function ItineraryBuilder() {
         )}
 
         {/* Day Cards list */}
-        <div style={{ padding: '24px 40px', flex: 1, display: 'flex', flexDirection: 'column', gap: '16px' }}>
+        <div style={{ padding: '20px 40px', flex: 1, display: 'flex', flexDirection: 'column', gap: '12px' }}>
           {page.days.map((day, idx) => (
-            <div key={idx} style={{
+            <div key={idx} className="pdf-no-break pdf-day-card" style={{
               display: 'flex',
               border: '1px solid #fed7aa',
               borderRadius: '6px',
@@ -470,10 +479,11 @@ export default function ItineraryBuilder() {
             </div>
           ))}
 
-          {page.showFooter && (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '16px', marginTop: '16px' }}>
+          {page.footerBlocks.some(block => block !== 'banner') && (
+            <div className="pdf-footer-blocks" style={{ display: 'flex', flexDirection: 'column', gap: '10px', marginTop: '10px' }}>
               {/* Inclusions & Exclusions Row */}
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
+              {page.footerBlocks.includes('includes') && (
+              <div className="pdf-no-break" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
                 {/* Inclusions Box */}
                 <div style={{ border: '1px solid #bbf7d0', borderRadius: '6px', background: '#f0fdf4', overflow: 'hidden' }}>
                   <div style={{ background: '#16a34a', color: '#fff', padding: '8px 12px', fontSize: '14px', fontWeight: 'bold', display: 'flex', alignItems: 'center', gap: '6px' }}>
@@ -512,9 +522,11 @@ export default function ItineraryBuilder() {
                   {renderListOrDotted(exclusions, '•', '#991b1b', 3)}
                 </div>
               </div>
+              )}
 
               {/* Footer Details Grid — Instructions + Notes (2 cols) */}
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
+              {page.footerBlocks.includes('details') && (
+              <div className="pdf-no-break" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
                 {/* Instructions Card */}
                 <div style={{ border: '1px solid #fed7aa', borderRadius: '6px', background: '#fffbf5', overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
                   <div style={{ background: '#ea580c', color: '#fff', padding: '8px 12px', fontSize: '14px', fontWeight: 'bold', display: 'flex', alignItems: 'center', gap: '6px' }}>
@@ -555,11 +567,13 @@ export default function ItineraryBuilder() {
                   </div>
                 </div>
               </div>
+              )}
 
               {/* Custom Footer Block */}
-              <div style={{ border: '1px solid #bfdbfe', borderRadius: '6px', background: '#eff6ff', overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
-                <div style={{ background: '#2563eb', color: '#fff', padding: '8px 12px', fontSize: '14px', fontWeight: 'bold', display: 'flex', alignItems: 'center', gap: '6px' }}>
-                  <span>📌</span>
+              {page.footerBlocks.includes('custom') && (
+              <div className="pdf-no-break" style={{ border: '1px solid #fed7aa', borderRadius: '6px', background: '#fffbf5', overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
+                <div style={{ background: '#ea580c', color: '#fff', padding: '8px 12px', fontSize: '14px', fontWeight: 'bold', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                  <span>💳</span>
                   {isEditable ? (
                     <input
                       type="text"
@@ -572,17 +586,18 @@ export default function ItineraryBuilder() {
                     <span style={{ color: '#fff', fontSize: '14px', fontWeight: 'bold', fontFamily: 'inherit' }}>{customFooterTitle}</span>
                   )}
                 </div>
-                <div style={{ flex: 1, padding: '10px 14px', fontSize: '12.5px', color: '#1e3a8a', whiteSpace: 'pre-wrap', lineHeight: '1.5', background: '#eff6ff', minHeight: '72px' }}>
+                <div style={{ flex: 1, padding: '10px 14px', fontSize: '12.5px', color: '#334155', whiteSpace: 'pre-wrap', lineHeight: '1.5', background: '#fffbf5', minHeight: '60px' }}>
                   {customFooterContent || ''}
                 </div>
               </div>
+              )}
             </div>
           )}
         </div>
 
         {/* Footer Cards & Bottom Bar (Page Last only) */}
-        {page.showFooter && (
-          <div style={{ marginTop: 'auto' }}>
+        {page.footerBlocks.includes('banner') && (
+          <div className="pdf-no-break" style={{ marginTop: '0' }}>
             {/* Disclaimer line */}
             <div style={{ padding: '4px 40px 6px', textAlign: 'center' }}>
               <span style={{ fontSize: '10px', color: '#94a3b8', fontStyle: 'italic', letterSpacing: '0.1px' }}>
@@ -757,9 +772,11 @@ export default function ItineraryBuilder() {
   };
 
   const getPages = () => {
-    const pages: { days: TimelineDay[]; showHeader: boolean; showMeta: boolean; showFooter: boolean }[] = [];
+    const pages: ItineraryPdfPage[] = [];
 
     const A4_HEIGHT = 1122 / fontScale; // Adjust page capacity based on font scale
+    const PAGE_VERTICAL_PADDING = 40;
+    const PAGE_SAFE_BOTTOM = 12;
 
     // Determine header image height dynamically based on image aspect ratio
     const HEADER_HEIGHT = headerImage ? headerHeight : 0;
@@ -770,47 +787,100 @@ export default function ItineraryBuilder() {
     // Accent bar on subsequent pages
     const PAGE_ACCENT_HEIGHT = 12;
 
-    // Inclusions + Exclusions + details cards + custom block + banner spacing.
-    const FOOTER_HEIGHT = 610;
+    const estimateWrappedLines = (text: string, charsPerLine: number) => {
+      if (!text || text.trim() === '') return 0;
+      return text
+        .split('\n')
+        .reduce((sum, line) => sum + Math.max(1, Math.ceil(line.trim().length / charsPerLine)), 0);
+    };
+
+    const estimateListCardHeight = (text: string, placeholderLines: number, charsPerLine: number) => {
+      const lines = text && text.trim() !== '' ? estimateWrappedLines(text, charsPerLine) : placeholderLines;
+      return 34 + 16 + (lines * 18);
+    };
+
+    const estimateTextCardHeight = (text: string, minContentHeight: number, charsPerLine: number) => {
+      const lines = text && text.trim() !== '' ? estimateWrappedLines(text, charsPerLine) : 1;
+      return 34 + Math.max(minContentHeight, 18 + (lines * 18));
+    };
+
+    const estimateFooterBlockHeight = (block: FooterBlock) => {
+      if (block === 'includes') return Math.max(
+        estimateListCardHeight(inclusions, 3, 44),
+        estimateListCardHeight(exclusions, 3, 44)
+      );
+      if (block === 'details') return Math.max(
+        estimateListCardHeight(importantInstructions, 4, 44),
+        estimateTextCardHeight(agentNotes, 60, 48)
+      );
+      if (block === 'custom') return estimateTextCardHeight(customFooterContent, 60, 92);
+      return 58;
+    };
+
+    const footerBlocks: FooterBlock[] = ['includes', 'details', 'custom', 'banner'];
+    const FOOTER_GAP = 10;
+    const FOOTER_TOP_GAP = 10;
 
     // Estimator function for day card heights based on text length
     const estimateDayHeight = (day: TimelineDay) => {
-      let height = 160; // base height (increased for safety)
+      const programLines = Math.max(2, estimateWrappedLines(day.activities, 64));
+      const mealsLines = Math.max(1, estimateWrappedLines(day.meals, 34));
+      const stayLines = Math.max(1, estimateWrappedLines(day.accommodation, 34));
+      const bottomLines = Math.max(mealsLines, stayLines);
+      const locationExtra = day.location && day.location.length > 24 ? 18 : 0;
+      const contentHeight = 42 + (programLines * 20) + 30 + (bottomLines * 20) + locationExtra;
 
-      // Calculate activities program text height (wider text block fits ~65 chars per line at 14px)
-      if (day.activities) {
-        const lines = Math.ceil(day.activities.length / 65);
-        if (lines > 2) {
-          height += (lines - 2) * 22;
-        }
-      }
-
-      // Calculate meals/accommodation text height
-      if (day.meals || day.accommodation) {
-        const mealsLen = day.meals ? day.meals.length : 0;
-        const stayLen = day.accommodation ? day.accommodation.length : 0;
-        const maxLen = Math.max(mealsLen, stayLen);
-        if (maxLen > 25) height += 24;
-        if (maxLen > 55) height += 24;
-        if (maxLen > 85) height += 24;
-      }
-
-      return height + 24; // height + spacing gap
+      return Math.max(124, contentHeight) + 12; // card height + page gap
     };
 
     let currentPageDays: TimelineDay[] = [];
-    let currentHeight = HEADER_HEIGHT + META_HEIGHT + 24; // Page 1 initial height
+    let currentHeight = HEADER_HEIGHT + META_HEIGHT + PAGE_VERTICAL_PADDING; // Page 1 initial height
     let isFirstPage = true;
+    const usableHeight = A4_HEIGHT - PAGE_SAFE_BOTTOM;
+
+    const pushPage = (days: TimelineDay[], showHeader: boolean, showMeta: boolean, footerBlocksForPage: FooterBlock[] = []) => {
+      if (days.length === 0 && footerBlocksForPage.length === 0) return;
+      pages.push({
+        days,
+        showHeader,
+        showMeta,
+        footerBlocks: footerBlocksForPage
+      });
+    };
+
+    const addFooterBlocks = (baseDays: TimelineDay[], showHeader: boolean, showMeta: boolean, baseHeight: number) => {
+      let daysForPage = baseDays;
+      let headerForPage = showHeader;
+      let metaForPage = showMeta;
+      let pageFooterBlocks: FooterBlock[] = [];
+      let height = baseHeight + (baseDays.length > 0 ? FOOTER_TOP_GAP : 0);
+
+      footerBlocks.forEach((block) => {
+        const blockHeight = estimateFooterBlockHeight(block);
+        const gap = pageFooterBlocks.length > 0 ? FOOTER_GAP : 0;
+
+        if (height + gap + blockHeight <= usableHeight) {
+          pageFooterBlocks.push(block);
+          height += gap + blockHeight;
+          return;
+        }
+
+        pushPage(daysForPage, headerForPage, metaForPage, pageFooterBlocks);
+        daysForPage = [];
+        headerForPage = false;
+        metaForPage = false;
+        pageFooterBlocks = [block];
+        height = PAGE_ACCENT_HEIGHT + PAGE_VERTICAL_PADDING + blockHeight;
+      });
+
+      pushPage(daysForPage, headerForPage, metaForPage, pageFooterBlocks);
+    };
 
     // Try single page fit check
     const totalDaysHeight = timeline.reduce((sum, d) => sum + estimateDayHeight(d), 0);
-    if ((currentHeight + totalDaysHeight + FOOTER_HEIGHT) <= A4_HEIGHT) {
-      pages.push({
-        days: timeline,
-        showHeader: true,
-        showMeta: true,
-        showFooter: true
-      });
+    const totalFooterHeight = FOOTER_TOP_GAP + footerBlocks.reduce((sum, block, idx) => sum + estimateFooterBlockHeight(block) + (idx > 0 ? FOOTER_GAP : 0), 0);
+    if ((currentHeight + totalDaysHeight + totalFooterHeight) <= usableHeight) {
+      pushPage(timeline, true, true, footerBlocks);
       return pages;
     }
 
@@ -819,35 +889,20 @@ export default function ItineraryBuilder() {
       const day = timeline[i];
       const dayHeight = estimateDayHeight(day);
       const isLastDay = i === timeline.length - 1;
-      const maxHeight = A4_HEIGHT;
+      const maxHeight = usableHeight;
 
       if (isLastDay) {
         // Must pack both this day card and the footer on this page
-        if (currentHeight + dayHeight + FOOTER_HEIGHT <= maxHeight) {
+        if (currentHeight + dayHeight <= maxHeight) {
           currentPageDays.push(day);
-          pages.push({
-            days: currentPageDays,
-            showHeader: isFirstPage,
-            showMeta: isFirstPage,
-            showFooter: true
-          });
+          addFooterBlocks(currentPageDays, isFirstPage, isFirstPage, currentHeight + dayHeight);
         } else {
           // Push current page without footer
           if (currentPageDays.length > 0) {
-            pages.push({
-              days: currentPageDays,
-              showHeader: isFirstPage,
-              showMeta: isFirstPage,
-              showFooter: false
-            });
+            pushPage(currentPageDays, isFirstPage, isFirstPage);
           }
-          // Day card + footer pushed to next page
-          pages.push({
-            days: [day],
-            showHeader: false,
-            showMeta: false,
-            showFooter: true
-          });
+          const freshPageHeight = PAGE_ACCENT_HEIGHT + PAGE_VERTICAL_PADDING + dayHeight;
+          addFooterBlocks([day], false, false, freshPageHeight);
         }
       } else {
         // Fits on current page?
@@ -856,16 +911,13 @@ export default function ItineraryBuilder() {
           currentHeight += dayHeight;
         } else {
           // Doesn't fit, seal page and open next page
-          pages.push({
-            days: currentPageDays,
-            showHeader: isFirstPage,
-            showMeta: isFirstPage,
-            showFooter: false
-          });
+          if (currentPageDays.length > 0) {
+            pushPage(currentPageDays, isFirstPage, isFirstPage);
+          }
 
           currentPageDays = [day];
           isFirstPage = false;
-          currentHeight = PAGE_ACCENT_HEIGHT + 24 + dayHeight;
+          currentHeight = PAGE_ACCENT_HEIGHT + PAGE_VERTICAL_PADDING + dayHeight;
         }
       }
     }
@@ -1047,6 +1099,19 @@ export default function ItineraryBuilder() {
             box-sizing: border-box !important;
             background: white !important;
             position: relative !important;
+          }
+
+          .pdf-page-render.itinerary-page:last-child,
+          .itinerary-page:last-child {
+            page-break-after: auto !important;
+            break-after: auto !important;
+          }
+
+          .pdf-no-break,
+          .pdf-day-card,
+          .pdf-footer-blocks {
+            break-inside: avoid !important;
+            page-break-inside: avoid !important;
           }
 
           * {
@@ -1657,14 +1722,6 @@ export default function ItineraryBuilder() {
               )}
             </button>
 
-            {/* Fullscreen Preview Button (Desktop Only) */}
-            <button
-              className="itin-btn itin-btn-secondary itin-fullscreen-btn"
-              onClick={() => setShowFullscreenPreview(true)}
-            >
-              🖵 {language === 'hi' ? 'पूर्ण स्क्रीन' : 'Fullscreen'}
-            </button>
-
             {/* View Preview Button (Mobile Only) */}
             <button
               className="itin-btn itin-btn-slate itin-view-preview-btn"
@@ -1849,7 +1906,6 @@ export default function ItineraryBuilder() {
                         value={rate}
                         onChange={e => setRate(e.target.value)}
                         onBlur={(e) => handleBlurTranslate(e.target.value, setRate)}
-                        maxLength={30}
                         className="itin-input"
                       />
                     </div>
@@ -2061,19 +2117,13 @@ export default function ItineraryBuilder() {
                     />
                   </div>
                   <div>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px' }}>
-                      <label className="itin-label" style={{ marginBottom: 0 }}>
-                        {language === 'hi' ? 'क्या शामिल है विवरण' : 'Inclusions Content'}
-                      </label>
-                      <span style={{ fontSize: '10px', fontWeight: 'bold', color: inclusions.length > 370 ? '#ef4444' : '#64748b' }}>
-                        {inclusions.length}/400
-                      </span>
-                    </div>
+                    <label className="itin-label">
+                      {language === 'hi' ? 'क्या शामिल है विवरण' : 'Inclusions Content'}
+                    </label>
                     <textarea
                       value={inclusions}
                       onChange={e => setInclusions(e.target.value)}
                       onBlur={(e) => handleBlurTranslate(e.target.value, setInclusions)}
-                      maxLength={400}
                       placeholder={language === 'hi' ? 'उदा. टोल टैक्स, पार्किंग शामिल है।' : 'e.g. All sightseeing, Hotels daily breakfast'}
                       className="itin-textarea"
                       rows={3}
@@ -2096,19 +2146,13 @@ export default function ItineraryBuilder() {
                     />
                   </div>
                   <div>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px' }}>
-                      <label className="itin-label" style={{ marginBottom: 0 }}>
-                        {language === 'hi' ? 'क्या शामिल नहीं है विवरण' : 'Exclusions Content'}
-                      </label>
-                      <span style={{ fontSize: '10px', fontWeight: 'bold', color: exclusions.length > 370 ? '#ef4444' : '#64748b' }}>
-                        {exclusions.length}/400
-                      </span>
-                    </div>
+                    <label className="itin-label">
+                      {language === 'hi' ? 'क्या शामिल नहीं है विवरण' : 'Exclusions Content'}
+                    </label>
                     <textarea
                       value={exclusions}
                       onChange={e => setExclusions(e.target.value)}
                       onBlur={(e) => handleBlurTranslate(e.target.value, setExclusions)}
-                      maxLength={400}
                       placeholder={language === 'hi' ? 'उदा. हवाई टिकट का किराया।' : 'e.g. Flight ticket fare, monument entry fees'}
                       className="itin-textarea"
                       rows={3}
@@ -2131,19 +2175,13 @@ export default function ItineraryBuilder() {
                     />
                   </div>
                   <div>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px' }}>
-                      <label className="itin-label" style={{ marginBottom: 0 }}>
-                        {language === 'hi' ? 'महत्वपूर्ण निर्देश' : 'Important Instructions'}
-                      </label>
-                      <span style={{ fontSize: '10px', fontWeight: 'bold', color: importantInstructions.length > 370 ? '#ef4444' : '#64748b' }}>
-                        {importantInstructions.length}/400
-                      </span>
-                    </div>
+                    <label className="itin-label">
+                      {language === 'hi' ? 'महत्वपूर्ण निर्देश' : 'Important Instructions'}
+                    </label>
                     <textarea
                       value={importantInstructions}
                       onChange={e => setImportantInstructions(e.target.value)}
                       onBlur={(e) => handleBlurTranslate(e.target.value, setImportantInstructions)}
-                      maxLength={400}
                       className="itin-textarea"
                       rows={3}
                     />
@@ -2165,14 +2203,10 @@ export default function ItineraryBuilder() {
                     />
                   </div>
                   <div>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px' }}>
-                      <label className="itin-label" style={{ marginBottom: 0 }}>Notes Content</label>
-                      <span style={{ fontSize: '10px', fontWeight: 'bold', color: agentNotes.length > 370 ? '#ef4444' : '#64748b' }}>{agentNotes.length}/400</span>
-                    </div>
+                    <label className="itin-label">Notes Content</label>
                     <textarea
                       value={agentNotes}
                       onChange={e => setAgentNotes(e.target.value)}
-                      maxLength={400}
                       placeholder={language === 'hi' ? 'अतिरिक्त नोट्स यहाँ लिखें...' : 'Write additional notes here...'}
                       className="itin-textarea"
                       rows={3}
@@ -2184,7 +2218,7 @@ export default function ItineraryBuilder() {
                 <div style={{ marginBottom: '16px', display: 'grid', gridTemplateColumns: '1fr', gap: '12px' }}>
                   <div>
                     <label className="itin-label">
-                      Custom Heading
+                      Payment Heading
                     </label>
                     <input
                       type="text"
@@ -2195,15 +2229,11 @@ export default function ItineraryBuilder() {
                     />
                   </div>
                   <div>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px' }}>
-                      <label className="itin-label" style={{ marginBottom: 0 }}>Custom Content</label>
-                      <span style={{ fontSize: '10px', fontWeight: 'bold', color: customFooterContent.length > 470 ? '#ef4444' : '#64748b' }}>{customFooterContent.length}/500</span>
-                    </div>
+                    <label className="itin-label">Payment Details</label>
                     <textarea
                       value={customFooterContent}
                       onChange={e => setCustomFooterContent(e.target.value)}
-                      maxLength={500}
-                      placeholder={language === 'hi' ? 'कस्टम विवरण यहाँ लिखें...' : 'Write custom details here...'}
+                      placeholder={language === 'hi' ? 'कस्टम विवरण यहाँ लिखें...' : 'Write Payment Details here...'}
                       className="itin-textarea"
                       rows={4}
                     />
@@ -2605,9 +2635,7 @@ export default function ItineraryBuilder() {
             {/* Scrollable Vertical Container */}
             <div
               ref={(el) => {
-                // @ts-ignore
                 fullscreenScrollRef.current = el;
-                // @ts-ignore
                 viewportRef.current = el;
               }}
               onScroll={() => handleScroll(true)}
