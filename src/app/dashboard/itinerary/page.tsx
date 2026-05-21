@@ -71,6 +71,17 @@ export default function ItineraryBuilder() {
   const [savedItineraries, setSavedItineraries] = useState<any[]>([]);
   const [showSavedModal, setShowSavedModal] = useState(false);
 
+  // Mobile collapsible sections
+  const [tourDetailsOpen, setTourDetailsOpen] = useState(true);
+  const [dayByDayOpen, setDayByDayOpen] = useState(true);
+  const [footerDetailsOpen, setFooterDetailsOpen] = useState(false);
+  const [previewOpen, setPreviewOpen] = useState(true);
+  const [dayAccordion, setDayAccordion] = useState<Record<number, boolean>>({0: true});
+
+  const toggleDayAccordion = (idx: number) => {
+    setDayAccordion(prev => ({ ...prev, [idx]: !prev[idx] }));
+  };
+
   useEffect(() => {
     const saved = localStorage.getItem('savedItineraries');
     if (saved) {
@@ -456,7 +467,6 @@ export default function ItineraryBuilder() {
             background: #ffffff !important;
             position: relative;
           }
-          /* Force colors to print correctly */
           * {
             -webkit-print-color-adjust: exact !important;
             print-color-adjust: exact !important;
@@ -466,12 +476,113 @@ export default function ItineraryBuilder() {
           size: A4;
           margin: 0;
         }
+
+        /* ======= MOBILE RESPONSIVE ======= */
+        @media (max-width: 768px) {
+          .itin-outer-shell {
+            flex-direction: column !important;
+            height: auto !important;
+            overflow: visible !important;
+          }
+          .itin-header-bar {
+            flex-direction: column !important;
+            align-items: flex-start !important;
+            padding: 12px 16px !important;
+            gap: 10px !important;
+          }
+          .itin-header-bar h1 {
+            font-size: 17px !important;
+          }
+          .itin-header-actions {
+            flex-wrap: wrap !important;
+            gap: 8px !important;
+            width: 100% !important;
+          }
+          .itin-header-actions select {
+            min-width: 110px !important;
+            font-size: 12px !important;
+            padding: 6px 10px !important;
+          }
+          .itin-header-actions button {
+            padding: 6px 10px !important;
+            font-size: 12px !important;
+          }
+          .itin-body-columns {
+            flex-direction: column !important;
+          }
+          .itin-left-pane {
+            width: 100% !important;
+            border-right: none !important;
+            padding: 16px !important;
+            overflow: visible !important;
+          }
+          .itin-right-pane {
+            width: 100% !important;
+            padding: 16px !important;
+            overflow: visible !important;
+          }
+          .itin-section-header {
+            cursor: pointer !important;
+            user-select: none !important;
+          }
+          .itin-section-chevron {
+            display: inline-flex !important;
+          }
+          .itin-zoom-controls-bar {
+            flex-wrap: wrap !important;
+            gap: 8px !important;
+            padding: 10px 12px !important;
+          }
+          .itin-zoom-inner {
+            flex-wrap: wrap !important;
+            gap: 8px !important;
+          }
+          .itin-font-controls {
+            border-right: none !important;
+            padding-right: 0 !important;
+          }
+          .itin-preview-scroll {
+            overflow-x: auto !important;
+          }
+          .itin-day-card-mobile {
+            cursor: pointer;
+          }
+        }
+
+        /* Desktop: hide chevron & keep sections always open */
+        @media (min-width: 769px) {
+          .itin-section-chevron {
+            display: none !important;
+          }
+          .itin-collapsible {
+            display: block !important;
+          }
+          .itin-section-header {
+            cursor: default !important;
+            pointer-events: none !important;
+          }
+          .itin-section-header button,
+          .itin-section-header input {
+            pointer-events: auto !important;
+          }
+          .itin-day-card-mobile {
+            cursor: default !important;
+            pointer-events: none !important;
+          }
+          .itin-day-card-mobile button,
+          .itin-day-card-mobile input {
+            pointer-events: auto !important;
+          }
+          .itin-day-collapsible {
+            display: block !important;
+          }
+        }
       `}} />
 
-      <div style={{ display: 'flex', flexDirection: 'column', height: '100vh', background: '#f8fafc', overflow: 'hidden', fontFamily: "'Outfit', sans-serif" }}>
+      <div className="itin-outer-shell" style={{ display: 'flex', flexDirection: 'column', height: '100vh', background: '#f8fafc', overflow: 'hidden', fontFamily: "'Outfit', sans-serif" }}>
 
         {/* Top Header Bar */}
-        <div className="no-print" style={{
+        <div className="no-print itin-header-bar" style={{
           background: '#ffffff',
           padding: '16px 24px',
           borderBottom: '1px solid #e2e8f0',
@@ -485,7 +596,7 @@ export default function ItineraryBuilder() {
             🗺️ {language === 'hi' ? 'कस्टम यात्रा कार्यक्रम निर्माता' : 'Custom Itinerary Builder'}
           </h1>
 
-          <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+          <div className="itin-header-actions" style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
             {/* Language Selector */}
             <select
               value={language}
@@ -570,7 +681,7 @@ export default function ItineraryBuilder() {
               onMouseOver={e => e.currentTarget.style.background = '#c2410c'}
               onMouseOut={e => e.currentTarget.style.background = '#ea580c'}
             >
-              📤 {language === 'hi' ? 'इमेज डाउनलोड' : 'Image'}
+              📤 {language === 'hi' ? 'इमेज' : 'Image'}
             </button>
 
             {/* PDF Print Button */}
@@ -594,23 +705,29 @@ export default function ItineraryBuilder() {
               onMouseOver={e => e.currentTarget.style.background = '#059669'}
               onMouseOut={e => e.currentTarget.style.background = '#10b981'}
             >
-              🖨️ {language === 'hi' ? 'पीडीएफ प्रिंट' : 'PDF'}
+              🖨️ {language === 'hi' ? 'पीडीएफ' : 'PDF'}
             </button>
           </div>
         </div>
 
         {/* Two Columns Body */}
-        <div style={{ display: 'flex', flex: 1, overflow: 'hidden' }}>
+        <div className="itin-body-columns" style={{ display: 'flex', flex: 1, overflow: 'hidden' }}>
 
           {/* Left Pane - Form Editor */}
-          <div className="no-print" style={{ width: '45%', overflowY: 'auto', padding: '24px', borderRight: '1px solid #e2e8f0', background: '#fff' }}>
+          <div className="no-print itin-left-pane" style={{ width: '45%', overflowY: 'auto', padding: '24px', borderRight: '1px solid #e2e8f0', background: '#fff' }}>
 
             {/* Tour Details Box */}
             <div style={{ background: '#f8fafc', padding: '20px', borderRadius: '8px', border: '1px solid #e2e8f0', marginBottom: '20px' }}>
-              <h2 style={{ fontSize: '15px', fontWeight: '700', color: '#1e293b', marginBottom: '16px', display: 'flex', alignItems: 'center', gap: '6px' }}>
-                Tour Details & Header
+              <h2
+                className="itin-section-header"
+                onClick={() => setTourDetailsOpen(prev => !prev)}
+                style={{ fontSize: '15px', fontWeight: '700', color: '#1e293b', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '6px', margin: 0, marginBottom: tourDetailsOpen ? '16px' : '0' }}
+              >
+                <span>Tour Details & Header</span>
+                <span className="itin-section-chevron" style={{ fontSize: '18px', transition: 'transform 0.2s', transform: tourDetailsOpen ? 'rotate(180deg)' : 'rotate(0deg)' }}>⌄</span>
               </h2>
 
+              <div className="itin-collapsible" style={{ display: tourDetailsOpen ? 'block' : 'none' }}>
               <div style={{ marginBottom: '16px' }}>
                 <label style={{ display: 'block', fontSize: '12px', fontWeight: '600', color: '#64748b', marginBottom: '6px' }}>
                   {language === 'hi' ? 'कस्टम हेडर इमेज (वैकल्पिक)' : 'Custom Header Image (Optional)'}
@@ -786,43 +903,62 @@ export default function ItineraryBuilder() {
                 )}
               </div>
             </div>
+            </div>
 
             {/* Day-by-Day Editor Box */}
             <div style={{ background: '#f8fafc', padding: '20px', borderRadius: '8px', border: '1px solid #e2e8f0', marginBottom: '20px' }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
+              <div
+                className="itin-section-header"
+                onClick={() => setDayByDayOpen(prev => !prev)}
+                style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: dayByDayOpen ? '16px' : '0', cursor: 'default' }}
+              >
                 <h2 style={{ fontSize: '15px', fontWeight: '700', color: '#1e293b', margin: 0 }}>Day-by-Day Itinerary</h2>
-                <button
-                  onClick={addDay}
-                  style={{
-                    background: '#ea580c',
-                    color: '#fff',
-                    padding: '6px 14px',
-                    borderRadius: '6px',
-                    fontSize: '12px',
-                    cursor: 'pointer',
-                    border: 'none',
-                    fontWeight: '700',
-                    boxShadow: '0 1px 2px rgba(234, 88, 12, 0.2)'
-                  }}
-                >
-                  + Add Day
-                </button>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <button
+                    onClick={(e) => { e.stopPropagation(); addDay(); }}
+                    style={{
+                      background: '#ea580c',
+                      color: '#fff',
+                      padding: '6px 14px',
+                      borderRadius: '6px',
+                      fontSize: '12px',
+                      cursor: 'pointer',
+                      border: 'none',
+                      fontWeight: '700',
+                      boxShadow: '0 1px 2px rgba(234, 88, 12, 0.2)'
+                    }}
+                  >
+                    + Add Day
+                  </button>
+                  <span className="itin-section-chevron" style={{ fontSize: '18px', transition: 'transform 0.2s', transform: dayByDayOpen ? 'rotate(180deg)' : 'rotate(0deg)' }}>⌄</span>
+                </div>
               </div>
 
-              {timeline.map((day, idx) => (
+              <div className="itin-collapsible" style={{ display: dayByDayOpen ? 'block' : 'none' }}>
+              {timeline.map((day, idx) => {
+                const isDayOpen = dayAccordion[idx] !== false;
+                return (
                 <div key={idx} style={{ background: '#ffffff', padding: '16px', borderRadius: '8px', border: '1px solid #e2e8f0', marginBottom: '16px', boxShadow: '0 1px 2px rgba(0,0,0,0.02)' }}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '12px', alignItems: 'center' }}>
+                  <div
+                    className="itin-day-card-mobile"
+                    onClick={() => toggleDayAccordion(idx)}
+                    style={{ display: 'flex', justifyContent: 'space-between', marginBottom: isDayOpen ? '12px' : '0', alignItems: 'center' }}
+                  >
                     <strong style={{ fontSize: '14px', color: '#ea580c', fontWeight: '700' }}>Day {day.dayNumber}</strong>
-                    {timeline.length > 1 && (
-                      <button
-                        onClick={() => removeDay(idx)}
-                        style={{ color: '#ef4444', background: 'none', border: 'none', cursor: 'pointer', fontSize: '12px', fontWeight: '600' }}
-                      >
-                        Remove
-                      </button>
-                    )}
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                      {timeline.length > 1 && (
+                        <button
+                          onClick={(e) => { e.stopPropagation(); removeDay(idx); }}
+                          style={{ color: '#ef4444', background: 'none', border: 'none', cursor: 'pointer', fontSize: '12px', fontWeight: '600' }}
+                        >
+                          Remove
+                        </button>
+                      )}
+                      <span className="itin-section-chevron" style={{ fontSize: '16px', transition: 'transform 0.2s', transform: isDayOpen ? 'rotate(180deg)' : 'rotate(0deg)', color: '#94a3b8' }}>⌄</span>
+                    </div>
                   </div>
 
+                  <div className="itin-day-collapsible" style={{ display: isDayOpen ? 'block' : 'none' }}>
                   <div style={{ marginBottom: '12px', display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
                     <div>
                       <label style={{ display: 'block', fontSize: '11px', fontWeight: '600', color: '#64748b', marginBottom: '4px' }}>
@@ -886,15 +1022,26 @@ export default function ItineraryBuilder() {
                       />
                     </div>
                   </div>
+                  </div>
                 </div>
-              ))}
+              );
+              })}
+              </div>
             </div>
 
             {/* Footer details editor box */}
             <div style={{ background: '#f8fafc', padding: '20px', borderRadius: '8px', border: '1px solid #e2e8f0', marginBottom: '20px' }}>
-              <h2 style={{ fontSize: '15px', fontWeight: '700', color: '#1e293b', marginBottom: '16px' }}>Footer Details & Content</h2>
+              <h2
+                className="itin-section-header"
+                onClick={() => setFooterDetailsOpen(prev => !prev)}
+                style={{ fontSize: '15px', fontWeight: '700', color: '#1e293b', display: 'flex', alignItems: 'center', justifyContent: 'space-between', margin: 0, marginBottom: footerDetailsOpen ? '16px' : '0' }}
+              >
+                <span>Footer Details & Content</span>
+                <span className="itin-section-chevron" style={{ fontSize: '18px', transition: 'transform 0.2s', transform: footerDetailsOpen ? 'rotate(180deg)' : 'rotate(0deg)' }}>⌄</span>
+              </h2>
 
               {/* Inclusions Group */}
+              <div className="itin-collapsible" style={{ display: footerDetailsOpen ? 'block' : 'none' }}>
               <div style={{ marginBottom: '16px', display: 'grid', gridTemplateColumns: '1fr', gap: '8px' }}>
                 <div>
                   <label style={{ display: 'block', fontSize: '12px', fontWeight: '600', color: '#64748b', marginBottom: '4px' }}>
@@ -1024,13 +1171,14 @@ export default function ItineraryBuilder() {
                 </div>
               </div>
             </div>
+            </div>
           </div>
 
           {/* Right Pane - Live Preview */}
-          <div style={{ width: '55%', overflowY: 'auto', padding: '24px', background: '#e2e8f0', display: 'flex', flexDirection: 'column' }}>
+          <div className="itin-right-pane" style={{ width: '55%', overflowY: 'auto', padding: '24px', background: '#e2e8f0', display: 'flex', flexDirection: 'column' }}>
 
             {/* Zoom Controls Header */}
-            <div className="no-print" style={{
+            <div className="no-print itin-zoom-controls-bar" style={{
               display: 'flex',
               justifyContent: 'space-between',
               alignItems: 'center',
@@ -1050,9 +1198,9 @@ export default function ItineraryBuilder() {
                 </span>
               </div>
 
-              <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
+              <div className="itin-zoom-inner" style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
                 {/* Font Size Controls */}
-                <div style={{ display: 'flex', alignItems: 'center', gap: '6px', borderRight: '1px solid #e2e8f0', paddingRight: '16px' }}>
+                <div className="itin-font-controls" style={{ display: 'flex', alignItems: 'center', gap: '6px', borderRight: '1px solid #e2e8f0', paddingRight: '16px' }}>
                   <span style={{ fontSize: '13px', fontWeight: '600', color: '#475569', marginRight: '4px' }}>
                     {language === 'hi' ? 'फ़ॉन्ट:' : 'Font:'}
                   </span>
@@ -1116,7 +1264,7 @@ export default function ItineraryBuilder() {
                     title="Zoom In"
                   >+</button>
                   <button
-                    onClick={() => setZoom(0.75)}
+                    onClick={() => setZoom(0.55)}
                     style={{ padding: '4px 10px', borderRadius: '6px', border: '1px solid #cbd5e1', background: '#fff', cursor: 'pointer', fontSize: '12px', fontWeight: '700', color: '#475569' }}
                   >Reset</button>
                 </div>
@@ -1124,7 +1272,7 @@ export default function ItineraryBuilder() {
             </div>
 
             {/* Scrollable Container with centered scale preview */}
-            <div style={{
+            <div className="itin-preview-scroll" style={{
               flex: 1,
               overflowY: 'auto',
               display: 'flex',
