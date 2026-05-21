@@ -40,14 +40,6 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
 
   return (
     <div style={{ display: 'flex', minHeight: '100vh', background: '#f1f5f9' }}>
-      {/* Mobile overlay */}
-      {sidebarOpen && (
-        <div
-          onClick={() => setSidebarOpen(false)}
-          style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)', zIndex: 40 }}
-        />
-      )}
-
       {/* Sidebar */}
       <aside style={{
         width: '260px',
@@ -57,11 +49,11 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
         flexDirection: 'column',
         position: 'fixed',
         height: '100vh',
-        zIndex: 50,
+        zIndex: sidebarOpen ? 9999 : 50,
         transition: 'transform 0.3s',
         transform: sidebarOpen ? 'translateX(0)' : undefined,
       }}
-        className="sidebar-desktop"
+        className="sidebar-desktop mobile-sidebar"
       >
         {/* Brand */}
         <div style={{
@@ -147,7 +139,17 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
       </aside>
 
       {/* Main content */}
-      <main style={{ flex: 1, marginLeft: '260px', minHeight: '100vh', paddingBottom: '80px' }}>
+      <main
+        className={sidebarOpen ? 'mobile-content sidebar-open' : 'mobile-content'}
+        style={{
+          flex: 1,
+          marginLeft: '260px',
+          minHeight: '100vh',
+          paddingBottom: '80px',
+          position: sidebarOpen ? 'relative' : undefined,
+          zIndex: sidebarOpen ? 0 : undefined,
+        }}
+      >
         {/* Top bar (mobile) */}
         <div style={{
           display: 'none',
@@ -221,7 +223,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
           alignItems: 'center',
           zIndex: 40,
           padding: '0 10px',
-        }} className="bottom-nav">
+        }} className="bottom-nav mobile-bottom-nav">
           <Link href="/dashboard" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '4px', textDecoration: 'none', color: isActive('/dashboard') ? '#f97316' : '#64748b' }}>
             <span style={{ fontSize: '22px' }}>🏠</span>
             <span style={{ fontSize: '10px', fontWeight: '700' }}>Dashboard</span>
@@ -250,11 +252,43 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
         </div>
       </main>
 
+      {/* Mobile overlay */}
+      {sidebarOpen && (
+        <div
+          className="mobile-sidebar-overlay"
+          onClick={() => setSidebarOpen(false)}
+          style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.45)', backdropFilter: 'blur(2px)', zIndex: 9998 }}
+        />
+      )}
+
       <style>{`
         @media (max-width: 768px) {
+          .mobile-sidebar {
+            position: fixed !important;
+            top: 0 !important;
+            left: 0 !important;
+            width: 280px !important;
+            height: 100vh !important;
+            z-index: 9999 !important;
+            background: #07122b !important;
+          }
+          .mobile-sidebar-overlay {
+            position: fixed !important;
+            inset: 0 !important;
+            background: rgba(0,0,0,0.45) !important;
+            backdrop-filter: blur(2px) !important;
+            z-index: 9998 !important;
+          }
           .sidebar-desktop { transform: translateX(-100%); }
+          .mobile-content.sidebar-open {
+            pointer-events: none;
+            user-select: none;
+            position: relative;
+            z-index: 1;
+          }
           .mobile-topbar { display: flex !important; }
           .bottom-nav { display: flex !important; }
+          .mobile-bottom-nav { z-index: 20 !important; }
           main { margin-left: 0 !important; }
           .main-content-padding { padding: 20px 16px !important; }
           .desktop-topbar { display: none !important; }

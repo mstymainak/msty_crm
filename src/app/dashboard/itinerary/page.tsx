@@ -31,6 +31,8 @@ type SavedItinerary = {
   importantInstructions: string;
   agentNotes: string;
   notesTitle: string;
+  customFooterTitle?: string;
+  customFooterContent?: string;
   showRateField: boolean;
   rateLabel: string;
   rate: string;
@@ -56,6 +58,7 @@ export default function ItineraryBuilder() {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const embeddedScrollRef = useRef<HTMLDivElement>(null);
   const fullscreenScrollRef = useRef<HTMLDivElement>(null);
+  const viewportRef = useRef<HTMLDivElement>(null);
   const [embeddedPage, setEmbeddedPage] = useState(1);
   const [fullscreenPage, setFullscreenPage] = useState(1);
 
@@ -85,7 +88,7 @@ export default function ItineraryBuilder() {
       } else if (width <= 1280) {
         setZoom(0.75); // slightly smaller zoom for smaller laptops to prevent overflow
       } else {
-        setZoom(0.85); // default zoom for large desktop screens
+        setZoom(0.80); // default zoom for large desktop screens
       }
     };
     checkMobile();
@@ -119,6 +122,8 @@ export default function ItineraryBuilder() {
   const [doctorContact, setDoctorContact] = useState('');
   const [agentNotes, setAgentNotes] = useState('');
   const [notesTitle, setNotesTitle] = useState('Note');
+  const [customFooterTitle, setCustomFooterTitle] = useState('Custom Details');
+  const [customFooterContent, setCustomFooterContent] = useState('');
   const [showRateField, setShowRateField] = useState(true);
   const [rateLabel, setRateLabel] = useState('Rate');
   const [rate, setRate] = useState('');
@@ -130,12 +135,26 @@ export default function ItineraryBuilder() {
   const [showSavedModal, setShowSavedModal] = useState(false);
   const [showFullscreenPreview, setShowFullscreenPreview] = useState(false);
 
+  useEffect(() => {
+    if (showFullscreenPreview && isMobile) {
+      const updateFitScale = () => {
+        const containerWidth = viewportRef.current ? viewportRef.current.offsetWidth : window.innerWidth;
+        const pageWidth = 794;
+        const fitScale = Math.min((containerWidth - 24) / pageWidth, 1);
+        setZoom(fitScale);
+      };
+      updateFitScale();
+      const timer = setTimeout(updateFitScale, 50);
+      return () => clearTimeout(timer);
+    }
+  }, [showFullscreenPreview, isMobile]);
+
   // Mobile collapsible sections
   const [tourDetailsOpen, setTourDetailsOpen] = useState(true);
   const [dayByDayOpen, setDayByDayOpen] = useState(true);
   const [footerDetailsOpen, setFooterDetailsOpen] = useState(false);
   const [previewOpen, setPreviewOpen] = useState(true);
-  const [dayAccordion, setDayAccordion] = useState<Record<number, boolean>>({0: true});
+  const [dayAccordion, setDayAccordion] = useState<Record<number, boolean>>({ 0: true });
 
   const toggleDayAccordion = (idx: number) => {
     setDayAccordion(prev => ({ ...prev, [idx]: !prev[idx] }));
@@ -162,6 +181,7 @@ export default function ItineraryBuilder() {
       instructionsTitle, inclusionsTitle, exclusionsTitle,
       inclusions, exclusions, importantInstructions,
       agentNotes, notesTitle,
+      customFooterTitle, customFooterContent,
       showRateField, rateLabel, rate,
       showExtraField, extraFieldLabel, extraFieldValue
     };
@@ -195,6 +215,8 @@ export default function ItineraryBuilder() {
     setImportantInstructions(data.importantInstructions || '');
     setAgentNotes(data.agentNotes || '');
     setNotesTitle(data.notesTitle || 'Note');
+    setCustomFooterTitle(data.customFooterTitle || 'Custom Details');
+    setCustomFooterContent(data.customFooterContent || '');
     setShowRateField(data.showRateField !== undefined ? data.showRateField : true);
     setRateLabel(data.rateLabel || 'Rate');
     setRate(data.rate || '');
@@ -533,6 +555,27 @@ export default function ItineraryBuilder() {
                   </div>
                 </div>
               </div>
+
+              {/* Custom Footer Block */}
+              <div style={{ border: '1px solid #bfdbfe', borderRadius: '6px', background: '#eff6ff', overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
+                <div style={{ background: '#2563eb', color: '#fff', padding: '8px 12px', fontSize: '14px', fontWeight: 'bold', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                  <span>📌</span>
+                  {isEditable ? (
+                    <input
+                      type="text"
+                      value={customFooterTitle}
+                      onChange={e => setCustomFooterTitle(e.target.value)}
+                      maxLength={50}
+                      style={{ background: 'transparent', color: '#fff', border: 'none', fontSize: '14px', fontWeight: 'bold', fontFamily: 'inherit', outline: 'none', width: '100%', padding: '0', cursor: 'text' }}
+                    />
+                  ) : (
+                    <span style={{ color: '#fff', fontSize: '14px', fontWeight: 'bold', fontFamily: 'inherit' }}>{customFooterTitle}</span>
+                  )}
+                </div>
+                <div style={{ flex: 1, padding: '10px 14px', fontSize: '12.5px', color: '#1e3a8a', whiteSpace: 'pre-wrap', lineHeight: '1.5', background: '#eff6ff', minHeight: '72px' }}>
+                  {customFooterContent || ''}
+                </div>
+              </div>
             </div>
           )}
         </div>
@@ -541,7 +584,7 @@ export default function ItineraryBuilder() {
         {page.showFooter && (
           <div style={{ marginTop: 'auto' }}>
             {/* Disclaimer line */}
-            <div style={{ padding: '6px 40px 8px', textAlign: 'center' }}>
+            <div style={{ padding: '4px 40px 6px', textAlign: 'center' }}>
               <span style={{ fontSize: '10px', color: '#94a3b8', fontStyle: 'italic', letterSpacing: '0.1px' }}>
                 {language === 'hi'
                   ? 'नोट: यात्रा कार्यक्रम मौसम, समय एवं परिस्थितियों के अनुसार परिवर्तित किया जा सकता है।'
@@ -550,8 +593,8 @@ export default function ItineraryBuilder() {
             </div>
 
             {/* Bottom Banner Bar */}
-            <div style={{ background: 'linear-gradient(to right, #ea580c, #dc2626)', padding: '14px 40px', display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
-              <h2 style={{ color: '#fff', fontSize: '20px', fontWeight: 'bold', margin: 0, letterSpacing: '1px' }}>
+            <div style={{ background: 'linear-gradient(to right, #ea580c, #dc2626)', padding: '10px 40px', minHeight: '42px', display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
+              <h2 style={{ color: '#fff', fontSize: '18px', fontWeight: 'bold', margin: 0, letterSpacing: '1px', lineHeight: 1.2 }}>
                 🌸 {language === 'hi' ? 'शुभ यात्रा ! मंगल यात्रा !' : 'Happy & Auspicious Journey !'} 🌸
               </h2>
             </div>
@@ -584,7 +627,7 @@ export default function ItineraryBuilder() {
       for (let i = 0; i < pageElements.length; i++) {
         const originalElement = pageElements[i] as HTMLElement;
         const clone = originalElement.cloneNode(true) as HTMLElement;
-        
+
         // Explicitly copy current dynamic input/textarea values since cloneNode doesn't copy current state values
         const originalInputs = originalElement.querySelectorAll('input, textarea, select');
         const clonedInputs = clone.querySelectorAll('input, textarea, select');
@@ -599,7 +642,7 @@ export default function ItineraryBuilder() {
         clone.style.border = 'none';
         clone.style.margin = '0';
         clone.style.position = 'relative';
-        
+
         tempContainer.appendChild(clone);
 
         // Brief delay to ensure styles and layouts are resolved
@@ -727,8 +770,8 @@ export default function ItineraryBuilder() {
     // Accent bar on subsequent pages
     const PAGE_ACCENT_HEIGHT = 12;
 
-    // Inclusions + Exclusions + Details grid + banner + paddings (increased safety margin)
-    const FOOTER_HEIGHT = 440;
+    // Inclusions + Exclusions + details cards + custom block + banner spacing.
+    const FOOTER_HEIGHT = 610;
 
     // Estimator function for day card heights based on text length
     const estimateDayHeight = (day: TimelineDay) => {
@@ -888,6 +931,52 @@ export default function ItineraryBuilder() {
             height: 1123px !important;
             min-height: 1123px !important;
             max-height: 1123px !important;
+          }
+          /* MOBILE PREVIEW MODAL CLASSES */
+          .mobile-preview-modal {
+            position: fixed !important;
+            inset: 0 !important;
+            z-index: 9999 !important;
+            background: #111827 !important;
+            display: flex !important;
+            flex-direction: column !important;
+            overflow: hidden !important;
+          }
+          .mobile-preview-toolbar {
+            flex-shrink: 0 !important;
+            padding: 12px !important;
+            background: #111827 !important;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.08) !important;
+          }
+          .mobile-preview-viewport {
+            flex: 1 !important;
+            overflow: auto !important;
+            display: flex !important;
+            justify-content: center !important;
+            align-items: flex-start !important;
+            padding: 16px 12px 80px !important;
+            background: #e5e7eb !important;
+          }
+          .mobile-preview-page-wrapper {
+            display: flex !important;
+            justify-content: center !important;
+            width: 100% !important;
+          }
+          .mobile-preview-page {
+            transform-origin: top center !important;
+            margin: 0 auto !important;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.12) !important;
+          }
+          .mobile-pages-stack {
+            display: flex !important;
+            flex-direction: column !important;
+            gap: 20px !important;
+            align-items: center !important;
+          }
+          .mobile-preview-inner {
+            width: 100% !important;
+            display: flex !important;
+            justify-content: center !important;
           }
         }
         @media print {
@@ -1436,42 +1525,7 @@ export default function ItineraryBuilder() {
             display: none !important;
           }
 
-          /* FULLSCREEN MOBILE PREVIEW */
-          .itin-fullscreen-modal {
-            position: fixed !important;
-            inset: 0 !important;
-            z-index: 9999 !important;
-            background: #f3f4f6 !important;
-            overflow: auto !important;
-            display: flex !important;
-            flex-direction: column !important;
-          }
-          .itin-fullscreen-scroll-x {
-            background: #f3f4f6 !important;
-            overflow-y: auto !important;
-            overflow-x: hidden !important;
-            display: flex !important;
-            flex-direction: column !important;
-            align-items: center !important;
-          }
 
-          /* PREVIEW SCALE FIX */
-          .mobile-preview-page {
-            transform: scale(0.33) !important;
-            transform-origin: top left !important;
-          }
-          .itin-scale-wrapper {
-            transform: none !important;
-            width: 794px !important;
-            height: 1123px !important;
-          }
-          .itin-page-snap-wrapper, .page-scale-wrapper {
-            height: 375px !important;
-            overflow: hidden !important;
-            display: flex !important;
-            justify-content: center !important;
-            align-items: flex-start !important;
-          }
         }
 
           .itin-day-card-mobile {
@@ -1672,173 +1726,173 @@ export default function ItineraryBuilder() {
               </h2>
 
               <div className="itin-collapsible" style={{ display: tourDetailsOpen ? 'block' : 'none' }}>
-              <div style={{ marginBottom: '16px' }}>
-                <label className="itin-label">
-                  {language === 'hi' ? 'कस्टम हेडर इमेज (वैकल्पिक)' : 'Custom Header Image (Optional)'}
-                </label>
-                <div style={{ position: 'relative', width: '100%' }}>
-                  <input
-                    type="file"
-                    accept="image/*"
-                    onChange={handleImageUpload}
-                    ref={fileInputRef}
-                    className="itin-input"
-                    style={{ paddingRight: '32px' }}
-                  />
-                  {headerImage && (
-                    <button
-                      onClick={removeHeaderImage}
-                      style={{
-                        position: 'absolute',
-                        right: '8px',
-                        top: '50%',
-                        transform: 'translateY(-50%)',
-                        background: 'transparent',
-                        color: '#94a3b8',
-                        border: 'none',
-                        cursor: 'pointer',
-                        fontSize: '14px',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        padding: '4px',
-                        borderRadius: '50%'
-                      }}
-                      onMouseOver={e => e.currentTarget.style.color = '#ef4444'}
-                      onMouseOut={e => e.currentTarget.style.color = '#94a3b8'}
-                      title="Remove Image"
-                    >
-                      ✕
-                    </button>
+                <div style={{ marginBottom: '16px' }}>
+                  <label className="itin-label">
+                    {language === 'hi' ? 'कस्टम हेडर इमेज (वैकल्पिक)' : 'Custom Header Image (Optional)'}
+                  </label>
+                  <div style={{ position: 'relative', width: '100%' }}>
+                    <input
+                      type="file"
+                      accept="image/*"
+                      onChange={handleImageUpload}
+                      ref={fileInputRef}
+                      className="itin-input"
+                      style={{ paddingRight: '32px' }}
+                    />
+                    {headerImage && (
+                      <button
+                        onClick={removeHeaderImage}
+                        style={{
+                          position: 'absolute',
+                          right: '8px',
+                          top: '50%',
+                          transform: 'translateY(-50%)',
+                          background: 'transparent',
+                          color: '#94a3b8',
+                          border: 'none',
+                          cursor: 'pointer',
+                          fontSize: '14px',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          padding: '4px',
+                          borderRadius: '50%'
+                        }}
+                        onMouseOver={e => e.currentTarget.style.color = '#ef4444'}
+                        onMouseOut={e => e.currentTarget.style.color = '#94a3b8'}
+                        title="Remove Image"
+                      >
+                        ✕
+                      </button>
+                    )}
+                  </div>
+                </div>
+
+                <div className="itin-form-grid form-grid mobile-form-grid" style={{ marginBottom: '12px' }}>
+                  <div>
+                    <label className="itin-label">
+                      {language === 'hi' ? 'यात्रा का नाम' : 'Tour Name'}
+                    </label>
+                    <input
+                      type="text"
+                      placeholder={language === 'hi' ? 'नाम दर्ज करें' : 'Enter tour name'}
+                      value={title}
+                      onChange={e => setTitle(e.target.value)}
+                      onBlur={(e) => handleBlurTranslate(e.target.value, setTitle)}
+                      maxLength={50}
+                      className="itin-input"
+                    />
+                  </div>
+                  <div>
+                    <label className="itin-label">
+                      {language === 'hi' ? 'तिथि' : 'Date'}
+                    </label>
+                    <input
+                      type="text"
+                      placeholder={language === 'hi' ? 'तिथि चुनें या लिखें' : 'Select or enter date'}
+                      value={startDate}
+                      onChange={e => setStartDate(e.target.value)}
+                      maxLength={30}
+                      className="itin-input"
+                    />
+                  </div>
+                </div>
+
+                <div className="itin-form-grid form-grid mobile-form-grid">
+                  <div>
+                    <label className="itin-label">
+                      {language === 'hi' ? 'प्रस्थान स्थान' : 'Start Location'}
+                    </label>
+                    <input
+                      type="text"
+                      placeholder={language === 'hi' ? 'प्रस्थान स्थान दर्ज करें' : 'Enter start location'}
+                      value={startLocation}
+                      onChange={e => setStartLocation(e.target.value)}
+                      onBlur={(e) => handleBlurTranslate(e.target.value, setStartLocation)}
+                      maxLength={40}
+                      className="itin-input"
+                    />
+                  </div>
+                  <div>
+                    <label className="itin-label">
+                      {language === 'hi' ? 'समाप्ति स्थान' : 'End Location'}
+                    </label>
+                    <input
+                      type="text"
+                      placeholder={language === 'hi' ? 'समाप्ति स्थान दर्ज करें' : 'Enter end location'}
+                      value={endLocation}
+                      onChange={e => setEndLocation(e.target.value)}
+                      onBlur={(e) => handleBlurTranslate(e.target.value, setEndLocation)}
+                      maxLength={40}
+                      className="itin-input"
+                    />
+                  </div>
+                </div>
+
+                <div className="itin-form-grid form-grid mobile-form-grid" style={{ marginTop: '16px' }}>
+                  {showRateField ? (
+                    <div className="dynamic-field-box" style={{ background: '#fff', padding: '12px', borderRadius: '6px', border: '1px solid #cbd5e1' }}>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
+                        <input
+                          type="text"
+                          value={rateLabel}
+                          onChange={e => setRateLabel(e.target.value)}
+                          style={{ fontSize: '12px', fontWeight: '700', color: '#1e293b', border: '1px dashed #cbd5e1', outline: 'none', padding: '2px 6px', background: 'transparent', borderRadius: '4px', width: '70%' }}
+                        />
+                        <button onClick={() => setShowRateField(false)} style={{ color: '#ef4444', background: 'none', border: 'none', cursor: 'pointer', fontSize: '11px', fontWeight: '700' }}>
+                          ✖
+                        </button>
+                      </div>
+                      <input
+                        type="text"
+                        placeholder={language === 'hi' ? 'मूल्य दर्ज करें' : 'Enter value'}
+                        value={rate}
+                        onChange={e => setRate(e.target.value)}
+                        onBlur={(e) => handleBlurTranslate(e.target.value, setRate)}
+                        maxLength={30}
+                        className="itin-input"
+                      />
+                    </div>
+                  ) : (
+                    <div>
+                      <button className="dynamic-field-box" onClick={() => setShowRateField(true)} style={{ color: '#ea580c', background: 'none', border: '1px dashed #ea580c', borderRadius: '6px', cursor: 'pointer', fontSize: '12px', fontWeight: '700', width: '100%', height: '100%' }}>
+                        + Add Field
+                      </button>
+                    </div>
+                  )}
+
+                  {showExtraField ? (
+                    <div className="dynamic-field-box" style={{ background: '#fff', padding: '12px', borderRadius: '6px', border: '1px solid #cbd5e1' }}>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
+                        <input
+                          type="text"
+                          value={extraFieldLabel}
+                          onChange={e => setExtraFieldLabel(e.target.value)}
+                          style={{ fontSize: '12px', fontWeight: '700', color: '#1e293b', border: '1px dashed #cbd5e1', outline: 'none', padding: '2px 6px', background: 'transparent', borderRadius: '4px', width: '70%' }}
+                        />
+                        <button onClick={() => setShowExtraField(false)} style={{ color: '#ef4444', background: 'none', border: 'none', cursor: 'pointer', fontSize: '11px', fontWeight: '700' }}>
+                          ✖
+                        </button>
+                      </div>
+                      <input
+                        type="text"
+                        placeholder={language === 'hi' ? 'विवरण दर्ज करें' : 'Enter value'}
+                        value={extraFieldValue}
+                        onChange={e => setExtraFieldValue(e.target.value)}
+                        onBlur={(e) => handleBlurTranslate(e.target.value, setExtraFieldValue)}
+                        maxLength={30}
+                        className="itin-input"
+                      />
+                    </div>
+                  ) : (
+                    <div>
+                      <button className="dynamic-field-box" onClick={() => setShowExtraField(true)} style={{ color: '#ea580c', background: 'none', border: '1px dashed #ea580c', borderRadius: '6px', cursor: 'pointer', fontSize: '12px', fontWeight: '700', width: '100%', height: '100%' }}>
+                        + Add Field
+                      </button>
+                    </div>
                   )}
                 </div>
               </div>
-
-              <div className="itin-form-grid form-grid mobile-form-grid" style={{ marginBottom: '12px' }}>
-                <div>
-                  <label className="itin-label">
-                    {language === 'hi' ? 'यात्रा का नाम' : 'Tour Name'}
-                  </label>
-                  <input
-                    type="text"
-                    placeholder={language === 'hi' ? 'नाम दर्ज करें' : 'Enter tour name'}
-                    value={title}
-                    onChange={e => setTitle(e.target.value)}
-                    onBlur={(e) => handleBlurTranslate(e.target.value, setTitle)}
-                    maxLength={50}
-                    className="itin-input"
-                  />
-                </div>
-                <div>
-                  <label className="itin-label">
-                    {language === 'hi' ? 'तिथि' : 'Date'}
-                  </label>
-                  <input
-                    type="text"
-                    placeholder={language === 'hi' ? 'तिथि चुनें या लिखें' : 'Select or enter date'}
-                    value={startDate}
-                    onChange={e => setStartDate(e.target.value)}
-                    maxLength={30}
-                    className="itin-input"
-                  />
-                </div>
-              </div>
-
-              <div className="itin-form-grid form-grid mobile-form-grid">
-                <div>
-                  <label className="itin-label">
-                    {language === 'hi' ? 'प्रस्थान स्थान' : 'Start Location'}
-                  </label>
-                  <input
-                    type="text"
-                    placeholder={language === 'hi' ? 'प्रस्थान स्थान दर्ज करें' : 'Enter start location'}
-                    value={startLocation}
-                    onChange={e => setStartLocation(e.target.value)}
-                    onBlur={(e) => handleBlurTranslate(e.target.value, setStartLocation)}
-                    maxLength={40}
-                    className="itin-input"
-                  />
-                </div>
-                <div>
-                  <label className="itin-label">
-                    {language === 'hi' ? 'समाप्ति स्थान' : 'End Location'}
-                  </label>
-                  <input
-                    type="text"
-                    placeholder={language === 'hi' ? 'समाप्ति स्थान दर्ज करें' : 'Enter end location'}
-                    value={endLocation}
-                    onChange={e => setEndLocation(e.target.value)}
-                    onBlur={(e) => handleBlurTranslate(e.target.value, setEndLocation)}
-                    maxLength={40}
-                    className="itin-input"
-                  />
-                </div>
-              </div>
-
-              <div className="itin-form-grid form-grid mobile-form-grid" style={{ marginTop: '16px' }}>
-                {showRateField ? (
-                  <div className="dynamic-field-box" style={{ background: '#fff', padding: '12px', borderRadius: '6px', border: '1px solid #cbd5e1' }}>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
-                      <input
-                        type="text"
-                        value={rateLabel}
-                        onChange={e => setRateLabel(e.target.value)}
-                        style={{ fontSize: '12px', fontWeight: '700', color: '#1e293b', border: '1px dashed #cbd5e1', outline: 'none', padding: '2px 6px', background: 'transparent', borderRadius: '4px', width: '70%' }}
-                      />
-                      <button onClick={() => setShowRateField(false)} style={{ color: '#ef4444', background: 'none', border: 'none', cursor: 'pointer', fontSize: '11px', fontWeight: '700' }}>
-                        ✖
-                      </button>
-                    </div>
-                    <input
-                      type="text"
-                      placeholder={language === 'hi' ? 'मूल्य दर्ज करें' : 'Enter value'}
-                      value={rate}
-                      onChange={e => setRate(e.target.value)}
-                      onBlur={(e) => handleBlurTranslate(e.target.value, setRate)}
-                      maxLength={30}
-                      className="itin-input"
-                    />
-                  </div>
-                ) : (
-                  <div>
-                    <button className="dynamic-field-box" onClick={() => setShowRateField(true)} style={{ color: '#ea580c', background: 'none', border: '1px dashed #ea580c', borderRadius: '6px', cursor: 'pointer', fontSize: '12px', fontWeight: '700', width: '100%', height: '100%' }}>
-                      + Add Field
-                    </button>
-                  </div>
-                )}
-
-                {showExtraField ? (
-                  <div className="dynamic-field-box" style={{ background: '#fff', padding: '12px', borderRadius: '6px', border: '1px solid #cbd5e1' }}>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
-                      <input
-                        type="text"
-                        value={extraFieldLabel}
-                        onChange={e => setExtraFieldLabel(e.target.value)}
-                        style={{ fontSize: '12px', fontWeight: '700', color: '#1e293b', border: '1px dashed #cbd5e1', outline: 'none', padding: '2px 6px', background: 'transparent', borderRadius: '4px', width: '70%' }}
-                      />
-                      <button onClick={() => setShowExtraField(false)} style={{ color: '#ef4444', background: 'none', border: 'none', cursor: 'pointer', fontSize: '11px', fontWeight: '700' }}>
-                        ✖
-                      </button>
-                    </div>
-                    <input
-                      type="text"
-                      placeholder={language === 'hi' ? 'विवरण दर्ज करें' : 'Enter value'}
-                      value={extraFieldValue}
-                      onChange={e => setExtraFieldValue(e.target.value)}
-                      onBlur={(e) => handleBlurTranslate(e.target.value, setExtraFieldValue)}
-                      maxLength={30}
-                      className="itin-input"
-                    />
-                  </div>
-                ) : (
-                  <div>
-                    <button className="dynamic-field-box" onClick={() => setShowExtraField(true)} style={{ color: '#ea580c', background: 'none', border: '1px dashed #ea580c', borderRadius: '6px', cursor: 'pointer', fontSize: '12px', fontWeight: '700', width: '100%', height: '100%' }}>
-                      + Add Field
-                    </button>
-                  </div>
-                )}
-              </div>
-            </div>
             </div>
 
             {/* Day-by-Day Editor Box */}
@@ -1872,111 +1926,111 @@ export default function ItineraryBuilder() {
               </div>
 
               <div className="itin-collapsible" style={{ display: dayByDayOpen ? 'block' : 'none' }}>
-              {timeline.map((day, idx) => {
-                const isDayOpen = dayAccordion[idx] !== false;
-                return (
-                <div key={idx} className="itin-day-editor-card day-card">
-                  <div
-                    className="itin-day-card-mobile"
-                    onClick={() => toggleDayAccordion(idx)}
-                    style={{ display: 'flex', justifyContent: 'space-between', marginBottom: isDayOpen ? '12px' : '0', alignItems: 'center' }}
-                  >
-                    <strong style={{ fontSize: '14px', color: '#ea580c', fontWeight: '700' }}>Day {day.dayNumber}</strong>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                      {timeline.length > 1 && (
-                        <button
-                          onClick={(e) => { e.stopPropagation(); removeDay(idx); }}
-                          style={{ color: '#ef4444', background: 'none', border: 'none', cursor: 'pointer', fontSize: '12px', fontWeight: '600' }}
-                        >
-                          Remove
-                        </button>
-                      )}
-                      <span className="itin-section-chevron" style={{ fontSize: '16px', transition: 'transform 0.2s', transform: isDayOpen ? 'rotate(180deg)' : 'rotate(0deg)', color: '#94a3b8' }}>⌄</span>
-                    </div>
-                  </div>
-
-                  <div className="itin-day-collapsible" style={{ display: isDayOpen ? 'block' : 'none' }}>
-                  <div className="itin-form-grid form-grid mobile-form-grid" style={{ marginBottom: '12px' }}>
-                    <div>
-                      <label className="itin-label">
-                        {language === 'hi' ? 'दिनांक' : 'Date'}
-                      </label>
-                      <input
-                        placeholder="dd/mm/yyyy"
-                        value={day.dateString}
-                        onChange={e => updateDay(idx, 'dateString', e.target.value)}
-                        maxLength={30}
-                        className="itin-input"
-                      />
-                    </div>
-                    <div>
-                      <label className="itin-label">
-                        {language === 'hi' ? 'स्थान' : 'Location'}
-                      </label>
-                      <input
-                        placeholder={language === 'hi' ? 'स्थान दर्ज करें' : 'Enter location'}
-                        value={day.location || ''}
-                        onChange={e => updateDay(idx, 'location', e.target.value)}
-                        onBlur={() => handleDayBlurTranslate(idx, 'location')}
-                        maxLength={40}
-                        className="itin-input"
-                      />
-                    </div>
-                  </div>
-
-                  <div style={{ marginBottom: '12px' }}>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px' }}>
-                      <label className="itin-label" style={{ marginBottom: 0 }}>
-                        {language === 'hi' ? 'कार्यक्रम विवरण' : 'Activities Description'}
-                      </label>
-                      <span style={{ fontSize: '10px', fontWeight: 'bold', color: day.activities.length > 470 ? '#ef4444' : '#64748b' }}>
-                        {day.activities.length}/500
-                      </span>
-                    </div>
-                    <textarea
-                      placeholder={language === 'hi' ? 'विवरण दर्ज करें' : 'Enter activities description'}
-                      value={day.activities}
-                      onChange={e => updateDay(idx, 'activities', e.target.value)}
-                      onBlur={() => handleDayBlurTranslate(idx, 'activities')}
-                      maxLength={500}
-                      className="itin-textarea"
-                      rows={3}
-                    />
-                  </div>
-
-                  <div className="itin-form-grid form-grid mobile-form-grid">
-                    <div>
-                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px' }}>
-                        <label className="itin-label" style={{ marginBottom: 0 }}>
-                          {language === 'hi' ? 'भोजन' : 'Meals'}
-                        </label>
-                        <span style={{ fontSize: '10px', fontWeight: 'bold', color: '#94a3b8' }}>{day.meals.length}/65</span>
+                {timeline.map((day, idx) => {
+                  const isDayOpen = dayAccordion[idx] !== false;
+                  return (
+                    <div key={idx} className="itin-day-editor-card day-card">
+                      <div
+                        className="itin-day-card-mobile"
+                        onClick={() => toggleDayAccordion(idx)}
+                        style={{ display: 'flex', justifyContent: 'space-between', marginBottom: isDayOpen ? '12px' : '0', alignItems: 'center' }}
+                      >
+                        <strong style={{ fontSize: '14px', color: '#ea580c', fontWeight: '700' }}>Day {day.dayNumber}</strong>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                          {timeline.length > 1 && (
+                            <button
+                              onClick={(e) => { e.stopPropagation(); removeDay(idx); }}
+                              style={{ color: '#ef4444', background: 'none', border: 'none', cursor: 'pointer', fontSize: '12px', fontWeight: '600' }}
+                            >
+                              Remove
+                            </button>
+                          )}
+                          <span className="itin-section-chevron" style={{ fontSize: '16px', transition: 'transform 0.2s', transform: isDayOpen ? 'rotate(180deg)' : 'rotate(0deg)', color: '#94a3b8' }}>⌄</span>
+                        </div>
                       </div>
-                      <input
-                        placeholder={language === 'hi' ? 'उदा. नाश्ता और रात का भोजन' : 'e.g. Breakfast & Dinner'}
-                        value={day.meals}
-                        onChange={e => updateDay(idx, 'meals', e.target.value)}
-                        onBlur={() => handleDayBlurTranslate(idx, 'meals')}
-                        className="itin-input"
-                      />
+
+                      <div className="itin-day-collapsible" style={{ display: isDayOpen ? 'block' : 'none' }}>
+                        <div className="itin-form-grid form-grid mobile-form-grid" style={{ marginBottom: '12px' }}>
+                          <div>
+                            <label className="itin-label">
+                              {language === 'hi' ? 'दिनांक' : 'Date'}
+                            </label>
+                            <input
+                              placeholder="dd/mm/yyyy"
+                              value={day.dateString}
+                              onChange={e => updateDay(idx, 'dateString', e.target.value)}
+                              maxLength={30}
+                              className="itin-input"
+                            />
+                          </div>
+                          <div>
+                            <label className="itin-label">
+                              {language === 'hi' ? 'स्थान' : 'Location'}
+                            </label>
+                            <input
+                              placeholder={language === 'hi' ? 'स्थान दर्ज करें' : 'Enter location'}
+                              value={day.location || ''}
+                              onChange={e => updateDay(idx, 'location', e.target.value)}
+                              onBlur={() => handleDayBlurTranslate(idx, 'location')}
+                              maxLength={40}
+                              className="itin-input"
+                            />
+                          </div>
+                        </div>
+
+                        <div style={{ marginBottom: '12px' }}>
+                          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px' }}>
+                            <label className="itin-label" style={{ marginBottom: 0 }}>
+                              {language === 'hi' ? 'कार्यक्रम विवरण' : 'Activities Description'}
+                            </label>
+                            <span style={{ fontSize: '10px', fontWeight: 'bold', color: day.activities.length > 470 ? '#ef4444' : '#64748b' }}>
+                              {day.activities.length}/500
+                            </span>
+                          </div>
+                          <textarea
+                            placeholder={language === 'hi' ? 'विवरण दर्ज करें' : 'Enter activities description'}
+                            value={day.activities}
+                            onChange={e => updateDay(idx, 'activities', e.target.value)}
+                            onBlur={() => handleDayBlurTranslate(idx, 'activities')}
+                            maxLength={500}
+                            className="itin-textarea"
+                            rows={3}
+                          />
+                        </div>
+
+                        <div className="itin-form-grid form-grid mobile-form-grid">
+                          <div>
+                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px' }}>
+                              <label className="itin-label" style={{ marginBottom: 0 }}>
+                                {language === 'hi' ? 'भोजन' : 'Meals'}
+                              </label>
+                              <span style={{ fontSize: '10px', fontWeight: 'bold', color: '#94a3b8' }}>{day.meals.length}/65</span>
+                            </div>
+                            <input
+                              placeholder={language === 'hi' ? 'उदा. नाश्ता और रात का भोजन' : 'e.g. Breakfast & Dinner'}
+                              value={day.meals}
+                              onChange={e => updateDay(idx, 'meals', e.target.value)}
+                              onBlur={() => handleDayBlurTranslate(idx, 'meals')}
+                              className="itin-input"
+                            />
+                          </div>
+                          <div>
+                            <label className="itin-label">
+                              {language === 'hi' ? 'आवास' : 'Accommodation'}
+                            </label>
+                            <input
+                              placeholder={language === 'hi' ? 'उदा. होटल का नाम' : 'e.g. Hotel Name'}
+                              value={day.accommodation}
+                              onChange={e => updateDay(idx, 'accommodation', e.target.value)}
+                              onBlur={() => handleDayBlurTranslate(idx, 'accommodation')}
+                              className="itin-input"
+                            />
+                          </div>
+                        </div>
+                      </div>
                     </div>
-                    <div>
-                      <label className="itin-label">
-                        {language === 'hi' ? 'आवास' : 'Accommodation'}
-                      </label>
-                      <input
-                        placeholder={language === 'hi' ? 'उदा. होटल का नाम' : 'e.g. Hotel Name'}
-                        value={day.accommodation}
-                        onChange={e => updateDay(idx, 'accommodation', e.target.value)}
-                        onBlur={() => handleDayBlurTranslate(idx, 'accommodation')}
-                        className="itin-input"
-                      />
-                    </div>
-                  </div>
-                  </div>
-                </div>
-              );
-              })}
+                  );
+                })}
               </div>
             </div>
 
@@ -1993,139 +2047,169 @@ export default function ItineraryBuilder() {
 
               {/* Inclusions Group */}
               <div className="itin-collapsible" style={{ display: footerDetailsOpen ? 'block' : 'none' }}>
-              <div style={{ marginBottom: '16px', display: 'grid', gridTemplateColumns: '1fr', gap: '12px' }}>
-                <div>
-                  <label className="itin-label">
-                    {language === 'hi' ? 'क्या शामिल है शीर्षक (Inclusions Title)' : 'Inclusions Title'}
-                  </label>
-                  <input
-                    type="text"
-                    value={inclusionsTitle}
-                    onChange={e => setInclusionsTitle(e.target.value)}
-                    maxLength={40}
-                    className="itin-input"
-                  />
-                </div>
-                <div>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px' }}>
-                    <label className="itin-label" style={{ marginBottom: 0 }}>
-                      {language === 'hi' ? 'क्या शामिल है विवरण' : 'Inclusions Content'}
+                <div style={{ marginBottom: '16px', display: 'grid', gridTemplateColumns: '1fr', gap: '12px' }}>
+                  <div>
+                    <label className="itin-label">
+                      {language === 'hi' ? 'क्या शामिल है शीर्षक (Inclusions Title)' : 'Inclusions Title'}
                     </label>
-                    <span style={{ fontSize: '10px', fontWeight: 'bold', color: inclusions.length > 370 ? '#ef4444' : '#64748b' }}>
-                      {inclusions.length}/400
-                    </span>
+                    <input
+                      type="text"
+                      value={inclusionsTitle}
+                      onChange={e => setInclusionsTitle(e.target.value)}
+                      maxLength={40}
+                      className="itin-input"
+                    />
                   </div>
-                  <textarea
-                    value={inclusions}
-                    onChange={e => setInclusions(e.target.value)}
-                    onBlur={(e) => handleBlurTranslate(e.target.value, setInclusions)}
-                    maxLength={400}
-                    placeholder={language === 'hi' ? 'उदा. टोल टैक्स, पार्किंग शामिल है।' : 'e.g. All sightseeing, Hotels daily breakfast'}
-                    className="itin-textarea"
-                    rows={3}
-                  />
+                  <div>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px' }}>
+                      <label className="itin-label" style={{ marginBottom: 0 }}>
+                        {language === 'hi' ? 'क्या शामिल है विवरण' : 'Inclusions Content'}
+                      </label>
+                      <span style={{ fontSize: '10px', fontWeight: 'bold', color: inclusions.length > 370 ? '#ef4444' : '#64748b' }}>
+                        {inclusions.length}/400
+                      </span>
+                    </div>
+                    <textarea
+                      value={inclusions}
+                      onChange={e => setInclusions(e.target.value)}
+                      onBlur={(e) => handleBlurTranslate(e.target.value, setInclusions)}
+                      maxLength={400}
+                      placeholder={language === 'hi' ? 'उदा. टोल टैक्स, पार्किंग शामिल है।' : 'e.g. All sightseeing, Hotels daily breakfast'}
+                      className="itin-textarea"
+                      rows={3}
+                    />
+                  </div>
                 </div>
-              </div>
 
-              {/* Exclusions Group */}
-              <div style={{ marginBottom: '16px', display: 'grid', gridTemplateColumns: '1fr', gap: '12px' }}>
-                <div>
-                  <label className="itin-label">
-                    {language === 'hi' ? 'क्या शामिल नहीं है शीर्षक (Exclusions Title)' : 'Exclusions Title'}
-                  </label>
-                  <input
-                    type="text"
-                    value={exclusionsTitle}
-                    onChange={e => setExclusionsTitle(e.target.value)}
-                    maxLength={40}
-                    className="itin-input"
-                  />
-                </div>
-                <div>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px' }}>
-                    <label className="itin-label" style={{ marginBottom: 0 }}>
-                      {language === 'hi' ? 'क्या शामिल नहीं है विवरण' : 'Exclusions Content'}
+                {/* Exclusions Group */}
+                <div style={{ marginBottom: '16px', display: 'grid', gridTemplateColumns: '1fr', gap: '12px' }}>
+                  <div>
+                    <label className="itin-label">
+                      {language === 'hi' ? 'क्या शामिल नहीं है शीर्षक (Exclusions Title)' : 'Exclusions Title'}
                     </label>
-                    <span style={{ fontSize: '10px', fontWeight: 'bold', color: exclusions.length > 370 ? '#ef4444' : '#64748b' }}>
-                      {exclusions.length}/400
-                    </span>
+                    <input
+                      type="text"
+                      value={exclusionsTitle}
+                      onChange={e => setExclusionsTitle(e.target.value)}
+                      maxLength={40}
+                      className="itin-input"
+                    />
                   </div>
-                  <textarea
-                    value={exclusions}
-                    onChange={e => setExclusions(e.target.value)}
-                    onBlur={(e) => handleBlurTranslate(e.target.value, setExclusions)}
-                    maxLength={400}
-                    placeholder={language === 'hi' ? 'उदा. हवाई टिकट का किराया।' : 'e.g. Flight ticket fare, monument entry fees'}
-                    className="itin-textarea"
-                    rows={3}
-                  />
+                  <div>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px' }}>
+                      <label className="itin-label" style={{ marginBottom: 0 }}>
+                        {language === 'hi' ? 'क्या शामिल नहीं है विवरण' : 'Exclusions Content'}
+                      </label>
+                      <span style={{ fontSize: '10px', fontWeight: 'bold', color: exclusions.length > 370 ? '#ef4444' : '#64748b' }}>
+                        {exclusions.length}/400
+                      </span>
+                    </div>
+                    <textarea
+                      value={exclusions}
+                      onChange={e => setExclusions(e.target.value)}
+                      onBlur={(e) => handleBlurTranslate(e.target.value, setExclusions)}
+                      maxLength={400}
+                      placeholder={language === 'hi' ? 'उदा. हवाई टिकट का किराया।' : 'e.g. Flight ticket fare, monument entry fees'}
+                      className="itin-textarea"
+                      rows={3}
+                    />
+                  </div>
                 </div>
-              </div>
 
-              {/* Instructions Group */}
-              <div style={{ marginBottom: '16px', display: 'grid', gridTemplateColumns: '1fr', gap: '12px' }}>
-                <div>
-                  <label className="itin-label">
-                    {language === 'hi' ? 'निर्देश शीर्षक (Instructions Title)' : 'Instructions Title'}
-                  </label>
-                  <input
-                    type="text"
-                    value={instructionsTitle}
-                    onChange={e => setInstructionsTitle(e.target.value)}
-                    maxLength={40}
-                    className="itin-input"
-                  />
-                </div>
-                <div>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px' }}>
-                    <label className="itin-label" style={{ marginBottom: 0 }}>
-                      {language === 'hi' ? 'महत्वपूर्ण निर्देश' : 'Important Instructions'}
+                {/* Instructions Group */}
+                <div style={{ marginBottom: '16px', display: 'grid', gridTemplateColumns: '1fr', gap: '12px' }}>
+                  <div>
+                    <label className="itin-label">
+                      {language === 'hi' ? 'निर्देश शीर्षक (Instructions Title)' : 'Instructions Title'}
                     </label>
-                    <span style={{ fontSize: '10px', fontWeight: 'bold', color: importantInstructions.length > 370 ? '#ef4444' : '#64748b' }}>
-                      {importantInstructions.length}/400
-                    </span>
+                    <input
+                      type="text"
+                      value={instructionsTitle}
+                      onChange={e => setInstructionsTitle(e.target.value)}
+                      maxLength={40}
+                      className="itin-input"
+                    />
                   </div>
-                  <textarea
-                    value={importantInstructions}
-                    onChange={e => setImportantInstructions(e.target.value)}
-                    onBlur={(e) => handleBlurTranslate(e.target.value, setImportantInstructions)}
-                    maxLength={400}
-                    className="itin-textarea"
-                    rows={3}
-                  />
+                  <div>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px' }}>
+                      <label className="itin-label" style={{ marginBottom: 0 }}>
+                        {language === 'hi' ? 'महत्वपूर्ण निर्देश' : 'Important Instructions'}
+                      </label>
+                      <span style={{ fontSize: '10px', fontWeight: 'bold', color: importantInstructions.length > 370 ? '#ef4444' : '#64748b' }}>
+                        {importantInstructions.length}/400
+                      </span>
+                    </div>
+                    <textarea
+                      value={importantInstructions}
+                      onChange={e => setImportantInstructions(e.target.value)}
+                      onBlur={(e) => handleBlurTranslate(e.target.value, setImportantInstructions)}
+                      maxLength={400}
+                      className="itin-textarea"
+                      rows={3}
+                    />
+                  </div>
                 </div>
-              </div>
 
-              {/* Notes Group */}
-              <div style={{ marginBottom: '16px', display: 'grid', gridTemplateColumns: '1fr', gap: '12px' }}>
-                <div>
-                  <label className="itin-label">
-                    Notes Title
-                  </label>
-                  <input
-                    type="text"
-                    value={notesTitle}
-                    onChange={e => setNotesTitle(e.target.value)}
-                    maxLength={40}
-                    className="itin-input"
-                  />
-                </div>
-                <div>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px' }}>
-                    <label className="itin-label" style={{ marginBottom: 0 }}>Notes Content</label>
-                    <span style={{ fontSize: '10px', fontWeight: 'bold', color: agentNotes.length > 370 ? '#ef4444' : '#64748b' }}>{agentNotes.length}/400</span>
+                {/* Notes Group */}
+                <div style={{ marginBottom: '16px', display: 'grid', gridTemplateColumns: '1fr', gap: '12px' }}>
+                  <div>
+                    <label className="itin-label">
+                      Notes Title
+                    </label>
+                    <input
+                      type="text"
+                      value={notesTitle}
+                      onChange={e => setNotesTitle(e.target.value)}
+                      maxLength={40}
+                      className="itin-input"
+                    />
                   </div>
-                  <textarea
-                    value={agentNotes}
-                    onChange={e => setAgentNotes(e.target.value)}
-                    maxLength={400}
-                    placeholder={language === 'hi' ? 'अतिरिक्त नोट्स यहाँ लिखें...' : 'Write additional notes here...'}
-                    className="itin-textarea"
-                    rows={3}
-                  />
+                  <div>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px' }}>
+                      <label className="itin-label" style={{ marginBottom: 0 }}>Notes Content</label>
+                      <span style={{ fontSize: '10px', fontWeight: 'bold', color: agentNotes.length > 370 ? '#ef4444' : '#64748b' }}>{agentNotes.length}/400</span>
+                    </div>
+                    <textarea
+                      value={agentNotes}
+                      onChange={e => setAgentNotes(e.target.value)}
+                      maxLength={400}
+                      placeholder={language === 'hi' ? 'अतिरिक्त नोट्स यहाँ लिखें...' : 'Write additional notes here...'}
+                      className="itin-textarea"
+                      rows={3}
+                    />
+                  </div>
+                </div>
+
+                {/* Custom Footer Block */}
+                <div style={{ marginBottom: '16px', display: 'grid', gridTemplateColumns: '1fr', gap: '12px' }}>
+                  <div>
+                    <label className="itin-label">
+                      Custom Heading
+                    </label>
+                    <input
+                      type="text"
+                      value={customFooterTitle}
+                      onChange={e => setCustomFooterTitle(e.target.value)}
+                      maxLength={50}
+                      className="itin-input"
+                    />
+                  </div>
+                  <div>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px' }}>
+                      <label className="itin-label" style={{ marginBottom: 0 }}>Custom Content</label>
+                      <span style={{ fontSize: '10px', fontWeight: 'bold', color: customFooterContent.length > 470 ? '#ef4444' : '#64748b' }}>{customFooterContent.length}/500</span>
+                    </div>
+                    <textarea
+                      value={customFooterContent}
+                      onChange={e => setCustomFooterContent(e.target.value)}
+                      maxLength={500}
+                      placeholder={language === 'hi' ? 'कस्टम विवरण यहाँ लिखें...' : 'Write custom details here...'}
+                      className="itin-textarea"
+                      rows={4}
+                    />
+                  </div>
                 </div>
               </div>
-            </div>
             </div>
           </div>
 
@@ -2208,7 +2292,7 @@ export default function ItineraryBuilder() {
                   <button
                     className="itin-btn itin-btn-secondary"
                     style={{ height: '34px', padding: '0 12px' }}
-                    onClick={() => setZoom(0.85)}
+                    onClick={() => setZoom(0.80)}
                   >
                     Reset
                   </button>
@@ -2398,39 +2482,36 @@ export default function ItineraryBuilder() {
         </div>
       )}
 
-      {isMobile && dayByDayOpen && (
-        <button
-          className="itin-add-day-fab no-print"
-          onClick={addDay}
-        >
-          ➕ {language === 'hi' ? 'दिन जोड़ें' : 'Add Day'}
-        </button>
-      )}
-
       {/* Fullscreen Preview Modal */}
       {showFullscreenPreview && (
-        <div className="itin-fullscreen-modal no-print" style={{
-          position: 'fixed',
-          top: 0,
-          left: 0,
-          right: 0,
-          bottom: 0,
-          background: '#0f172a',
-          zIndex: 100,
-          display: 'flex',
-          flexDirection: 'column',
-          color: '#fff'
-        }}>
-          {/* Modal Header/Toolbar */}
-          <div className="preview-topbar" style={{
-            background: '#1e293b',
-            padding: '12px 16px',
-            borderBottom: '1px solid #334155',
+        <div
+          className={isMobile ? "mobile-preview-modal no-print" : "itin-fullscreen-modal no-print"}
+          style={isMobile ? { color: '#fff' } : {
+            position: 'fixed',
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            background: '#0f172a',
+            zIndex: 100,
             display: 'flex',
             flexDirection: 'column',
-            gap: '12px',
-            boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)'
-          }}>
+            color: '#fff'
+          }}
+        >
+          {/* Modal Header/Toolbar */}
+          <div
+            className={isMobile ? "mobile-preview-toolbar" : "preview-topbar"}
+            style={isMobile ? {} : {
+              background: '#1e293b',
+              padding: '12px 16px',
+              borderBottom: '1px solid #334155',
+              display: 'flex',
+              flexDirection: 'column',
+              gap: '12px',
+              boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)'
+            }}
+          >
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
               <div style={{ display: 'flex', alignItems: 'center' }}>
                 <span style={{ fontSize: '16px', fontWeight: 'bold' }}>
@@ -2488,8 +2569,6 @@ export default function ItineraryBuilder() {
                 >+</button>
               </div>
 
-
-
               {/* Zoom */}
               <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                 <span style={{ fontSize: '13px', color: '#94a3b8' }}>
@@ -2522,13 +2601,18 @@ export default function ItineraryBuilder() {
           </div>
 
           {/* Modal Content Scrollable Area */}
-          <div style={{ position: 'relative', flex: 1, display: 'flex', width: '100%', overflow: 'hidden' }}>
+          <div style={isMobile ? { flex: 1, display: 'flex', width: '100%', overflow: 'hidden', position: 'relative' } : { position: 'relative', flex: 1, display: 'flex', width: '100%', overflow: 'hidden' }}>
             {/* Scrollable Vertical Container */}
             <div
-              ref={fullscreenScrollRef}
+              ref={(el) => {
+                // @ts-ignore
+                fullscreenScrollRef.current = el;
+                // @ts-ignore
+                viewportRef.current = el;
+              }}
               onScroll={() => handleScroll(true)}
-              className="itin-fullscreen-scroll-x"
-              style={{
+              className={isMobile ? "mobile-preview-viewport" : "itin-fullscreen-scroll-x"}
+              style={isMobile ? {} : {
                 flex: 1,
                 overflowY: 'auto',
                 overflowX: 'hidden',
@@ -2546,62 +2630,103 @@ export default function ItineraryBuilder() {
                 background: '#0f172a'
               }}
             >
-              {pages.map((page, pageIdx) => (
-                <div
-                  key={pageIdx}
-                  className="itin-page-snap-wrapper page-scale-wrapper"
-                  style={{
-                    width: '100%',
-                    height: `calc(1123px * ${zoom})`,
-                    flexShrink: 0,
-                    display: 'flex',
-                    justifyContent: 'center',
-                    alignItems: 'flex-start'
-                  }}
-                >
+              {isMobile ? (
+                <div className="mobile-pages-stack">
+                  {pages.map((page, pageIdx) => (
+                    <div
+                      key={pageIdx}
+                      className="mobile-preview-page-wrapper"
+                      style={{
+                        height: `calc(1123px * ${zoom})`,
+                        overflow: 'hidden'
+                      }}
+                    >
+                      <div className="mobile-preview-inner">
+                        <div
+                          className="mobile-preview-page pdf-page-render itinerary-page preview-page"
+                          style={{
+                            width: '794px',
+                            height: '1123px',
+                            backgroundColor: '#ffffff',
+                            transform: `scale(${zoom})`,
+                            flexShrink: 0,
+                            position: 'relative'
+                          }}
+                        >
+                          <div style={{
+                            width: `${100 / fontScale}%`,
+                            height: `${100 / fontScale}%`,
+                            transform: `scale(${fontScale})`,
+                            transformOrigin: 'top left',
+                            display: 'flex',
+                            flexDirection: 'column',
+                            position: 'relative'
+                          }}>
+                            {renderItineraryPageContent(page, pageIdx, false)}
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                pages.map((page, pageIdx) => (
                   <div
-                    className="itin-scale-wrapper"
+                    key={pageIdx}
+                    className="itin-page-snap-wrapper page-scale-wrapper"
                     style={{
-                      width: '794px',
-                      height: '1123px',
-                      minHeight: '1123px',
-                      transform: `scale(${zoom})`,
-                      transformOrigin: 'top center',
-                      overflow: 'hidden',
-                      position: 'relative',
-                      boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.5)',
-                      borderRadius: '12px',
-                      backgroundColor: '#ffffff',
+                      width: '100%',
+                      height: `calc(1123px * ${zoom})`,
                       flexShrink: 0,
-                      transition: 'transform 0.15s ease-out'
+                      display: 'flex',
+                      justifyContent: 'center',
+                      alignItems: 'flex-start'
                     }}
                   >
                     <div
-                      className="pdf-page-render itinerary-page preview-page mobile-preview-page"
+                      className="itin-scale-wrapper"
                       style={{
                         width: '794px',
                         height: '1123px',
-                        position: 'absolute',
-                        top: 0,
-                        left: 0,
-                        backgroundColor: '#ffffff'
+                        minHeight: '1123px',
+                        transform: `scale(${zoom})`,
+                        transformOrigin: 'top center',
+                        overflow: 'hidden',
+                        position: 'relative',
+                        boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.5)',
+                        borderRadius: '12px',
+                        backgroundColor: '#ffffff',
+                        flexShrink: 0,
+                        transition: 'transform 0.15s ease-out'
                       }}
                     >
-                      <div style={{
-                        width: `${100 / fontScale}%`,
-                        height: `${100 / fontScale}%`,
-                        transform: `scale(${fontScale})`,
-                        transformOrigin: 'top left',
-                        display: 'flex',
-                        flexDirection: 'column',
-                        position: 'relative'
-                      }}>
-                        {renderItineraryPageContent(page, pageIdx, false)}
+                      <div
+                        className="pdf-page-render itinerary-page preview-page"
+                        style={{
+                          width: '794px',
+                          height: '1123px',
+                          position: 'absolute',
+                          top: 0,
+                          left: 0,
+                          backgroundColor: '#ffffff'
+                        }}
+                      >
+                        <div style={{
+                          width: `${100 / fontScale}%`,
+                          height: `${100 / fontScale}%`,
+                          transform: `scale(${fontScale})`,
+                          transformOrigin: 'top left',
+                          display: 'flex',
+                          flexDirection: 'column',
+                          position: 'relative'
+                        }}>
+                          {renderItineraryPageContent(page, pageIdx, false)}
+                        </div>
                       </div>
                     </div>
                   </div>
-                </div>
-              ))}
+                ))
+              )}
             </div>
           </div>
         </div>
