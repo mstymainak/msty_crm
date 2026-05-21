@@ -6,10 +6,39 @@ import html2canvas from 'html2canvas';
 type TimelineDay = {
   dayNumber: number;
   dateString: string;
+  location?: string;
   activities: string;
   meals: string;
   accommodation: string;
 };
+
+type SavedItinerary = {
+  id: string;
+  saveName: string;
+  saveDate: string;
+  title: string;
+  startLocation: string;
+  endLocation: string;
+  startDate: string;
+  headerImage: string;
+  language: string;
+  timeline: TimelineDay[];
+  instructionsTitle: string;
+  inclusionsTitle: string;
+  exclusionsTitle: string;
+  inclusions: string;
+  exclusions: string;
+  importantInstructions: string;
+  agentNotes: string;
+  notesTitle: string;
+  showRateField: boolean;
+  rateLabel: string;
+  rate: string;
+  showExtraField: boolean;
+  extraFieldLabel: string;
+  extraFieldValue: string;
+};
+
 
 export default function ItineraryBuilder() {
   const [title, setTitle] = useState('');
@@ -19,8 +48,10 @@ export default function ItineraryBuilder() {
   const [headerImage, setHeaderImage] = useState('/style1.png');
   const [headerHeight, setHeaderHeight] = useState(180);
   const [language, setLanguage] = useState('en');
-  const [zoom, setZoom] = useState(0.75);
+  const [zoom, setZoom] = useState(0.55);
   const [fontScale, setFontScale] = useState(1);
+  const [isMobile, setIsMobile] = useState(false);
+  const previewContainerRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
@@ -35,8 +66,25 @@ export default function ItineraryBuilder() {
     }
   }, []);
 
+  // Detect mobile and auto-set zoom to fit A4 page width
+  useEffect(() => {
+    const checkMobile = () => {
+      const mobile = window.innerWidth <= 768;
+      setIsMobile(mobile);
+      if (mobile) {
+        const availableWidth = window.innerWidth - 32; // 16px padding each side
+        const a4WidthPx = 794; // 210mm at 96dpi
+        const autoZoom = Math.min(1, availableWidth / a4WidthPx);
+        setZoom(Math.round(autoZoom * 100) / 100);
+      }
+    };
+    checkMobile();
+    window.addEventListener('resize', checkMobile);
+    return () => window.removeEventListener('resize', checkMobile);
+  }, []);
+
   const [timeline, setTimeline] = useState<TimelineDay[]>([
-    { dayNumber: 1, dateString: '', activities: '', meals: '', accommodation: '' }
+    { dayNumber: 1, dateString: '', location: '', activities: '', meals: '', accommodation: '' }
   ]);
 
   const [instructionsTitle, setInstructionsTitle] = useState('महत्वपूर्ण निर्देश');
@@ -68,7 +116,7 @@ export default function ItineraryBuilder() {
   const [extraFieldLabel, setExtraFieldLabel] = useState('No. of Pax');
   const [extraFieldValue, setExtraFieldValue] = useState('');
 
-  const [savedItineraries, setSavedItineraries] = useState<any[]>([]);
+  const [savedItineraries, setSavedItineraries] = useState<SavedItinerary[]>([]);
   const [showSavedModal, setShowSavedModal] = useState(false);
 
   // Mobile collapsible sections
@@ -86,14 +134,17 @@ export default function ItineraryBuilder() {
     const saved = localStorage.getItem('savedItineraries');
     if (saved) {
       try {
-        setSavedItineraries(JSON.parse(saved));
-      } catch (e) { }
+        const parsed = JSON.parse(saved) as SavedItinerary[];
+        // eslint-disable-next-line react-hooks/set-state-in-effect
+        setSavedItineraries(parsed);
+      } catch { }
     }
   }, []);
 
   const handleSaveItinerary = () => {
-    const data: any = {
+    const data: SavedItinerary = {
       id: Date.now().toString(),
+      saveName: '',
       saveDate: new Date().toLocaleDateString(),
       title, startLocation, endLocation, startDate,
       headerImage, language, timeline,
@@ -115,7 +166,7 @@ export default function ItineraryBuilder() {
     alert(language === 'hi' ? "यात्रा कार्यक्रम सफलतापूर्वक सेव हो गया!" : "Itinerary saved successfully!");
   };
 
-  const loadItinerary = (data: any) => {
+  const loadItinerary = (data: SavedItinerary) => {
     if (!confirm(language === 'hi' ? "क्या आप वाकई इसे लोड करना चाहते हैं? आपका वर्तमान डेटा बदल जाएगा।" : "Are you sure you want to load this? Your current data will be overwritten.")) return;
 
     setTitle(data.title || '');
@@ -214,7 +265,7 @@ export default function ItineraryBuilder() {
   const addDay = () => {
     setTimeline(prev => [
       ...prev,
-      { dayNumber: prev.length + 1, dateString: '', activities: '', meals: '', accommodation: '' }
+      { dayNumber: prev.length + 1, dateString: '', location: '', activities: '', meals: '', accommodation: '' }
     ]);
   };
 
@@ -228,9 +279,9 @@ export default function ItineraryBuilder() {
     if (!text || language !== 'hi') return text;
     try {
       const res = await fetch(`https://translate.googleapis.com/translate_a/single?client=gtx&sl=en&tl=hi&dt=t&q=${encodeURIComponent(text)}`);
-      const data = await res.json();
+      const data = (await res.json()) as Array<Array<[string, string]>>;
       if (data && data[0]) {
-        return data[0].map((x: any) => x[0]).join('');
+        return data[0].map((x: [string, string]) => x[0]).join('');
       }
     } catch (e) {
       console.error(e);
@@ -542,10 +593,18 @@ export default function ItineraryBuilder() {
             padding-right: 0 !important;
           }
           .itin-preview-scroll {
-            overflow-x: auto !important;
+            overflow-x: hidden !important;
+            align-items: center !important;
           }
           .itin-day-card-mobile {
             cursor: pointer;
+          }
+          .itin-mobile-preview-title {
+            display: flex !important;
+          }
+          .pdf-pages-container-wrapper {
+            width: 100% !important;
+            transform-origin: top left !important;
           }
         }
 
@@ -575,6 +634,9 @@ export default function ItineraryBuilder() {
           }
           .itin-day-collapsible {
             display: block !important;
+          }
+          .itin-mobile-preview-title {
+            display: none !important;
           }
         }
       `}} />
@@ -972,6 +1034,19 @@ export default function ItineraryBuilder() {
                         style={{ width: '100%', padding: '8px 12px', borderRadius: '6px', border: '1px solid #cbd5e1', fontSize: '12px', outline: 'none' }}
                       />
                     </div>
+                    <div>
+                      <label style={{ display: 'block', fontSize: '11px', fontWeight: '600', color: '#64748b', marginBottom: '4px' }}>
+                        {language === 'hi' ? 'स्थान' : 'Location'}
+                      </label>
+                      <input
+                        placeholder={language === 'hi' ? 'स्थान दर्ज करें' : 'Enter location'}
+                        value={day.location || ''}
+                        onChange={e => updateDay(idx, 'location', e.target.value)}
+                        onBlur={() => handleDayBlurTranslate(idx, 'location')}
+                        maxLength={40}
+                        style={{ width: '100%', padding: '8px 12px', borderRadius: '6px', border: '1px solid #cbd5e1', fontSize: '12px', outline: 'none' }}
+                      />
+                    </div>
                   </div>
 
                   <div style={{ marginBottom: '12px' }}>
@@ -1177,6 +1252,11 @@ export default function ItineraryBuilder() {
           {/* Right Pane - Live Preview */}
           <div className="itin-right-pane" style={{ width: '55%', overflowY: 'auto', padding: '24px', background: '#e2e8f0', display: 'flex', flexDirection: 'column' }}>
 
+            {/* Mobile-only Preview & Settings heading */}
+            <div className="itin-mobile-preview-title" style={{ display: 'none', alignItems: 'center', justifyContent: 'space-between', marginBottom: '16px' }}>
+              <h2 style={{ fontSize: '16px', fontWeight: '700', color: '#1e293b', margin: 0 }}>Preview & Settings</h2>
+            </div>
+
             {/* Zoom Controls Header */}
             <div className="no-print itin-zoom-controls-bar" style={{
               display: 'flex',
@@ -1281,6 +1361,7 @@ export default function ItineraryBuilder() {
               paddingBottom: '40px'
             }}>
               <div
+                ref={previewContainerRef}
                 className="pdf-pages-container-wrapper"
                 style={{
                   transform: `scale(${zoom})`,
@@ -1453,8 +1534,15 @@ export default function ItineraryBuilder() {
                             }}>
                               {/* Program Section (Top) */}
                               <div style={{ flex: 1, marginBottom: '8px' }}>
-                                <div style={{ fontSize: '14px', fontWeight: 'bold', display: 'flex', alignItems: 'center', gap: '4px', marginBottom: '6px' }}>
-                                  📅 <span style={{ color: '#0f172a', fontWeight: '800' }}>{language === 'hi' ? 'कार्यक्रम' : 'Program'}</span>
+                                <div style={{ fontSize: '14px', fontWeight: 'bold', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '4px', marginBottom: '6px' }}>
+                                  <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                                    📅 <span style={{ color: '#0f172a', fontWeight: '800' }}>{language === 'hi' ? 'कार्यक्रम' : 'Program'}</span>
+                                  </div>
+                                  {day.location && (
+                                    <span style={{ fontSize: '12.5px', color: '#ea580c', fontWeight: 'bold', background: '#fff7ed', padding: '2px 8px', borderRadius: '12px', border: '1px solid #fed7aa', display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
+                                      📍 {day.location}
+                                    </span>
+                                  )}
                                 </div>
                                 {renderDottedOrText(day.activities, 2)}
                               </div>
